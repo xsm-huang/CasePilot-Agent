@@ -1,0 +1,11 @@
+{
+  "name": "@casepilot/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build"
+  },
+  "dependencies": { "@casepilot/contracts": "workspace:*", "vue": "3.5.44" },
+  "devDependencies": { "@vitejs/plugin-vue": "6.0.10", "vite": "8.3.5", "typescript": "5.9.3", "vue-tsc": "3.3.13" }
+}
