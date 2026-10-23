@@ -1,8 +1,6 @@
 # CasePilot Agent
 
-AI 理赔案件分析工作台的最小可验证原型。
-
-当前为 **V0 工作流验证版**：真实运行 Vue 3、NestJS、LangGraph.js 的图执行、interrupt/Command 恢复与 SSE；案件/条款为虚构示例，检索使用内存关键词匹配，报告为确定性模板。尚未接入大模型、LangChain 文档解析、Embedding 或 pgvector，因此不应将这一版描述为完整 AI/RAG 实现。
+真实运行 Vue 3、NestJS、LangGraph.js 的图执行、interrupt/Command 恢复与 SSE；案件/条款为虚构示例，检索使用内存关键词匹配，报告为确定性模板。尚未接入大模型、LangChain 文档解析、Embedding 或 pgvector，因此不应将这一版描述为完整 AI/RAG 实现。
 
 ## MVP 验证闭环
 
@@ -62,4 +60,3 @@ pnpm build
 预置的 `CASE-2026-001` 会命中“事故日期早于保单生效日期”和“维修发票缺失”，因此工作流会暂停等待审核；通过审核后生成带条款引用的报告。
 
 `CASE-2026-002` 材料齐全且日期有效，会跳过人工审核直接生成报告。
-

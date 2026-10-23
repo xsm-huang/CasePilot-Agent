@@ -1,21 +1,30 @@
+import axios from 'axios';
+
 export interface ResponseSchema<T> { parse(value: unknown): T }
 
 export class ApiError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
 }
 
+const api = axios.create({ baseURL: '/api' });
+
 export async function request<T>(path: string, schema: ResponseSchema<T>, options: { body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    signal: options.signal,
-    ...(options.body === undefined ? {} : {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(options.body)
-    })
-  });
-  const data: unknown = await response.json();
-  if (!response.ok) {
+  try {
+    const response = await api.request<unknown>({
+      url: path,
+      method: options.body === undefined ? 'GET' : 'POST',
+      data: options.body,
+      signal: options.signal
+    });
+    return schema.parse(response.data);
+  } catch (cause) {
+    if (!axios.isAxiosError(cause)) throw cause;
+    if (cause.code === 'ERR_CANCELED') throw cause;
+    const status = cause.response?.status ?? 0;
+    const data: unknown = cause.response?.data;
     const message = typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string'
-      ? data.message : `请求失败：${response.status}`;
-    throw new ApiError(response.status, message);
+      ? data.message
+      : status > 0 ? `请求失败：${status}` : '网络请求失败，请检查服务是否可用。';
+    throw new ApiError(status, message);
   }
-  return schema.parse(data);
 }

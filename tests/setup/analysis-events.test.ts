@@ -31,7 +31,7 @@ test('duplicate and missing events do not advance the authoritative snapshot', (
 
 test('review and report events apply validated payloads and terminal status', () => {
   const previous = task();
-  const finding = { code: 'MISSING_REPAIR_INVOICE', severity: 'medium', title: '缺少发票', detail: '待补充' };
+  const finding = { code: 'MISSING_REPAIR_INVOICE', source: 'rule', severity: 'medium', title: '缺少发票', detail: '待补充' };
   const waiting = mergeAnalysisEvent(previous, {
     ...event(1), type: 'review_required', status: 'waiting_review', data: [finding],
   });

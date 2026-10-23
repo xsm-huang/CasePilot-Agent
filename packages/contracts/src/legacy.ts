@@ -15,7 +15,11 @@ export const v0ClaimCaseSchema = z.object({
 export type V0ClaimCase = z.infer<typeof v0ClaimCaseSchema>;
 
 export const v0FindingSchema = z.object({
-  code: z.string(), severity: z.enum(['low', 'medium', 'high']), title: z.string(), detail: z.string()
+  code: z.string(),
+  source: z.enum(['rule', 'ai']),
+  severity: z.enum(['low', 'medium', 'high']),
+  title: z.string(),
+  detail: z.string()
 });
 export type V0Finding = z.infer<typeof v0FindingSchema>;
 
