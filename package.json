@@ -1,15 +1,17 @@
 {
   "name": "casepilot-agent",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@12.4.2",
   "scripts": {
-    "dev": "pnpm --parallel --filter ./apps/* dev",
+    "dev": "pnpm --filter @casepilot/web dev",
     "build": "pnpm -r build",
-    "test": "pnpm --filter @casepilot/api test",
-    "test:setup": "node --test tests/setup/*.test.mjs && node --experimental-transform-types --test tests/setup/*.test.ts",
-    "model:probe": "pnpm --filter @casepilot/api model:probe",
-    "smoke": "node scripts/smoke.mjs",
-    "smoke:isolated": "node scripts/smoke-isolated.mjs",
+    "test": "pnpm test:api && pnpm test:web",
+    "test:api": "uv run --package casepilot-api --extra dev python scripts/test.py",
+    "test:api:database": "uv run --package casepilot-api --extra dev python scripts/test.py --database",
+    "test:web": "pnpm --filter @casepilot/contracts build && pnpm --filter @casepilot/contracts test && node --experimental-transform-types --test tests/web/unit/*.test.ts tests/web/integration/*.test.ts",
+    "contracts:generate": "pnpm --filter @casepilot/contracts generate",
+    "contracts:check": "pnpm --filter @casepilot/contracts generate:check",
     "db:up": "docker compose up -d --wait postgres",
     "db:status": "docker compose ps",
     "db:stop": "docker compose stop postgres"

@@ -25,3 +25,32 @@ button.primary { border: 0; border-radius: 9px; padding: 12px 18px; color: white
 .finding-source, .review li .finding-source { display: inline-block; margin: 0 8px 5px 0; padding: 3px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; vertical-align: middle; }.finding-source.rule { background: #e7eef8; color: #315f91; }.finding-source.ai { background: #eee8f8; color: #68449a; }
 .result-placeholder { min-height: 220px; }.event div, .citation { overflow-wrap: anywhere; }.status.rejected, .status.failed { background: #ffece8; color: #9d3328; }
 @media (max-width: 600px) { h1 { font-size: 24px; }.case-summary { flex-direction: column; }.workflow-strip { font-size: 10px; }.panel { padding: 18px; } }
+.app-navigation { display: flex; align-items: center; gap: 10px; padding: 12px 4vw; background: #fff; border-bottom: 1px solid #dfe6df; }
+.app-navigation strong { margin-right: 18px; color: #176b4b; letter-spacing: .08em; font-size: 13px; }
+.app-navigation button, .secondary { font: inherit; border: 1px solid #d8e2d9; border-radius: 8px; padding: 9px 13px; background: #fff; color: #476051; cursor: pointer; }
+.app-navigation button.active { background: #e6f3eb; border-color: #96bda5; color: #176b4b; font-weight: 700; }
+.knowledge-layout { max-width: 1440px; margin: auto; display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.knowledge-results { display: grid; gap: 20px; min-width: 0; }
+.import-panel label { display: block; margin: 18px 0 8px; font-size: 13px; font-weight: 700; }
+.import-panel input:not([type=checkbox]) { display: block; width: 100%; border: 1px solid #cedbd0; border-radius: 8px; padding: 11px; font: inherit; font-size: 14px; background: #fff; }
+.import-panel small { display: block; margin: 8px 0; overflow-wrap: anywhere; color: #65776b; }
+.import-panel form > button { margin-top: 24px; width: 100%; }
+.replacement-note { background: #fff6e3; border: 1px solid #e8d3a0; padding: 14px; border-radius: 9px; margin-top: 20px; font-size: 13px; overflow-wrap: anywhere; }
+.replacement-note p { margin: 7px 0; font-size: 12px; }
+.replacement-note .checkbox-label { font-size: 12px; font-weight: 400; line-height: 1.7; }
+.generation-detail h2 { margin: 0; overflow-wrap: anywhere; }
+.generation-detail .status-row { gap: 14px; align-items: start; }
+.generation-detail .status { flex-shrink: 0; }
+.generation-detail code { font-size: 11px; overflow-wrap: anywhere; }
+.publication-state { color: #176b4b; }
+.knowledge-stats { display: flex; gap: 30px; margin: 24px 0; }
+.knowledge-stats dt { font-size: 12px; color: #65776b; }.knowledge-stats dd { margin: 6px 0 0; font-size: 24px; font-weight: 700; }
+.generation-detail progress { width: 100%; accent-color: #176b4b; }
+.generation-detail .error-banner { margin: 16px 0; }.generation-detail .error-banner p { color: inherit; margin-bottom: 0; }
+.generation-detail details { margin-top: 22px; font-size: 13px; }.generation-detail summary { cursor: pointer; color: #476051; }
+.attempt-row { padding: 14px 0; border-bottom: 1px solid #e4eae4; }.attempt-row p { margin: 6px 0 0; font-size: 12px; }
+.generation-card { display: flex; width: 100%; gap: 16px; justify-content: space-between; align-items: center; text-align: left; background: #f7f9f5; border: 1px solid transparent; border-radius: 10px; padding: 15px; margin-top: 10px; font: inherit; font-size: 13px; color: #304838; cursor: pointer; }
+.generation-card > span:first-child { min-width: 0; overflow-wrap: anywhere; }.generation-card > span:last-child { flex-shrink: 0; text-align: right; }
+.generation-card.active { background: #eaf5ef; border-color: #86b59b; }.generation-card small { display: block; color: #748078; margin-top: 7px; font-size: 11px; }
+@media (max-width: 900px) { .knowledge-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .app-navigation { gap: 6px; padding: 10px 18px; }.app-navigation strong { margin-right: 4px; font-size: 10px; }.app-navigation button { font-size: 12px; padding: 9px; }.knowledge-stats { gap: 20px; }.generation-card { align-items: start; } }

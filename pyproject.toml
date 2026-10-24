@@ -1,0 +1,18 @@
+[tool.uv.workspace]
+members = ["apps/api"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/api"]
+asyncio_mode = "auto"
+markers = [
+  "database: requires the project PostgreSQL instance and isolated test schemas",
+  "live: explicitly opted-in bounded requests to the configured provider",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".tools", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

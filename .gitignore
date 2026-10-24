@@ -9,3 +9,15 @@ coverage/
 !.env.example
 data/
 
+# Python environments, local tools and generated caches.
+.venv/
+.tools/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+

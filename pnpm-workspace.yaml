@@ -4,6 +4,3 @@ packages:
 
 allowBuilds:
   esbuild: true
-
-minimumReleaseAgeExclude:
-  - '@langchain/langgraph-checkpoint-postgres@1.1.2'

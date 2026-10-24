@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from 'vue';
 import type { V0AnalysisTask, V0ClaimCase } from '@casepilot/contracts';
 import { workbenchApi } from '../api/workbench';
+import { ApiError } from '../api/http';
 import { mergeAnalysisEvent } from '../domain/analysisEvents';
 import { isTerminal } from '../domain/presentation';
 import { createRequestScope } from '../domain/requestScope';
@@ -105,7 +106,16 @@ export function useWorkbench() {
       await workbenchApi.review(id, decision, draft, scope.signal);
       const current = await workbenchApi.task(id, scope.signal);
       if (scope.isCurrent()) display(current, scope);
-    } catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
+    } catch (cause) {
+      if (!scope.isCurrent()) return;
+      error.value = String(cause);
+      if (cause instanceof ApiError && cause.status === 409) {
+        try {
+          const current = await workbenchApi.task(id, scope.signal);
+          if (scope.isCurrent()) display(current, scope);
+        } catch { /* Keep the original conflict visible if the resync fails. */ }
+      }
+    }
     finally { if (scope.isCurrent()) pending.value = false; }
   }
 
