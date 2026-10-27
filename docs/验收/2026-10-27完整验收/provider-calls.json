@@ -1,0 +1,21 @@
+{
+  "limits": {
+    "model": 270,
+    "embedding": 110
+  },
+  "used": {
+    "model": 1,
+    "embedding": 0
+  },
+  "stopped": "PROVIDER_REQUEST_INTERRUPTED",
+  "calls": [
+    {
+      "kind": "model",
+      "model": "glm-4.7-flash",
+      "status": "ambiguous",
+      "at": "2026-10-26T16:52:03.731445+00:00",
+      "errorType": "ConnectError",
+      "durationMs": 61
+    }
+  ]
+}

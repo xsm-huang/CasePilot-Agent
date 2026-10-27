@@ -3,11 +3,19 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from psycopg import Error as DatabaseError
+from psycopg_pool import PoolTimeout
 
 from .analyses.errors import AnalysisError
 from .api.analyses import router as analyses_router
 from .api.cases import router as cases_router
-from .api.errors import analysis_error, http_error, knowledge_error, validation_error
+from .api.errors import (
+    analysis_error,
+    database_error,
+    http_error,
+    knowledge_error,
+    validation_error,
+)
 from .api.knowledge import router as knowledge_router
 from .api.system import router as system_router
 from .bootstrap import lifespan
@@ -15,13 +23,17 @@ from .config import load_environment
 from .knowledge.errors import KnowledgeOperationError
 
 
-def create_app():
+def create_app(*, chat=None, embedder=None):
     load_environment()
     application = FastAPI(title="CasePilot Python API", lifespan=lifespan)
+    application.state.chat_adapter = chat
+    application.state.embedding_adapter = embedder
     application.add_exception_handler(AnalysisError, analysis_error)
     application.add_exception_handler(KnowledgeOperationError, knowledge_error)
     application.add_exception_handler(HTTPException, http_error)
     application.add_exception_handler(RequestValidationError, validation_error)
+    application.add_exception_handler(DatabaseError, database_error)
+    application.add_exception_handler(PoolTimeout, database_error)
     application.include_router(knowledge_router)
     application.include_router(system_router)
     application.include_router(cases_router)

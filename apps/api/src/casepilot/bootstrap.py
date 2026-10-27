@@ -4,29 +4,26 @@ import asyncio
 import os
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from .analyses.executor import Executor
-from .analyses.service import AnalysisService
-from .analyses.store import Store
-from .analyses.worker import reconcile_commands, run_commands
+from .analyses.worker import run_commands
+from .analyses.workspace_executor import WorkspaceExecutor, reconcile_workspace
+from .analyses.workspace_service import WorkspaceService
+from .analyses.workspace_store import WorkspaceStore
 from .knowledge.repository import PostgresKnowledgeRepository
 from .knowledge.service import KnowledgeService
 from .model import embed_texts, read_model_config
 from .persistence.runtime import open_storage
-from .workflow.graph import create_graph
+from .workflow.workspace_graph import create_workspace_graph
 
 
 @asynccontextmanager
 async def lifespan(app):
     async with AsyncExitStack() as stack:
         pool, checkpointer = await open_storage(stack)
-        store = Store(pool, os.getenv("CASEPILOT_DB_SCHEMA", "casepilot_python"))
+        store = WorkspaceStore(pool, os.getenv("CASEPILOT_DB_SCHEMA", "casepilot_python"))
         await store.setup()
-        executor = Executor(store, create_graph(store, checkpointer))
         app.state.store = store
-        app.state.executor = executor
         wakeup = asyncio.Event()
         app.state.wakeup = wakeup
-        app.state.analyses = AnalysisService(store, wakeup)
         app.state.knowledge = None
         knowledge_worker = None
         if pool:
@@ -37,10 +34,18 @@ async def lifespan(app):
             async def production_embeddings(texts):
                 return await embed_texts(read_model_config(), texts)
 
-            knowledge = KnowledgeService(repository, production_embeddings)
+            knowledge = KnowledgeService(
+                repository, app.state.embedding_adapter or production_embeddings
+            )
             app.state.knowledge = knowledge
 
-        await reconcile_commands(store)
+        service = WorkspaceService(store, wakeup, app.state.knowledge, app.state.chat_adapter)
+        app.state.analyses = service
+        executor = WorkspaceExecutor(
+            store, create_workspace_graph(store, app.state.knowledge, service.chat, checkpointer)
+        )
+        app.state.executor = executor
+        await reconcile_workspace(store)
 
         worker = asyncio.create_task(run_commands(store, executor, wakeup))
         try:

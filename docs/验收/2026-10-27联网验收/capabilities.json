@@ -1,0 +1,10 @@
+{
+  "status": "failed",
+  "error": {
+    "code": "MODEL_TIMEOUT"
+  },
+  "used": {
+    "model": 1,
+    "embedding": 0
+  }
+}

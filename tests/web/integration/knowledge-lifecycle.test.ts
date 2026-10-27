@@ -6,7 +6,7 @@ import { createRenderer } from '../../../apps/web/node_modules/vue/index.mjs';
 
 // Vite resolves application TS imports exactly as in the browser. Vue's custom
 // renderer exercises actual mount/unmount hooks without requiring a DOM shim.
-const server = await createServer({ configFile: false, root: fileURLToPath(new URL('../../../apps/web', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] } });
+const server = await createServer({ configFile: false, root: fileURLToPath(new URL('../../../apps/web', import.meta.url)), server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] } });
 after(async () => { await server.close(); });
 const { useKnowledge } = await server.ssrLoadModule('/src/composables/useKnowledge.ts');
 const { knowledgeApi } = await server.ssrLoadModule('/src/api/knowledge.ts');

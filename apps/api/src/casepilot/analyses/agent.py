@@ -1,4 +1,4 @@
-"""Executable G3 analysis component. HTTP/session/report integration is a later stage."""
+"""Bounded analysis component used by the durable workspace graph."""
 
 from ..cases.repository import get_case
 from ..knowledge.config import PROFILE

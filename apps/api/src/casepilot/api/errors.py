@@ -2,7 +2,6 @@
 
 from uuid import uuid4
 
-from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
 from ..knowledge.errors import KnowledgeOperationError
@@ -37,7 +36,35 @@ async def knowledge_error(request, exc):
 
 
 async def analysis_error(request, exc):
-    return await http_error(request, HTTPException(ANALYSIS_ERROR_STATUSES[exc.code], exc.message))
+    statuses = {
+        **ANALYSIS_ERROR_STATUSES,
+        "INVALID_INPUT": 400,
+        "NOT_FOUND": 404,
+        "IDEMPOTENCY_CONFLICT": 409,
+        "ACTIVE_ANALYSIS_EXISTS": 409,
+        "LEGACY_READ_ONLY": 409,
+        "RECOVERY_CONFLICT": 409,
+        "CURSOR_CONFLICT": 409,
+        "EMBEDDING_PROFILE_MISMATCH": 409,
+        "KNOWLEDGE_NOT_READY": 422,
+        "MODEL_CONTEXT_LIMIT": 422,
+        "DEPENDENCY_UNAVAILABLE": 503,
+    }
+    return JSONResponse(
+        {"code": exc.code, "message": exc.message, "requestId": str(uuid4())},
+        status_code=statuses.get(exc.code, 500),
+    )
+
+
+async def database_error(request, exc):
+    return JSONResponse(
+        {
+            "code": "DEPENDENCY_UNAVAILABLE",
+            "message": "持久存储暂不可用，请稍后重试。",
+            "requestId": str(uuid4()),
+        },
+        status_code=503,
+    )
 
 
 async def http_error(request, exc):
@@ -58,5 +85,6 @@ async def validation_error(request, exc):
             request, KnowledgeOperationError("INVALID_REQUEST", "无效的请求。")
         )
     return JSONResponse(
-        {"message": "无效的请求。", "error": "Bad Request", "statusCode": 400}, status_code=400
+        {"code": "INVALID_INPUT", "message": "无效的请求。", "requestId": str(uuid4())},
+        status_code=400,
     )

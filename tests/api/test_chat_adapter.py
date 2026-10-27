@@ -4,7 +4,7 @@ import json
 
 import httpx
 import pytest
-from casepilot.model.chat import ChatClient
+from casepilot.model.chat import ChatClient, assistant_message
 from casepilot.model.config import read_model_config
 from casepilot.model.errors import ModelError
 
@@ -26,7 +26,7 @@ TOOLS = [
 ]
 
 
-async def test_real_tool_request_and_json_request_are_distinct_and_do_not_expose_reasoning():
+async def test_real_tool_and_json_requests_preserve_internal_reasoning():
     calls = []
 
     def handle(request):
@@ -35,7 +35,7 @@ async def test_real_tool_request_and_json_request_are_distinct_and_do_not_expose
             return httpx.Response(
                 200,
                 json={
-                    "model": "glm-4.7-flash",
+                    "model": "glm-5.3-flash",
                     "choices": [
                         {
                             "message": {
@@ -65,11 +65,21 @@ async def test_real_tool_request_and_json_request_are_distinct_and_do_not_expose
         adapter = ChatClient(CONFIG, client=client)
         turn = await adapter.complete([{"role": "user", "content": "test"}], tools=TOOLS)
         assert turn["toolCalls"][0]["arguments"] == {"query": "repair evidence"}
-        assert "reasoning" not in json.dumps(turn)
-        await adapter.complete([{"role": "user", "content": "test"}], json_mode=True)
+        assert turn["_reasoningContent"] == "not public"
+        await adapter.complete(
+            [
+                {"role": "user", "content": "test"},
+                assistant_message(turn),
+                {"role": "tool", "tool_call_id": "call-1", "content": "[]"},
+            ],
+            json_mode=True,
+        )
     assert calls[0]["tools"] == TOOLS and "response_format" not in calls[0]
     assert calls[1]["response_format"] == {"type": "json_object"} and "tools" not in calls[1]
-    assert all(call["thinking"] == {"type": "disabled"} for call in calls)
+    assert calls[1]["messages"][1]["reasoning_content"] == "not public"
+    assert calls[1]["messages"][1]["tool_calls"][0]["id"] == "call-1"
+    assert all(call["thinking"] == {"type": "enabled", "clear_thinking": False} for call in calls)
+    assert all(call["max_tokens"] == 4096 for call in calls)
 
 
 @pytest.mark.parametrize(
@@ -79,6 +89,7 @@ async def test_real_tool_request_and_json_request_are_distinct_and_do_not_expose
         {"choices": [{"message": []}]},
         {"choices": [{"finish_reason": "length", "message": {"content": "partial"}}]},
         {"choices": [{"message": {"content": ""}}]},
+        {"choices": [{"message": {"content": "valid", "reasoning_content": []}}]},
         {"usage": {"total_tokens": True}},
         {"model": "another-model"},
     ],

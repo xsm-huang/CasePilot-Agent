@@ -36,7 +36,9 @@ class TaskLedger:
 
         return await self._change(update)
 
-    async def run(self, key, kind, operation, *, reserve_model=3, repair=False, attempt=1):
+    async def run(self, key, kind, operation, *, reserve_model=3, repair=False, attempt=None):
+        if attempt is None:
+            attempt = self.store.get(self.task_id).get("_agent", {}).get("attempts", {}).get(key, 1)
         if (
             not isinstance(key, str)
             or not 1 <= len(key) <= 200
@@ -70,11 +72,12 @@ class TaskLedger:
                 raise AgentError("MODEL_BUDGET_EXHAUSTED")
             if kind == "retrieval" and counts["retrieval"] >= 3:
                 raise AgentError("RETRIEVAL_BUDGET_EXHAUSTED")
-            if repair and counts["repair"] >= 1:
+            first_repair = repair and not any(k.rsplit(":", 1)[0] == key for k in agent["calls"])
+            if first_repair and counts["repair"] >= 1:
                 raise AgentError("STRUCTURE_REPAIR_EXHAUSTED")
             if kind in counts:
                 counts[kind] += 1
-            if repair:
+            if first_repair:
                 counts["repair"] += 1
             agent["calls"][call_key] = {
                 "kind": kind,
@@ -82,6 +85,8 @@ class TaskLedger:
                 "status": "reserved",
                 "startedAt": datetime.now(timezone.utc).isoformat(),
             }
+            if projector := getattr(self.store, "project_agent_call", None):
+                projector(task, call_key, agent["calls"][call_key])
             return {"cached": False}
 
         reservation = await self._change(reserve)
@@ -96,12 +101,16 @@ class TaskLedger:
 
             def fail(task):
                 task["_agent"]["calls"][call_key].update(status="failed", error=safe_code)
+                if projector := getattr(self.store, "project_agent_call", None):
+                    projector(task, call_key, task["_agent"]["calls"][call_key])
 
             await self._change(fail)
             raise
 
         def commit(task):
             task["_agent"]["calls"][call_key].update(status="completed", result=deepcopy(result))
+            if projector := getattr(self.store, "project_agent_call", None):
+                projector(task, call_key, task["_agent"]["calls"][call_key])
             return result
 
         return await self._change(commit)

@@ -1,10 +1,11 @@
 import { ref } from 'vue';
-import { v0TimelineEventSchema, type V0TimelineEvent } from '@casepilot/contracts';
+import { workspaceEventSchema, type WorkspaceEvent } from '@casepilot/contracts';
 
 type StreamCallbacks = {
   isCurrent: () => boolean;
-  onEvent: (event: V0TimelineEvent) => void;
+  onEvent: (event: WorkspaceEvent) => void;
   onInvalid: (cause: unknown) => void;
+  onDisconnect: () => void;
 };
 
 export function useAnalysisStream() {
@@ -17,19 +18,18 @@ export function useAnalysisStream() {
     connection.value = label;
   }
 
-  function connect(id: string, callbacks: StreamCallbacks) {
+  function connect(id: string, after: number, callbacks: StreamCallbacks) {
     close('连接中');
-    // V0 replays all events. The domain reducer removes duplicates; V1 will add after=cursor.
-    const source = new EventSource(`/api/analyses/${encodeURIComponent(id)}/events`);
+    const source = new EventSource(`/api/analyses/${encodeURIComponent(id)}/events?after=${after}`);
     stream = source;
     const active = () => stream === source && callbacks.isCurrent();
     source.onopen = () => { if (active()) connection.value = '实时连接'; };
     source.addEventListener('timeline', (message) => {
       if (!active()) return;
-      try { callbacks.onEvent(v0TimelineEventSchema.parse(JSON.parse((message as MessageEvent<string>).data))); }
-      catch (cause) { close('事件格式异常'); callbacks.onInvalid(cause); }
+      try { callbacks.onEvent(workspaceEventSchema.parse(JSON.parse((message as MessageEvent<string>).data))); }
+      catch (cause) { if (active()) { close('事件格式异常'); callbacks.onInvalid(cause); } }
     });
-    source.onerror = () => { if (active()) connection.value = '连接中断，正在重连'; };
+    source.onerror = () => { if (active()) { close('连接中断，同步快照'); callbacks.onDisconnect(); } };
   }
 
   return { connection, connect, close };

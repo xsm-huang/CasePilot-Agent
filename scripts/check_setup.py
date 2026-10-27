@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 import psycopg
+from casepilot.model.profiles import CHAT_PROFILES
 from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +29,7 @@ def configuration_checks(environment: dict[str, str]) -> dict[str, bool]:
         "POSTGRES_PORT",
     )
     checks = {name: bool(environment.get(name, "").strip()) for name in required}
-    checks["CHAT_MODEL_APPROVED"] = environment.get("CHAT_MODEL") == "glm-4.7-flash"
+    checks["CHAT_MODEL_APPROVED"] = environment.get("CHAT_MODEL") in CHAT_PROFILES
     checks["EMBEDDING_MODEL_APPROVED"] = environment.get("EMBEDDING_MODEL") == "embedding-3"
     checks["EMBEDDING_DIMENSIONS_APPROVED"] = environment.get("EMBEDDING_DIMENSIONS") == "1024"
     try:

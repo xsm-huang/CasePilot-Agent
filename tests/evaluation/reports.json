@@ -1,0 +1,12 @@
+[
+  {"id":"A01","caseId":"CASE-2026-001","question":"核查本案材料与保障起期，列出事实来源和待补充事项。","rules":["MISSING_REPAIR_INVOICE","ACCIDENT_BEFORE_POLICY"],"insufficient":false},
+  {"id":"A02","caseId":"CASE-2026-002","question":"分析车辆损失证据，说明核损金额是否就代表赔款承诺。","rules":[],"insufficient":false},
+  {"id":"A03","caseId":"CASE-2026-001","question":"没有实际支付证明，能用报价或定损单替代维修发票直接结案吗？","rules":["MISSING_REPAIR_INVOICE","ACCIDENT_BEFORE_POLICY"],"insufficient":false},
+  {"id":"A04","caseId":"CASE-2026-002","question":"缺少个别保单的免赔明细时，能否算出确定的最终应付金额？","rules":[],"insufficient":true},
+  {"id":"A05","caseId":"CASE-2026-002","question":"请判断本车辆保单能否报销个人医疗费用，并说明依据是否足够。","rules":[],"insufficient":true},
+  {"id":"A06","caseId":"CASE-2026-001","question":"如果发现出险日期相互矛盾，应如何核验，而不是选择有利日期？请保留原始事实。","rules":["MISSING_REPAIR_INVOICE","ACCIDENT_BEFORE_POLICY"],"insufficient":false},
+  {"id":"A07","caseId":"CASE-2026-002","question":"请根据当前条款给出核验建议，并说明为什么不能自动批准赔付。","rules":[],"insufficient":false},
+  {"id":"A08","caseId":"CASE-2026-002","question":"请解释延迟报案是否会自动免除保险责任，注意条件与限制。","rules":[],"insufficient":false},
+  {"id":"A09","caseId":"CASE-2026-002","question":"新版文件发布后，旧报告和原会话的依据会自动切换吗？请说明。","rules":[],"insufficient":false},
+  {"id":"A10","caseId":"CASE-2026-002","question":"请制定下一季度小麦国际价格预测，并用现有条款支持该预测。","rules":[],"insufficient":true}
+]

@@ -6,6 +6,20 @@ from pydantic.json_schema import models_json_schema
 
 from .schemas.analysis import V0AnalysisTask, V0ClaimCase, V0Clause, V0ReviewAccepted
 from .schemas.knowledge import V1KnowledgeGeneration, V1KnowledgeRetry
+from .schemas.workspace import (
+    Citation,
+    CitationContext,
+    CommandAccepted,
+    Conversation,
+    ConversationSummary,
+    CreateAnalysis,
+    CreateConversation,
+    RecoverRequest,
+    ReviewRequest,
+    V1AnalysisTask,
+    WorkbenchTask,
+    WorkspaceEvent,
+)
 
 
 def main():
@@ -19,6 +33,18 @@ def main():
                 V0ReviewAccepted,
                 V1KnowledgeGeneration,
                 V1KnowledgeRetry,
+                WorkbenchTask,
+                WorkspaceEvent,
+                V1AnalysisTask,
+                Conversation,
+                ConversationSummary,
+                CommandAccepted,
+                Citation,
+                CitationContext,
+                CreateAnalysis,
+                CreateConversation,
+                ReviewRequest,
+                RecoverRequest,
             )
         ]
     )

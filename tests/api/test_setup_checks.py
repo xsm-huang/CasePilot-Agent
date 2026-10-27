@@ -14,7 +14,7 @@ spec.loader.exec_module(setup)
 VALID = {
     "ZHIPU_API_KEY": "test-only-never-send",
     "ZHIPU_BASE_URL": "https://open.bigmodel.cn/api/paas/v4",
-    "CHAT_MODEL": "glm-4.7-flash",
+    "CHAT_MODEL": "glm-5.3-flash",
     "EMBEDDING_MODEL": "embedding-3",
     "EMBEDDING_DIMENSIONS": "1024",
     "POSTGRES_DB": "casepilot",

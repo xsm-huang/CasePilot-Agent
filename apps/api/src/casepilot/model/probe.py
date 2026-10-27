@@ -11,6 +11,7 @@ import httpx
 from ..config import load_environment
 from .config import read_model_config
 from .errors import ModelError
+from .profiles import chat_profile
 from .transport import _provider_request
 
 
@@ -25,8 +26,7 @@ async def probe_model_capabilities(config):
         defaults = {
             "model": config.chat_model,
             "stream": False,
-            "max_tokens": 256,
-            "thinking": {"type": "disabled"},
+            **chat_profile(config.chat_model).request_options("probe"),
         }
         try:
             tool_response = await request(

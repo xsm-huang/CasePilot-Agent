@@ -417,6 +417,55 @@ class PostgresKnowledgeRepository:
                 for row in await cur.fetchall()
             ]
 
+    async def citation_context(self, citation):
+        """Read bounded neighbours from the exact immutable source of a task citation."""
+        async with self.pool.connection() as conn:
+            cursor = await conn.execute(
+                self.sql(
+                    "SELECT c.ordinal FROM {s}.knowledge_chunks c JOIN {s}.knowledge_generations g ON g.id=c.generation_id "
+                    "WHERE c.id=%s AND g.id=%s AND g.document_id=%s AND g.product_code=%s AND g.clause_version=%s AND g.profile=%s AND g.snapshot->>'status'='ready'"
+                ),
+                (
+                    citation["chunkId"],
+                    citation["generationId"],
+                    citation["documentId"],
+                    citation["productCode"],
+                    citation["clauseVersion"],
+                    PROFILE,
+                ),
+            )
+            center = await cursor.fetchone()
+            if not center:
+                raise KnowledgeOperationError("GENERATION_NOT_FOUND", "引用来源不可用。")
+            result = {}
+            for name, operator, order in (("previous", "<", "DESC"), ("next", ">", "ASC")):
+                cursor = await conn.execute(
+                    self.sql(
+                        "SELECT id,page,ordinal,content FROM {s}.knowledge_chunks WHERE generation_id=%s AND ordinal "
+                        + operator
+                        + " %s ORDER BY ordinal "
+                        + order
+                        + " LIMIT 1"
+                    ),
+                    (citation["generationId"], center[0]),
+                )
+                row = await cursor.fetchone()
+                result[name] = (
+                    dict(zip(("chunkId", "page", "ordinal", "content"), row, strict=True))
+                    if row
+                    else None
+                )
+            return {"citation": citation, **result}
+
+    async def generation_profile(self, generation_id):
+        async with self.pool.connection() as conn:
+            cursor = await conn.execute(
+                self.sql("SELECT profile FROM {s}.knowledge_generations WHERE id=%s"),
+                (generation_id,),
+            )
+            row = await cursor.fetchone()
+            return row[0] if row else None
+
     async def active_generation(self, product_code, clause_version):
         async with self.pool.connection() as conn:
             generation_id = await self._active(conn, product_code, clause_version)

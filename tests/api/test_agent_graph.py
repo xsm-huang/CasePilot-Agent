@@ -53,14 +53,18 @@ async def test_real_tools_and_structured_model_analysis_use_pinned_knowledge():
 async def test_actual_tool_call_protocol_performs_supplement_then_returns_result():
     store, task_id = await prepared()
     knowledge = FakeKnowledge([[clause()], [clause(2)]])
-    chat = ScriptedChat([tool_turn("请补充维修费用凭证条款")])
+    reasoning = "private reasoning retained exactly\nfor tool continuation"
+    chat = ScriptedChat([tool_turn("请补充维修费用凭证条款") | {"_reasoningContent": reasoning}])
     result = await run_agent_analysis(store, task_id, knowledge, chat)
     assert len(knowledge.calls) == 2
     assert len(result["citations"]) == 2
     messages = chat.calls[1]["messages"]
     assert messages[-2]["role"] == "assistant"
+    assert messages[-2]["reasoning_content"] == reasoning
     assert messages[-1]["role"] == "tool"
     assert messages[-1]["tool_call_id"] == messages[-2]["tool_calls"][0]["id"]
+    assert reasoning not in str(result)
+    assert reasoning not in str(store.public(store.get(task_id)))
 
 
 async def test_supplement_limit_is_enforced_even_when_model_keeps_requesting():

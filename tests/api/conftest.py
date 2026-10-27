@@ -28,10 +28,11 @@ def free_port():
 
 
 class ApiProcess:
-    def __init__(self, extra_env=None):
+    def __init__(self, extra_env=None, worker=None):
         self.port = free_port()
         self.base = f"http://127.0.0.1:{self.port}/api"
         self.extra_env = extra_env or {}
+        self.worker = worker
         self.process = None
         self.log = tempfile.TemporaryFile(mode="w+b")
 
@@ -56,11 +57,9 @@ class ApiProcess:
         env["HOST"] = "127.0.0.1"
         env["PYTHONPATH"] = str(ROOT / "apps/api/src")
         self.process = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                "casepilot",
-            ],
+            [sys.executable, str(self.worker)]
+            if self.worker
+            else [sys.executable, "-m", "casepilot"],
             cwd=ROOT,
             env=env,
             stdout=self.log,
@@ -104,25 +103,6 @@ def api(api_process):
         yield client
 
 
-def create_settled(api, case_id="CASE-2026-001"):
-    response = api.post("/analyses", json={"caseId": case_id})
-    assert response.status_code in (200, 201), response.text
-    task_id = response.json()["id"]
-    return settle_task(api, task_id)
-
-
-def settle_task(api, task_id):
-    deadline = time.monotonic() + 10
-    while time.monotonic() < deadline:
-        response = api.get(f"/analyses/{task_id}")
-        response.raise_for_status()
-        task = response.json()
-        if task["status"] != "running":
-            return task
-        time.sleep(0.02)
-    raise AssertionError(f"Task {task_id} did not settle")
-
-
 def sse_events(response):
     payload = []
     event_id = None
@@ -135,7 +115,7 @@ def sse_events(response):
             import json
 
             value = json.loads("\n".join(payload))
-            assert event_id == value["id"]
+            assert event_id == value["seq"]
             yield value
             payload = []
             event_id = None

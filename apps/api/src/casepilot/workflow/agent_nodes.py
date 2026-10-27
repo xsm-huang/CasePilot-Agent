@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from ..analyses.agent_errors import AgentError
 from ..analyses.evidence import Assessment, checked_assessment, merge_citations
+from ..model.chat import assistant_message
 from .prompts import ASSESSMENT_POLICY, PROMPT_VERSION, TOOL_POLICY
 from .tools import SearchInput, build_analysis_tools
 
@@ -52,6 +53,7 @@ class AgentNodes:
 
     def evidence(self, state):
         return {
+            "history": self.context.get("history", []),
             "question": self.context["question"],
             "facts": state["facts"],
             "ruleFindings": state["ruleFindings"],
@@ -89,20 +91,7 @@ class AgentNodes:
         if state["supplements"] >= 2:
             return update | {"stopReason": "retrieval_budget_exhausted"}
         call = calls[0] | {"arguments": {"query": query}}
-        assistant = {
-            "role": "assistant",
-            "content": turn["content"] or None,
-            "tool_calls": [
-                {
-                    "id": call["id"],
-                    "type": "function",
-                    "function": {
-                        "name": call["name"],
-                        "arguments": json.dumps(call["arguments"], ensure_ascii=False),
-                    },
-                }
-            ],
-        }
+        assistant = assistant_message(turn)
         return update | {"pendingTool": call, "messages": [*messages, assistant]}
 
     async def supplement(self, state):
@@ -160,7 +149,7 @@ class AgentNodes:
                 lambda: self.chat.complete(
                     [
                         *messages,
-                        {"role": "assistant", "content": turn["content"]},
+                        assistant_message(turn),
                         {
                             "role": "user",
                             "content": "前次 JSON 结构或引用未通过校验。只修复结构及允许的事实/引用 ID；无法支持的结论标为 insufficient，不添加新来源。",

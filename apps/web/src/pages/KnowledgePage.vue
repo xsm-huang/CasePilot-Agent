@@ -15,7 +15,7 @@ const time = (value: string) => new Date(value).toLocaleString('zh-CN');
 <template>
   <main>
     <header><div><span class="eyebrow">CASEPILOT / KNOWLEDGE</span><h1>条款知识库</h1></div><button class="secondary" :disabled="busy" @click="refresh">刷新状态</button></header>
-    <p class="prototype-note">上传条款 PDF，按险种和业务版本发布检索索引。当前案件工作台仍使用演示条款；知识索引将在后续真实检索接入后使用。</p>
+    <p class="prototype-note">上传条款 PDF，按险种和业务版本发布检索索引。新会话使用与案件匹配的当前发布索引；已有会话继续使用创建时固定的知识版本。</p>
     <div v-if="error" class="error-banner" role="alert">{{ error }}</div>
     <div class="knowledge-layout">
       <section class="panel import-panel">

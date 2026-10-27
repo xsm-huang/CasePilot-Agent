@@ -1,85 +1,62 @@
-"""Actual PostgreSQL/checkpointer + killed-process recovery. No real models.
-
-Enable explicitly with CASEPILOT_TEST_DATABASE_URL. Only UUID-owned schemas
-are dropped; existing application schemas, volumes and containers are untouched.
-"""
-
-from __future__ import annotations
+"""V1 official checkpointer survives forced process termination."""
 
 import concurrent.futures
 
 import httpx
 import pytest
-from conftest import ApiProcess, create_settled, settle_task, sse_events
+from conftest import ROOT, ApiProcess, sse_events
+from test_http_acceptance import decision
+from workspace_fixtures import new_task, seed_knowledge, settle
 
 pytestmark = pytest.mark.database
 
 
-def kill_process(server):
-    # A forced kill is intentional: a graceful app restart alone is weaker evidence.
-    server.process.kill()
-    server.process.wait(timeout=5)
-
-
 def test_waiting_review_survives_killed_process_and_only_one_decision(postgres_env):
-    first = ApiProcess(postgres_env).start()
+    worker = ROOT / "tests/api/workspace_api_worker.py"
+    first = ApiProcess(postgres_env, worker).start()
     try:
-        with httpx.Client(base_url=first.base, timeout=5) as api:
-            paused = create_settled(api)
-            assert paused["status"] == "waiting_review"
-            assert paused.get("report") is None
-        kill_process(first)
+        with httpx.Client(base_url=first.base.removesuffix("/api"), timeout=15) as api:
+            seed_knowledge(api)
+            _, created = new_task(api, "CASE-2026-001")
+            paused = settle(api, created["id"], "waiting_review")
+        first.process.kill()
+        first.process.wait(timeout=5)
     finally:
         first.stop()
-
-    second = ApiProcess(postgres_env).start()
+    second = ApiProcess(postgres_env, worker).start()
     try:
-        with httpx.Client(base_url=second.base, timeout=5) as api:
-            restored = api.get(f"/analyses/{paused['id']}").json()
-            assert restored == paused
+        with httpx.Client(base_url=second.base.removesuffix("/api"), timeout=15) as api:
+            assert api.get(f"/api/analyses/{paused['id']}").json() == paused
 
-            def decide(decision):
-                with httpx.Client(base_url=second.base, timeout=10) as concurrent_api:
-                    response = concurrent_api.post(
-                        f"/analyses/{paused['id']}/review",
-                        json={"decision": decision, "comment": "恢复验证"},
-                    )
-                    return decision, response.status_code
+            def decide(value):
+                with httpx.Client(base_url=second.base.removesuffix("/api"), timeout=15) as client:
+                    return value, decision(client, paused, value).status_code
 
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 responses = list(pool.map(decide, ["approve", "reject"]))
-            assert sum(status in (200, 201, 202) for _, status in responses) == 1, responses
-            assert sum(status == 409 for _, status in responses) == 1, responses
-            winner = next(decision for decision, status in responses if status in (200, 201, 202))
-            result = settle_task(api, paused["id"])
-            assert result["status"] == ("completed" if winner == "approve" else "rejected")
-            assert result["findings"] == paused["findings"]
+            assert sorted(status for _, status in responses) == [202, 409]
+            winner = next(value for value, status in responses if status == 202)
+            result = settle(api, paused["id"], "completed" if winner == "approve" else "rejected")
+            assert result["ruleFindings"] == paused["ruleFindings"]
             assert result["citations"] == paused["citations"]
-            assert result["events"][: len(paused["events"])] == paused["events"]
-            assert [e["id"] for e in result["events"]] == list(range(1, len(result["events"]) + 1))
-            assert sum(e["type"] == "review_required" for e in result["events"]) == 1
-            assert sum(e["type"] == "tool" for e in result["events"]) == 3
-            assert sum(e["type"] == "report" for e in result["events"]) == (
-                1 if winner == "approve" else 0
+            assert (
+                result["execution"]["timeline"][: paused["lastEventSeq"]]
+                == paused["execution"]["timeline"]
             )
+            assert sum(e["type"] == "review.required" for e in result["execution"]["timeline"]) == 1
             with api.stream(
-                "GET",
-                f"/analyses/{paused['id']}/events",
-                headers={"Last-Event-ID": str(paused["events"][-1]["id"])},
+                "GET", f"/api/analyses/{paused['id']}/events?after={paused['lastEventSeq']}"
             ) as response:
-                assert list(sse_events(response)) == result["events"][len(paused["events"]) :]
+                assert (
+                    list(sse_events(response))
+                    == result["execution"]["timeline"][paused["lastEventSeq"] :]
+                )
     finally:
         second.stop()
-
-    third = ApiProcess(postgres_env).start()
+    third = ApiProcess(postgres_env, worker).start()
     try:
-        with httpx.Client(base_url=third.base, timeout=5) as api:
-            assert api.get(f"/analyses/{paused['id']}").json() == result
-            assert (
-                api.post(
-                    f"/analyses/{paused['id']}/review", json={"decision": "approve"}
-                ).status_code
-                == 409
-            )
+        with httpx.Client(base_url=third.base.removesuffix("/api"), timeout=15) as api:
+            assert api.get(f"/api/analyses/{paused['id']}").json() == result
+            assert decision(api, paused).status_code == 409
     finally:
         third.stop()

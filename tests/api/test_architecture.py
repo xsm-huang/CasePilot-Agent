@@ -33,7 +33,7 @@ def test_business_and_workflow_do_not_depend_on_http_or_bootstrap():
 
 
 def test_graph_definition_does_not_call_storage_or_providers():
-    for filename in ("graph.py", "agent_graph.py"):
+    for filename in ("agent_graph.py", "workspace_graph.py"):
         path = PACKAGE / "workflow" / filename
         forbidden = ("psycopg", "psycopg_pool", "httpx", "casepilot.persistence", "casepilot.model")
         assert not any(
@@ -64,10 +64,8 @@ def test_application_factories_have_independent_task_lifecycles(monkeypatch):
     monkeypatch.setenv("CASEPILOT_STORAGE", "memory")
     first_app, second_app = create_app(), create_app()
     with TestClient(first_app) as first, TestClient(second_app) as second:
-        response = first.post("/api/analyses", json={"caseId": "CASE-2026-001"})
-        assert response.status_code == 201
-        task_id = response.json()["id"]
-        assert first.get(f"/api/analyses/{task_id}").status_code == 200
-        assert second.get(f"/api/analyses/{task_id}").status_code == 404
+        response = first.post("/api/cases/CASE-2026-001/conversations", json={})
+        assert response.status_code == 503
+        assert first.get("/api/analyses").json() == []
         assert second.get("/api/analyses").json() == []
         assert first_app.state.store is not second_app.state.store

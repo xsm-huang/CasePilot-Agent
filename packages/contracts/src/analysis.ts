@@ -1,5 +1,5 @@
-// Active analysis contracts retain their V0 wire names. Shapes and validation
-// come exclusively from exported Python response models.
+// Legacy report reads and shared illustrative case models. V1 writes use workspace.ts.
+// Shapes and validation come exclusively from exported Python response models.
 import type {
   V0AnalysisTask, V0AnalysisReport, V0ClaimCase, V0Material, V0Finding,
   V0Clause, V0ClauseCitation, V0TimelineEvent, V0ReviewAccepted,

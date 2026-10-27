@@ -1,5 +1,1675 @@
 {
   "$defs": {
+    "AcceptedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "review.accepted",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ReviewAcceptedData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "AcceptedEvent",
+      "type": "object"
+    },
+    "AnalysisContext": {
+      "additionalProperties": false,
+      "properties": {
+        "caseVersion": {
+          "title": "Caseversion",
+          "type": "string"
+        },
+        "generationId": {
+          "title": "Generationid",
+          "type": "string"
+        },
+        "embeddingProfile": {
+          "title": "Embeddingprofile",
+          "type": "string"
+        },
+        "messageIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Messageids",
+          "type": "array"
+        },
+        "modelProfile": {
+          "title": "Modelprofile",
+          "type": "string"
+        },
+        "promptVersion": {
+          "title": "Promptversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "caseVersion",
+        "generationId",
+        "embeddingProfile",
+        "messageIds",
+        "modelProfile",
+        "promptVersion"
+      ],
+      "title": "AnalysisContext",
+      "type": "object"
+    },
+    "AnalysisReadyData": {
+      "additionalProperties": false,
+      "properties": {
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts",
+          "type": "array"
+        },
+        "ruleFindings": {
+          "items": {
+            "$ref": "#/$defs/RuleFinding"
+          },
+          "title": "Rulefindings",
+          "type": "array"
+        },
+        "modelFindings": {
+          "items": {
+            "$ref": "#/$defs/ModelFinding"
+          },
+          "title": "Modelfindings",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "insufficientEvidence": {
+          "title": "Insufficientevidence",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "facts",
+        "ruleFindings",
+        "modelFindings",
+        "citations",
+        "insufficientEvidence"
+      ],
+      "title": "AnalysisReadyData",
+      "type": "object"
+    },
+    "AnalysisReport": {
+      "additionalProperties": false,
+      "properties": {
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/ReportSection"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "insufficientEvidence": {
+          "title": "Insufficientevidence",
+          "type": "boolean"
+        },
+        "reviewerComment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reviewercomment"
+        }
+      },
+      "required": [
+        "caseId",
+        "sections",
+        "insufficientEvidence",
+        "reviewerComment"
+      ],
+      "title": "AnalysisReport",
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "citationId": {
+          "title": "Citationid",
+          "type": "string"
+        },
+        "chunkId": {
+          "title": "Chunkid",
+          "type": "string"
+        },
+        "generationId": {
+          "title": "Generationid",
+          "type": "string"
+        },
+        "documentId": {
+          "title": "Documentid",
+          "type": "string"
+        },
+        "fileName": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "productCode": {
+          "title": "Productcode",
+          "type": "string"
+        },
+        "clauseVersion": {
+          "title": "Clauseversion",
+          "type": "string"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "ordinal": {
+          "minimum": 0,
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "citationId",
+        "chunkId",
+        "generationId",
+        "documentId",
+        "fileName",
+        "productCode",
+        "clauseVersion",
+        "page",
+        "ordinal",
+        "content"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "CitationBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "chunkId": {
+          "title": "Chunkid",
+          "type": "string"
+        },
+        "page": {
+          "exclusiveMinimum": 0,
+          "title": "Page",
+          "type": "integer"
+        },
+        "ordinal": {
+          "minimum": 0,
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "chunkId",
+        "page",
+        "ordinal",
+        "content"
+      ],
+      "title": "CitationBlock",
+      "type": "object"
+    },
+    "CitationContext": {
+      "additionalProperties": false,
+      "properties": {
+        "citation": {
+          "$ref": "#/$defs/Citation"
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CitationBlock"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CitationBlock"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "citation",
+        "previous",
+        "next"
+      ],
+      "title": "CitationContext",
+      "type": "object"
+    },
+    "CommandAccepted": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "const": true,
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "taskId": {
+          "title": "Taskid",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "accepted",
+        "taskId",
+        "revision"
+      ],
+      "title": "CommandAccepted",
+      "type": "object"
+    },
+    "CompletedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "report.completed",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ReportCompletedData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "CompletedEvent",
+      "type": "object"
+    },
+    "Conversation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "title": "Updatedat",
+          "type": "string"
+        },
+        "activeAnalysisId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Activeanalysisid"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/Message"
+          },
+          "title": "Messages",
+          "type": "array"
+        },
+        "analysisIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Analysisids",
+          "type": "array"
+        },
+        "context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalysisContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextBefore": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Nextbefore"
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "title",
+        "createdAt",
+        "updatedAt",
+        "activeAnalysisId",
+        "messages",
+        "analysisIds",
+        "context",
+        "nextBefore"
+      ],
+      "title": "Conversation",
+      "type": "object"
+    },
+    "ConversationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "title": "Updatedat",
+          "type": "string"
+        },
+        "activeAnalysisId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Activeanalysisid"
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "title",
+        "createdAt",
+        "updatedAt",
+        "activeAnalysisId"
+      ],
+      "title": "ConversationSummary",
+      "type": "object"
+    },
+    "CreateAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "conversationId": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "initial",
+            "followup"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "question": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question"
+        }
+      },
+      "required": [
+        "conversationId",
+        "kind"
+      ],
+      "title": "CreateAnalysis",
+      "type": "object"
+    },
+    "CreateConversation": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "default": "新会话",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "title": "CreateConversation",
+      "type": "object"
+    },
+    "Execution": {
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/ExecutionData"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "tools": {
+          "items": {
+            "$ref": "#/$defs/ExecutionData"
+          },
+          "title": "Tools",
+          "type": "array"
+        },
+        "timeline": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "analysis.failed": "#/$defs/FailureEvent",
+                "analysis.ready": "#/$defs/ReadyEvent",
+                "analysis.recoverable": "#/$defs/FailureEvent",
+                "analysis.rejected": "#/$defs/RejectedEvent",
+                "analysis.status": "#/$defs/StatusEvent",
+                "node.completed": "#/$defs/ExecutionEvent",
+                "node.failed": "#/$defs/ExecutionEvent",
+                "node.started": "#/$defs/ExecutionEvent",
+                "report.completed": "#/$defs/CompletedEvent",
+                "report.section": "#/$defs/SectionEvent",
+                "review.accepted": "#/$defs/AcceptedEvent",
+                "review.required": "#/$defs/ReviewEvent",
+                "tool.completed": "#/$defs/ExecutionEvent",
+                "tool.failed": "#/$defs/ExecutionEvent",
+                "tool.started": "#/$defs/ExecutionEvent"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/StatusEvent"
+              },
+              {
+                "$ref": "#/$defs/ExecutionEvent"
+              },
+              {
+                "$ref": "#/$defs/ReadyEvent"
+              },
+              {
+                "$ref": "#/$defs/ReviewEvent"
+              },
+              {
+                "$ref": "#/$defs/AcceptedEvent"
+              },
+              {
+                "$ref": "#/$defs/SectionEvent"
+              },
+              {
+                "$ref": "#/$defs/CompletedEvent"
+              },
+              {
+                "$ref": "#/$defs/FailureEvent"
+              },
+              {
+                "$ref": "#/$defs/RejectedEvent"
+              }
+            ]
+          },
+          "title": "Timeline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "nodes",
+        "tools",
+        "timeline"
+      ],
+      "title": "Execution",
+      "type": "object"
+    },
+    "ExecutionData": {
+      "additionalProperties": false,
+      "properties": {
+        "executionId": {
+          "title": "Executionid",
+          "type": "string"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "attempt": {
+          "exclusiveMinimum": 0,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "completed",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "durationMs": {
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "executionId",
+        "key",
+        "name",
+        "attempt",
+        "status",
+        "summary",
+        "durationMs"
+      ],
+      "title": "ExecutionData",
+      "type": "object"
+    },
+    "ExecutionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "node.started",
+            "node.completed",
+            "node.failed",
+            "tool.started",
+            "tool.completed",
+            "tool.failed"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ExecutionData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "ExecutionEvent",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "properties": {
+        "factId": {
+          "title": "Factid",
+          "type": "string"
+        },
+        "fieldPath": {
+          "title": "Fieldpath",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "sourceType": {
+          "enum": [
+            "case",
+            "material"
+          ],
+          "title": "Sourcetype",
+          "type": "string"
+        },
+        "materialId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Materialid"
+        }
+      },
+      "required": [
+        "factId",
+        "fieldPath",
+        "value",
+        "sourceType"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "FailureData": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/PublicError"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "error",
+        "revision"
+      ],
+      "title": "FailureData",
+      "type": "object"
+    },
+    "FailureEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "analysis.failed",
+            "analysis.recoverable"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/FailureData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "FailureEvent",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "LegacyAnalysisTask": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "waiting_review",
+            "completed",
+            "rejected",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/V0TimelineEvent"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/V0Finding"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/V0ClauseCitation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/V0AnalysisReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "review": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/V0Review"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "schemaVersion": {
+          "const": 0,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "readOnly": {
+          "const": true,
+          "title": "Readonly",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "status",
+        "events",
+        "findings",
+        "citations",
+        "schemaVersion",
+        "readOnly"
+      ],
+      "title": "LegacyAnalysisTask",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "content",
+        "analysisId",
+        "createdAt"
+      ],
+      "title": "Message",
+      "type": "object"
+    },
+    "ModelFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "inference": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Inference",
+          "type": "string"
+        },
+        "evidenceStatus": {
+          "enum": [
+            "supported",
+            "insufficient"
+          ],
+          "title": "Evidencestatus",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "pendingItems": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Pendingitems",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "inference",
+        "evidenceStatus",
+        "factRefs",
+        "citationRefs",
+        "pendingItems"
+      ],
+      "title": "ModelFinding",
+      "type": "object"
+    },
+    "PendingReview": {
+      "additionalProperties": false,
+      "properties": {
+        "interruptKey": {
+          "title": "Interruptkey",
+          "type": "string"
+        },
+        "checkpointId": {
+          "title": "Checkpointid",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "interruptKey",
+        "checkpointId",
+        "revision",
+        "reason"
+      ],
+      "title": "PendingReview",
+      "type": "object"
+    },
+    "PublicError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "requestId": {
+          "title": "Requestid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "requestId"
+      ],
+      "title": "PublicError",
+      "type": "object"
+    },
+    "ReadyEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "analysis.ready",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/AnalysisReadyData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "ReadyEvent",
+      "type": "object"
+    },
+    "RecoverRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "expectedRevision"
+      ],
+      "title": "RecoverRequest",
+      "type": "object"
+    },
+    "RejectedData": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "title": "Comment",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "comment",
+        "revision"
+      ],
+      "title": "RejectedData",
+      "type": "object"
+    },
+    "RejectedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "analysis.rejected",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/RejectedData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "RejectedEvent",
+      "type": "object"
+    },
+    "ReportCompletedData": {
+      "additionalProperties": false,
+      "properties": {
+        "report": {
+          "$ref": "#/$defs/AnalysisReport"
+        },
+        "assistantMessageId": {
+          "title": "Assistantmessageid",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "report",
+        "assistantMessageId",
+        "revision"
+      ],
+      "title": "ReportCompletedData",
+      "type": "object"
+    },
+    "ReportSection": {
+      "additionalProperties": false,
+      "properties": {
+        "sectionKey": {
+          "enum": [
+            "summary",
+            "findings",
+            "recommendations"
+          ],
+          "title": "Sectionkey",
+          "type": "string"
+        },
+        "content": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "committedAt": {
+          "format": "date-time",
+          "title": "Committedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sectionKey",
+        "content",
+        "factRefs",
+        "citationRefs",
+        "committedAt"
+      ],
+      "title": "ReportSection",
+      "type": "object"
+    },
+    "ReviewAcceptedData": {
+      "additionalProperties": false,
+      "properties": {
+        "interruptKey": {
+          "title": "Interruptkey",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "approve",
+            "reject"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "interruptKey",
+        "decision",
+        "revision"
+      ],
+      "title": "ReviewAcceptedData",
+      "type": "object"
+    },
+    "ReviewEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "review.required",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/PendingReview"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "ReviewEvent",
+      "type": "object"
+    },
+    "ReviewRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "approve",
+            "reject"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "comment": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Comment",
+          "type": "string"
+        },
+        "interruptKey": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Interruptkey",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "decision",
+        "interruptKey",
+        "expectedRevision"
+      ],
+      "title": "ReviewRequest",
+      "type": "object"
+    },
+    "RuleFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "source": {
+          "const": "rule",
+          "title": "Source",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "sourceValues": {
+          "items": {
+            "$ref": "#/$defs/SourceValue"
+          },
+          "title": "Sourcevalues",
+          "type": "array"
+        }
+      },
+      "required": [
+        "code",
+        "source",
+        "severity",
+        "title",
+        "detail",
+        "factRefs",
+        "sourceValues"
+      ],
+      "title": "RuleFinding",
+      "type": "object"
+    },
+    "SectionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "report.section",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ReportSection"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "SectionEvent",
+      "type": "object"
+    },
+    "SourceValue": {
+      "additionalProperties": false,
+      "properties": {
+        "factId": {
+          "title": "Factid",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "factId",
+        "value"
+      ],
+      "title": "SourceValue",
+      "type": "object"
+    },
+    "StatusData": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting_review",
+            "resuming",
+            "recoverable",
+            "completed",
+            "rejected",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "revision"
+      ],
+      "title": "StatusData",
+      "type": "object"
+    },
+    "StatusEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "analysis.status",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/StatusData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "StatusEvent",
+      "type": "object"
+    },
     "V0AnalysisReport": {
       "properties": {
         "caseId": {
@@ -455,6 +2125,179 @@
       "title": "V0TimelineEvent",
       "type": "object"
     },
+    "V1AnalysisTask": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "initial",
+            "followup"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting_review",
+            "resuming",
+            "recoverable",
+            "completed",
+            "rejected",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "caseSnapshot": {
+          "$ref": "#/$defs/V0ClaimCase"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "lastEventSeq": {
+          "minimum": 0,
+          "title": "Lasteventseq",
+          "type": "integer"
+        },
+        "userMessageId": {
+          "title": "Usermessageid",
+          "type": "string"
+        },
+        "assistantMessageId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Assistantmessageid"
+        },
+        "context": {
+          "$ref": "#/$defs/AnalysisContext"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts",
+          "type": "array"
+        },
+        "ruleFindings": {
+          "items": {
+            "$ref": "#/$defs/RuleFinding"
+          },
+          "title": "Rulefindings",
+          "type": "array"
+        },
+        "modelFindings": {
+          "items": {
+            "$ref": "#/$defs/ModelFinding"
+          },
+          "title": "Modelfindings",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/ReportSection"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalysisReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pendingReview": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PendingReview"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "execution": {
+          "$ref": "#/$defs/Execution"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PublicError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "caseId",
+        "conversationId",
+        "kind",
+        "question",
+        "status",
+        "caseSnapshot",
+        "revision",
+        "lastEventSeq",
+        "userMessageId",
+        "assistantMessageId",
+        "context",
+        "facts",
+        "ruleFindings",
+        "modelFindings",
+        "citations",
+        "sections",
+        "report",
+        "pendingReview",
+        "execution",
+        "error"
+      ],
+      "title": "V1AnalysisTask",
+      "type": "object"
+    },
     "V1KnowledgeAttempt": {
       "properties": {
         "attempt": {
@@ -728,6 +2571,76 @@
       ],
       "title": "V1KnowledgeRetry",
       "type": "object"
+    },
+    "WorkbenchTask": {
+      "discriminator": {
+        "mapping": {
+          "0": "#/$defs/LegacyAnalysisTask",
+          "1": "#/$defs/V1AnalysisTask"
+        },
+        "propertyName": "schemaVersion"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/V1AnalysisTask"
+        },
+        {
+          "$ref": "#/$defs/LegacyAnalysisTask"
+        }
+      ],
+      "title": "WorkbenchTask"
+    },
+    "WorkspaceEvent": {
+      "discriminator": {
+        "mapping": {
+          "analysis.failed": "#/$defs/FailureEvent",
+          "analysis.ready": "#/$defs/ReadyEvent",
+          "analysis.recoverable": "#/$defs/FailureEvent",
+          "analysis.rejected": "#/$defs/RejectedEvent",
+          "analysis.status": "#/$defs/StatusEvent",
+          "node.completed": "#/$defs/ExecutionEvent",
+          "node.failed": "#/$defs/ExecutionEvent",
+          "node.started": "#/$defs/ExecutionEvent",
+          "report.completed": "#/$defs/CompletedEvent",
+          "report.section": "#/$defs/SectionEvent",
+          "review.accepted": "#/$defs/AcceptedEvent",
+          "review.required": "#/$defs/ReviewEvent",
+          "tool.completed": "#/$defs/ExecutionEvent",
+          "tool.failed": "#/$defs/ExecutionEvent",
+          "tool.started": "#/$defs/ExecutionEvent"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/StatusEvent"
+        },
+        {
+          "$ref": "#/$defs/ExecutionEvent"
+        },
+        {
+          "$ref": "#/$defs/ReadyEvent"
+        },
+        {
+          "$ref": "#/$defs/ReviewEvent"
+        },
+        {
+          "$ref": "#/$defs/AcceptedEvent"
+        },
+        {
+          "$ref": "#/$defs/SectionEvent"
+        },
+        {
+          "$ref": "#/$defs/CompletedEvent"
+        },
+        {
+          "$ref": "#/$defs/FailureEvent"
+        },
+        {
+          "$ref": "#/$defs/RejectedEvent"
+        }
+      ],
+      "title": "WorkspaceEvent"
     }
   }
 }

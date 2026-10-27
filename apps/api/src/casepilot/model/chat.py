@@ -5,7 +5,28 @@ import json
 import httpx
 
 from .errors import ModelError
+from .profiles import chat_profile
 from .transport import _provider_request
+
+
+def assistant_message(turn):
+    """Rebuild an internal assistant turn for tool continuation or JSON repair."""
+    message = {"role": "assistant", "content": turn["content"] or None}
+    if "_reasoningContent" in turn:
+        message["reasoning_content"] = turn["_reasoningContent"]
+    if turn["toolCalls"]:
+        message["tool_calls"] = [
+            {
+                "id": call["id"],
+                "type": "function",
+                "function": {
+                    "name": call["name"],
+                    "arguments": json.dumps(call["arguments"], ensure_ascii=False),
+                },
+            }
+            for call in turn["toolCalls"]
+        ]
+    return message
 
 
 class ChatClient:
@@ -21,12 +42,12 @@ class ChatClient:
             or len(json.dumps(messages, ensure_ascii=False)) > 60000
         ):
             raise ModelError("MODEL_CONTEXT_LIMIT")
+        profile = chat_profile(self.config.chat_model)
         body = {
             "model": self.config.chat_model,
             "messages": messages,
             "stream": False,
-            "max_tokens": 2048,
-            "thinking": {"type": "disabled"},
+            **profile.request_options(),
         }
         if tools:
             body.update(tools=tools, tool_choice="auto")
@@ -86,7 +107,12 @@ class ChatClient:
                     if type(usage[field]) is not int or not 0 <= usage[field] <= 2**53 - 1:
                         raise ValueError()
                     safe_usage[field] = usage[field]
-            return {"content": content, "toolCalls": parsed_calls, "usage": safe_usage}
+            return {
+                "content": content,
+                "toolCalls": parsed_calls,
+                "usage": safe_usage,
+                **profile.response_metadata(message),
+            }
         except (KeyError, IndexError, TypeError, ValueError) as exc:
             if isinstance(exc, ModelError):
                 raise

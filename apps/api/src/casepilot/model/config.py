@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass, field
 
 from .errors import ModelError
+from .profiles import DEFAULT_CHAT_MODEL, chat_profile
 
 EMBEDDING_PROFILE = "zhipu:embedding-3:1024:v1"
 
@@ -12,7 +13,7 @@ EMBEDDING_PROFILE = "zhipu:embedding-3:1024:v1"
 class ModelConfig:
     api_key: str = field(repr=False)
     base_url: str = "https://open.bigmodel.cn/api/paas/v4"
-    chat_model: str = "glm-4.7-flash"
+    chat_model: str = DEFAULT_CHAT_MODEL
     embedding_model: str = "embedding-3"
     embedding_dimensions: int = 1024
     timeout_ms: int = 30000
@@ -27,11 +28,10 @@ def read_model_config(env=None):
     if base != "https://open.bigmodel.cn/api/paas/v4":
         raise ModelError("ZHIPU_BASE_URL")
     chat, embedding = (
-        env.get("CHAT_MODEL", "glm-4.7-flash"),
+        env.get("CHAT_MODEL", DEFAULT_CHAT_MODEL),
         env.get("EMBEDDING_MODEL", "embedding-3"),
     )
-    if chat != "glm-4.7-flash":
-        raise ModelError("CHAT_MODEL")
+    chat_profile(chat)
     if embedding != "embedding-3":
         raise ModelError("EMBEDDING_MODEL")
 

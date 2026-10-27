@@ -52,7 +52,7 @@ def mock_client(monkeypatch, responses):
 
 
 def test_immutable_profile_hides_credentials():
-    assert CONFIG.chat_model == "glm-4.7-flash"
+    assert CONFIG.chat_model == "glm-5.3-flash"
     assert CONFIG.embedding_model == "embedding-3"
     assert CONFIG.embedding_dimensions == 1024
     assert KEY not in repr(CONFIG)
@@ -66,6 +66,7 @@ def test_immutable_profile_hides_credentials():
         ("ZHIPU_API_KEY", ""),
         ("ZHIPU_API_KEY", " "),
         ("ZHIPU_API_KEY", "first\nsecret"),
+        ("CHAT_MODEL", "glm-4.7-flash"),
         ("ZHIPU_BASE_URL", "https://example.com/api/paas/v4"),
         ("ZHIPU_BASE_URL", "http://open.bigmodel.cn/api/paas/v4"),
         ("ZHIPU_BASE_URL", "https://open.bigmodel.cn/api/paas/v4?token=secret"),
@@ -96,7 +97,7 @@ async def test_three_mock_requests_and_fixed_profile(monkeypatch):
     assert len(calls) == 3
     assert all(str(call.url).startswith("https://open.bigmodel.cn/api/paas/v4/") for call in calls)
     bodies = [json.loads(call.content) for call in calls]
-    assert bodies[0]["model"] == "glm-4.7-flash"
+    assert bodies[0]["model"] == "glm-5.3-flash"
     assert bodies[1]["response_format"] == {"type": "json_object"}
     assert bodies[2]["model"] == "embedding-3"
     assert bodies[2]["dimensions"] == 1024

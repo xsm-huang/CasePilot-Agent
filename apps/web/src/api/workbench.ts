@@ -1,12 +1,16 @@
-import { v0AnalysisTaskSchema, v0ClaimCaseSchema, v0ReviewAcceptedSchema } from '@casepilot/contracts';
+import { workbenchTaskSchema, v1AnalysisTaskSchema, v0ClaimCaseSchema, conversationSchema, conversationSummarySchema, commandAcceptedSchema, citationContextSchema } from '@casepilot/contracts';
 import { request } from './http';
-
+import type { CreateAnalysis, ReviewRequest } from '@casepilot/contracts';
+const enc = encodeURIComponent;
 export const workbenchApi = {
   cases: (signal: AbortSignal) => request('/cases', v0ClaimCaseSchema.array(), { signal }),
-  history: (signal: AbortSignal) => request('/analyses', v0AnalysisTaskSchema.array(), { signal }),
-  task: (id: string, signal: AbortSignal) => request(`/analyses/${encodeURIComponent(id)}`, v0AnalysisTaskSchema, { signal }),
-  start: (caseId: string, signal: AbortSignal) => request('/analyses', v0AnalysisTaskSchema, { signal, body: { caseId } }),
-  review: (id: string, decision: 'approve' | 'reject', comment: string, signal: AbortSignal) => request(
-    `/analyses/${encodeURIComponent(id)}/review`, v0ReviewAcceptedSchema, { signal, body: { decision, comment } }
-  )
+  history: (signal: AbortSignal) => request('/analyses', workbenchTaskSchema.array(), { signal }),
+  task: (id: string, signal: AbortSignal) => request(`/analyses/${enc(id)}`, workbenchTaskSchema, { signal }),
+  conversations: (caseId: string, signal: AbortSignal) => request(`/conversations?caseId=${enc(caseId)}`, conversationSummarySchema.array(), { signal }),
+  conversation: (id: string, signal: AbortSignal, before?: string) => request(`/conversations/${enc(id)}${before ? `?before=${enc(before)}` : ''}`, conversationSchema, { signal }),
+  createConversation: (caseId: string, signal: AbortSignal) => request(`/cases/${enc(caseId)}/conversations`, conversationSummarySchema, { signal, body: { title: '案件分析' } }),
+  start: (body: CreateAnalysis, key: string, signal: AbortSignal) => request('/analyses', v1AnalysisTaskSchema, { signal, body, headers: { 'Idempotency-Key': key } }),
+  review: (id: string, body: ReviewRequest, key: string, signal: AbortSignal) => request(`/analyses/${enc(id)}/review`, commandAcceptedSchema, { signal, body, headers: { 'Idempotency-Key': key } }),
+  recover: (id: string, revision: number, key: string, signal: AbortSignal) => request(`/analyses/${enc(id)}/recover`, commandAcceptedSchema, { signal, body: { expectedRevision: revision }, headers: { 'Idempotency-Key': key } }),
+  citation: (id: string, citationId: string, signal: AbortSignal) => request(`/analyses/${enc(id)}/citations/${enc(citationId)}/context`, citationContextSchema, { signal }),
 };
