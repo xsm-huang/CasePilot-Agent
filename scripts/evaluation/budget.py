@@ -8,12 +8,19 @@ import re
 import threading
 import time
 from contextlib import contextmanager
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
 import httpx
 from casepilot.model.errors import ModelError
+
+
+class BudgetReconciliationError(ValueError):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
 
 
 def write_json(path, value):
@@ -66,10 +73,12 @@ class BudgetLedger:
         *,
         run_id="unspecified",
         initial_used=None,
+        require_existing=False,
     ):
         self.path = Path(path).resolve()
         self.limits = {"model": model_limit, "embedding": embedding_limit}
         self.run_id = run_id
+        self.require_existing = require_existing
         self.initial_used = initial_used or {"model": 0, "embedding": 0}
         if (
             set(self.initial_used) != set(self.limits)
@@ -89,6 +98,10 @@ class BudgetLedger:
 
     def _read(self):
         if not self.path.exists():
+            if self.require_existing:
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_LEDGER_NOT_FOUND"
+                )
             return {
                 "version": 2,
                 "limits": self.limits,
@@ -114,11 +127,14 @@ class BudgetLedger:
     @contextmanager
     def _locked(self):
         with self.lock, _file_lock(self.path):
+            existed = self.path.exists()
             state = self._read()
+            original = deepcopy(state)
             try:
                 yield state
             finally:
-                write_json(self.path, state)
+                if not existed or state != original:
+                    write_json(self.path, state)
 
     @property
     def state(self):
@@ -166,6 +182,114 @@ class BudgetLedger:
         with self._locked() as state:
             state["stopped"] = state["stopped"] or reason
             return state
+
+    def reconcile_ambiguous(self, *, call_id, run_id, kind, operator):
+        """Confirm one exact ambiguous request as consumed without refunding budget."""
+
+        if (
+            not isinstance(call_id, str)
+            or not call_id
+            or len(call_id) > 128
+            or any(ord(character) < 32 for character in call_id)
+            or not isinstance(run_id, str)
+            or not run_id
+            or len(run_id) > 128
+            or any(ord(character) < 32 for character in run_id)
+            or not isinstance(kind, str)
+            or kind not in self.limits
+            or not isinstance(operator, str)
+            or not operator.strip()
+            or len(operator.strip()) > 128
+            or any(ord(character) < 32 for character in operator)
+        ):
+            raise BudgetReconciliationError(
+                "EVALUATION_RECONCILIATION_INPUT_INVALID"
+            )
+        operator = operator.strip()
+        with self._locked() as state:
+            if (
+                state.get("version") != 2
+                or set(state.get("limits", {})) != set(self.limits)
+                or state.get("limits") != self.limits
+                or set(state.get("used", {})) != set(self.limits)
+                or any(not isinstance(call, dict) for call in state.get("calls", []))
+                or any(
+                    type(state["used"].get(name)) is not int
+                    or not 0 <= state["used"][name] <= self.limits[name]
+                    for name in self.limits
+                )
+            ):
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_LEDGER_INVALID"
+                )
+            matches = [call for call in state["calls"] if call.get("id") == call_id]
+            if len(matches) != 1:
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_CALL_NOT_UNIQUE"
+                )
+            target = matches[0]
+            if target.get("runId") != run_id:
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_RUN_MISMATCH"
+                )
+            if target.get("kind") != kind:
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_KIND_MISMATCH"
+                )
+            reconciliation = target.get("reconciliation")
+            unresolved = [
+                call
+                for call in state["calls"]
+                if call.get("status") in {"reserved", "ambiguous"}
+            ]
+            if (
+                target.get("status") == "consumed"
+                and state.get("stopped") is None
+                and not unresolved
+                and isinstance(reconciliation, dict)
+                and reconciliation.get("action") == "confirmed_consumed"
+                and reconciliation.get("operator") == operator
+            ):
+                return {
+                    "outcome": "already_reconciled",
+                    "callId": call_id,
+                    "runId": run_id,
+                    "kind": kind,
+                    "used": deepcopy(state["used"]),
+                    "stopped": None,
+                    "reconciliation": deepcopy(reconciliation),
+                }
+            if state.get("stopped") != "PROVIDER_REQUEST_INTERRUPTED":
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_STOP_MISMATCH"
+                )
+            if target.get("status") != "ambiguous":
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_STATUS_MISMATCH"
+                )
+            if len(unresolved) != 1 or unresolved[0] is not target:
+                raise BudgetReconciliationError(
+                    "EVALUATION_RECONCILIATION_OTHER_UNRESOLVED"
+                )
+            reconciliation = {
+                "action": "confirmed_consumed",
+                "operator": operator,
+                "at": datetime.now(timezone.utc).isoformat(),
+                "previousStatus": "ambiguous",
+                "previousStop": "PROVIDER_REQUEST_INTERRUPTED",
+            }
+            target["status"] = "consumed"
+            target["reconciliation"] = reconciliation
+            state["stopped"] = None
+            return {
+                "outcome": "reconciled",
+                "callId": call_id,
+                "runId": run_id,
+                "kind": kind,
+                "used": deepcopy(state["used"]),
+                "stopped": None,
+                "reconciliation": deepcopy(reconciliation),
+            }
 
 
 class BudgetTransport(httpx.AsyncBaseTransport):

@@ -5,6 +5,7 @@ import inspect
 import json
 import re
 import sys
+from copy import deepcopy
 from types import SimpleNamespace
 
 import httpx
@@ -19,7 +20,7 @@ from conftest import ROOT
 sys.path.insert(0, str(ROOT / "scripts"))
 from evaluate_v1 import report_checks, report_plan
 from evaluation import artifacts
-from evaluation.budget import BudgetTransport
+from evaluation.budget import BudgetLedger, BudgetReconciliationError, BudgetTransport
 from evaluation.data import load, manifest
 from evaluation.pdf import corpus_pdf
 from evaluation.run_state import RunState, RunStateError
@@ -29,6 +30,64 @@ EXPECTED_DATA_HASHES = {
     "reports.json": "c0d9550b43a381341051b5ca5207a5e0027217deac9038686d31a1c7383bba8f",
     "retrieval.json": "68a8080bc93aaa600293c5c84cd5dba760c89100b4b4b0f453169a130dfee395",
 }
+RECONCILIATION_CALL_ID = "14e666ee-6396-47ff-b75a-8de53dde442c"
+RECONCILIATION_RUN_ID = "fcfc5858-c0f6-43bc-85f7-7e4053e8b83a"
+
+
+def _write_reconciliation_ledger(
+    path,
+    *,
+    call_id=RECONCILIATION_CALL_ID,
+    run_id=RECONCILIATION_RUN_ID,
+    target_status="ambiguous",
+    stopped="PROVIDER_REQUEST_INTERRUPTED",
+    another_unresolved=False,
+    duplicate_id=False,
+):
+    calls = [
+        {
+            "id": "historical-completed-call",
+            "runId": "historical-run",
+            "kind": "model",
+            "model": "glm-4.7-flash",
+            "status": "completed",
+            "at": "2026-10-26T00:00:00+00:00",
+            "usage": {"total_tokens": 20},
+        },
+        {
+            "id": call_id,
+            "runId": run_id,
+            "kind": "model",
+            "model": "glm-5.3-flash",
+            "status": target_status,
+            "at": "2026-10-27T13:03:47+00:00",
+            "errorType": "ConnectError",
+            "durationMs": 47,
+        },
+    ]
+    if another_unresolved:
+        calls.append(
+            {
+                "id": "another-unresolved-call",
+                "runId": "another-run",
+                "kind": "embedding",
+                "model": "embedding-3",
+                "status": "reserved",
+                "at": "2026-10-27T13:04:00+00:00",
+            }
+        )
+    if duplicate_id:
+        calls.append({**calls[1], "runId": "duplicate-run"})
+    state = {
+        "version": 2,
+        "limits": {"model": 270, "embedding": 110},
+        "used": {"model": 3, "embedding": 1 if another_unresolved else 0},
+        "migratedUsed": {"model": 2, "embedding": 0},
+        "stopped": stopped,
+        "calls": calls,
+    }
+    path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    return state
 
 
 def test_frozen_dataset_has_required_labels_and_traceable_pdf_pages():
@@ -206,6 +265,140 @@ def test_shared_budget_propagates_fail_stop_to_an_already_open_run(tmp_path):
         assert "private" not in path.read_text(encoding="utf-8")
 
     asyncio.run(scenario())
+
+
+def test_operator_reconciliation_consumes_ambiguous_call_without_refunding_or_rewriting_history(
+    tmp_path,
+):
+    path = tmp_path / "shared-provider-calls.json"
+    before = _write_reconciliation_ledger(path)
+    historical = deepcopy(before["calls"][0])
+    ambiguous = deepcopy(before["calls"][1])
+    ledger = BudgetLedger(path, 270, 110, require_existing=True)
+
+    result = ledger.reconcile_ambiguous(
+        call_id=RECONCILIATION_CALL_ID,
+        run_id=RECONCILIATION_RUN_ID,
+        kind="model",
+        operator="qa-owner",
+    )
+    after = json.loads(path.read_text(encoding="utf-8"))
+
+    assert result["outcome"] == "reconciled"
+    assert result["used"] == before["used"] == {"model": 3, "embedding": 0}
+    assert result["stopped"] is None and after["stopped"] is None
+    assert after["limits"] == before["limits"]
+    assert after["migratedUsed"] == before["migratedUsed"]
+    assert len(after["calls"]) == len(before["calls"])
+    assert after["calls"][0] == historical
+    target = after["calls"][1]
+    assert target["status"] == "consumed"
+    assert {key: target[key] for key in ambiguous if key != "status"} == {
+        key: value for key, value in ambiguous.items() if key != "status"
+    }
+    assert target["reconciliation"] == result["reconciliation"]
+    assert target["reconciliation"] | {"at": target["reconciliation"]["at"]} == {
+        "action": "confirmed_consumed",
+        "operator": "qa-owner",
+        "at": target["reconciliation"]["at"],
+        "previousStatus": "ambiguous",
+        "previousStop": "PROVIDER_REQUEST_INTERRUPTED",
+    }
+    assert isinstance(target["reconciliation"]["at"], str) and target["reconciliation"]["at"]
+
+    reconciled_bytes = path.read_bytes()
+    repeated = ledger.reconcile_ambiguous(
+        call_id=RECONCILIATION_CALL_ID,
+        run_id=RECONCILIATION_RUN_ID,
+        kind="model",
+        operator="qa-owner",
+    )
+    assert repeated["outcome"] == "already_reconciled"
+    assert repeated["used"] == {"model": 3, "embedding": 0}
+    assert path.read_bytes() == reconciled_bytes
+
+
+@pytest.mark.parametrize(
+    ("ledger_patch", "request_patch", "error_code"),
+    [
+        ({}, {"call_id": "missing-call"}, "EVALUATION_RECONCILIATION_CALL_NOT_UNIQUE"),
+        ({}, {"run_id": "wrong-run"}, "EVALUATION_RECONCILIATION_RUN_MISMATCH"),
+        ({}, {"kind": "embedding"}, "EVALUATION_RECONCILIATION_KIND_MISMATCH"),
+        (
+            {"target_status": "completed"},
+            {},
+            "EVALUATION_RECONCILIATION_STATUS_MISMATCH",
+        ),
+        (
+            {"stopped": "PROVIDER_REQUEST_FAILED"},
+            {},
+            "EVALUATION_RECONCILIATION_STOP_MISMATCH",
+        ),
+        (
+            {"another_unresolved": True},
+            {},
+            "EVALUATION_RECONCILIATION_OTHER_UNRESOLVED",
+        ),
+        (
+            {"duplicate_id": True},
+            {},
+            "EVALUATION_RECONCILIATION_CALL_NOT_UNIQUE",
+        ),
+    ],
+)
+def test_operator_reconciliation_rejects_mismatches_without_changing_ledger(
+    tmp_path, ledger_patch, request_patch, error_code
+):
+    path = tmp_path / "shared-provider-calls.json"
+    _write_reconciliation_ledger(path, **ledger_patch)
+    ledger = BudgetLedger(path, 270, 110, require_existing=True)
+    before = path.read_bytes()
+    request = {
+        "call_id": RECONCILIATION_CALL_ID,
+        "run_id": RECONCILIATION_RUN_ID,
+        "kind": "model",
+        "operator": "qa-owner",
+        **request_patch,
+    }
+
+    with pytest.raises(BudgetReconciliationError) as caught:
+        ledger.reconcile_ambiguous(**request)
+
+    assert caught.value.code == error_code
+    assert path.read_bytes() == before
+
+
+def test_reconciled_ledger_does_not_authorize_replaying_in_progress_capability(tmp_path):
+    ledger_path = tmp_path / "shared-provider-calls.json"
+    _write_reconciliation_ledger(ledger_path)
+    state_path = tmp_path / "run-state.json"
+    state = RunState.create(
+        state_path,
+        schema="casepilot_eval_interrupted",
+        checkpoint_schema="casepilot_eval_interrupted_cp",
+        run_id=RECONCILIATION_RUN_ID,
+        fingerprint="source-one",
+        budget_ledger=ledger_path,
+    )
+    state.begin("capability", data={"callId": RECONCILIATION_CALL_ID})
+    run_state_before = state_path.read_bytes()
+    ledger = BudgetLedger(ledger_path, 270, 110, require_existing=True)
+
+    ledger.reconcile_ambiguous(
+        call_id=RECONCILIATION_CALL_ID,
+        run_id=RECONCILIATION_RUN_ID,
+        kind="model",
+        operator="qa-owner",
+    )
+
+    assert ledger.ensure_active()["used"] == {"model": 3, "embedding": 0}
+    assert state_path.read_bytes() == run_state_before
+    with pytest.raises(RunStateError, match="EVALUATION_STAGE_IN_PROGRESS"):
+        RunState.resume(
+            state_path,
+            fingerprint="source-one",
+            budget_ledger=ledger_path,
+        )
 
 
 def test_run_state_resumes_only_the_same_source_and_shared_ledger(tmp_path):

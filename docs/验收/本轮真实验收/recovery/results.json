@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "status": "pending",
+  "checks": [
+    {
+      "id": "provider-request-in-flight",
+      "status": "pending",
+      "notes": ""
+    },
+    {
+      "id": "committed-section-not-repeated",
+      "status": "pending",
+      "notes": ""
+    },
+    {
+      "id": "event-cursor-replay",
+      "status": "pending",
+      "notes": ""
+    },
+    {
+      "id": "budget-not-reset",
+      "status": "pending",
+      "notes": ""
+    }
+  ]
+}

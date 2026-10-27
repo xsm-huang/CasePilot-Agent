@@ -1,0 +1,10 @@
+{
+  "status": "failed",
+  "error": {
+    "code": "MODEL_RESPONSE_INVALID"
+  },
+  "used": {
+    "model": 3,
+    "embedding": 0
+  }
+}

@@ -32,6 +32,7 @@ from evaluation.run_state import RunState, RunStateError
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BUDGET_LEDGER = ROOT / "data" / "evaluation-provider-budget.json"
 TERMINAL_TASKS = {"waiting_review", "completed", "failed", "recoverable", "rejected"}
+STOP_AFTER_STAGES = ("capability", "retrieval", "round-one", "automated")
 
 
 def free_port():
@@ -56,6 +57,18 @@ def report_plan(samples):
     """Run one breadth-first pass before spending budget on repetitions two and three."""
 
     return [(sample, repetition) for repetition in range(1, 4) for sample in samples]
+
+
+def reports_for_stop_after(plan, stop_after):
+    """Expose the maximum report work authorized by one staged invocation."""
+
+    if stop_after in {"capability", "retrieval"}:
+        return []
+    if stop_after == "round-one":
+        return [entry for entry in plan if entry[1] == 1]
+    if stop_after == "automated":
+        return list(plan)
+    raise ValueError("EVALUATION_STOP_AFTER_INVALID")
 
 
 def report_checks(sample, task, audit, original, corpus):
@@ -147,6 +160,16 @@ def _update_manual_report(path, entry, generation_id):
         rulesPreserved="pending",
     )
     write_json(path, review)
+
+
+def _complete_requested_stage(result, output, stage):
+    result.update(
+        status="stage_complete",
+        reason=f"STOP_AFTER_{stage.replace('-', '_').upper()}",
+        completedStage=stage,
+        stopAfter=stage,
+    )
+    write_json(output / "results.json", result)
 
 
 def round_one_semantic_review_passed(review, samples):
@@ -421,6 +444,7 @@ def run(args):
 
     samples = load("reports.json")
     plan = report_plan(samples)
+    authorized_reports = reports_for_stop_after(plan, args.stop_after)
     source = build_source_manifest(ROOT)
     state, result = _prepare_run(args, source, plan)
     if args.resume and not args.budget_ledger.exists():
@@ -501,6 +525,10 @@ def run(args):
             raise RuntimeError("CAPABILITY_GATE_FAILED")
         if not state.is_complete("capability"):
             state.complete("capability", capabilities)
+        result["capabilities"] = capabilities
+        if args.stop_after == "capability":
+            _complete_requested_stage(result, args.output, "capability")
+            return 0
 
         with httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=120) as client:
             corpus = load("corpus.json")
@@ -547,8 +575,11 @@ def run(args):
             write_json(args.output / "results.json", result)
             if retrieval_result["status"] != "passed":
                 raise RuntimeError("RETRIEVAL_GATE_FAILED")
+            if args.stop_after == "retrieval":
+                _complete_requested_stage(result, args.output, "retrieval")
+                return 0
 
-            for sample, repetition in plan:
+            for sample, repetition in authorized_reports:
                 if repetition != 1:
                     continue
                 _run_report(
@@ -561,13 +592,19 @@ def run(args):
                     status="manual_review_required",
                     reason="ROUND_ONE_SEMANTIC_REVIEW_REQUIRED",
                     semanticReview="round_one_required",
+                    completedStage="round-one",
+                    stopAfter=args.stop_after,
                 )
                 write_json(args.output / "results.json", result)
                 return 0
 
             result["semanticReview"] = "round_one_passed"
             write_json(args.output / "results.json", result)
-            for sample, repetition in plan:
+            if args.stop_after == "round-one":
+                _complete_requested_stage(result, args.output, "round-one")
+                return 0
+
+            for sample, repetition in authorized_reports:
                 if repetition == 1:
                     continue
                 _run_report(
@@ -599,14 +636,15 @@ def run(args):
                 )
                 state.complete("replacement", replacement)
             result.update(
-                status="manual_review_required",
+                status="stage_complete",
                 replacementGenerationId=replacement,
-                reason="Review claims against saved citations; automated validity is not semantic support.",
+                reason="STOP_AFTER_AUTOMATED",
+                completedStage="automated",
+                stopAfter="automated",
+                semanticReview="round_one_passed_remaining_rounds_required",
             )
             keep = args.keep_server
-            if not keep:
-                client.post("/evaluation/freeze").raise_for_status()
-            else:
+            if keep:
                 print(
                     json.dumps(
                         {
@@ -658,7 +696,7 @@ def run(args):
         )
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--serve", action="store_true", help=argparse.SUPPRESS)
@@ -670,6 +708,17 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--keep-server", action="store_true")
+    parser.add_argument(
+        "--stop-after",
+        choices=STOP_AFTER_STAGES,
+        default="capability",
+        help="Highest real-call stage authorized for this invocation.",
+    )
+    return parser
+
+
+def main():
+    parser = build_parser()
     args = parser.parse_args()
     args.output = args.output.resolve()
     args.budget_ledger = args.budget_ledger.resolve()

@@ -9,6 +9,89 @@ from conftest import ROOT
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import evaluate_v1
+from evaluation.budget import BudgetLedger, BudgetReconciliationError
+
+
+class _Response:
+    status_code = 200
+
+    def __init__(self, payload=None):
+        self.payload = payload or {}
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return self.payload
+
+
+class _Process:
+    def poll(self):
+        return None
+
+    def terminate(self):
+        return None
+
+    def wait(self, timeout):
+        return 0
+
+
+class _Client:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def get(self, path):
+        assert path.startswith("/evaluation/retrieval/")
+        return _Response({"status": "passed", "generationId": "generation-one"})
+
+
+class _Ledger:
+    def __init__(self, path, model_limit, embedding_limit, **kwargs):
+        self.state = {
+            "limits": {"model": model_limit, "embedding": embedding_limit},
+            "used": {"model": 0, "embedding": 0},
+            "migratedUsed": {"model": 0, "embedding": 0},
+            "stopped": None,
+        }
+
+    def ensure_active(self):
+        return None
+
+
+def _ambiguous_ledger(call=None, *, stopped="PROVIDER_REQUEST_INTERRUPTED"):
+    target = call or {
+        "id": "14ef1270-32d0-4c66-91c0-fb6d8fb0935d",
+        "runId": "run-capability-one",
+        "kind": "model",
+        "model": "glm-5.3-flash",
+        "status": "ambiguous",
+        "at": "2026-10-27T00:00:00+00:00",
+        "errorType": "ConnectError",
+        "durationMs": 42,
+    }
+    return {
+        "version": 2,
+        "limits": {"model": 270, "embedding": 110},
+        "used": {"model": 3, "embedding": 0},
+        "migratedUsed": {"model": 2, "embedding": 0},
+        "stopped": stopped,
+        "calls": [
+            {
+                "id": "historical-completed",
+                "runId": "run-old",
+                "kind": "model",
+                "model": "glm-4.7-flash",
+                "status": "completed",
+            },
+            target,
+        ],
+    }
 
 
 def _task(*, citations):
@@ -43,6 +126,129 @@ def test_no_live_flag_stops_before_creating_output_or_budget(tmp_path):
         )
     assert not output.exists()
     assert not ledger.exists()
+
+
+def test_operator_can_confirm_one_exact_ambiguous_call_as_consumed(tmp_path):
+    path = tmp_path / "shared-ledger.json"
+    before = _ambiguous_ledger()
+    path.write_text(json.dumps(before, ensure_ascii=False, indent=2), encoding="utf-8")
+    ledger = BudgetLedger(path, 270, 110, require_existing=True)
+
+    result = ledger.reconcile_ambiguous(
+        call_id="14ef1270-32d0-4c66-91c0-fb6d8fb0935d",
+        run_id="run-capability-one",
+        kind="model",
+        operator="acceptance-operator",
+    )
+
+    after = json.loads(path.read_text(encoding="utf-8"))
+    assert result == {
+        "outcome": "reconciled",
+        "callId": "14ef1270-32d0-4c66-91c0-fb6d8fb0935d",
+        "runId": "run-capability-one",
+        "kind": "model",
+        "used": {"model": 3, "embedding": 0},
+        "stopped": None,
+        "reconciliation": after["calls"][1]["reconciliation"],
+    }
+    assert after["used"] == before["used"]
+    assert after["calls"][0] == before["calls"][0]
+    assert after["calls"][1] == {
+        **before["calls"][1],
+        "status": "consumed",
+        "reconciliation": {
+            "action": "confirmed_consumed",
+            "operator": "acceptance-operator",
+            "at": after["calls"][1]["reconciliation"]["at"],
+            "previousStatus": "ambiguous",
+            "previousStop": "PROVIDER_REQUEST_INTERRUPTED",
+        },
+    }
+    assert after["stopped"] is None
+
+    reconciled_bytes = path.read_bytes()
+    repeated = ledger.reconcile_ambiguous(
+        call_id="14ef1270-32d0-4c66-91c0-fb6d8fb0935d",
+        run_id="run-capability-one",
+        kind="model",
+        operator="acceptance-operator",
+    )
+    assert repeated["outcome"] == "already_reconciled"
+    assert path.read_bytes() == reconciled_bytes
+
+
+@pytest.mark.parametrize(
+    ("change", "arguments", "error"),
+    [
+        (
+            lambda state: None,
+            {"call_id": "wrong-call"},
+            "EVALUATION_RECONCILIATION_CALL_NOT_UNIQUE",
+        ),
+        (
+            lambda state: None,
+            {"run_id": "wrong-run"},
+            "EVALUATION_RECONCILIATION_RUN_MISMATCH",
+        ),
+        (
+            lambda state: None,
+            {"kind": "embedding"},
+            "EVALUATION_RECONCILIATION_KIND_MISMATCH",
+        ),
+        (
+            lambda state: state["calls"][1].update(status="completed"),
+            {},
+            "EVALUATION_RECONCILIATION_STATUS_MISMATCH",
+        ),
+        (
+            lambda state: state.update(stopped="PROVIDER_REQUEST_FAILED"),
+            {},
+            "EVALUATION_RECONCILIATION_STOP_MISMATCH",
+        ),
+        (
+            lambda state: state["calls"].append(
+                {
+                    "id": "other-unresolved",
+                    "runId": "run-two",
+                    "kind": "embedding",
+                    "status": "reserved",
+                }
+            ),
+            {},
+            "EVALUATION_RECONCILIATION_OTHER_UNRESOLVED",
+        ),
+    ],
+)
+def test_operator_reconciliation_rejects_every_non_exact_state_without_rewrite(
+    tmp_path, change, arguments, error
+):
+    path = tmp_path / "shared-ledger.json"
+    state = _ambiguous_ledger()
+    change(state)
+    path.write_text(json.dumps(state, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    original = path.read_bytes()
+    ledger = BudgetLedger(path, 270, 110, require_existing=True)
+    request = {
+        "call_id": "14ef1270-32d0-4c66-91c0-fb6d8fb0935d",
+        "run_id": "run-capability-one",
+        "kind": "model",
+        "operator": "acceptance-operator",
+    }
+    request.update(arguments)
+
+    with pytest.raises(BudgetReconciliationError, match=error):
+        ledger.reconcile_ambiguous(**request)
+    assert path.read_bytes() == original
+
+
+def test_reconciliation_requires_an_existing_shared_ledger(tmp_path):
+    path = tmp_path / "missing.json"
+    with pytest.raises(
+        BudgetReconciliationError,
+        match="EVALUATION_RECONCILIATION_LEDGER_NOT_FOUND",
+    ):
+        BudgetLedger(path, 270, 110, require_existing=True)
+    assert not path.exists()
 
 
 def test_first_shared_ledger_includes_historical_run_usage(tmp_path):
@@ -136,6 +342,114 @@ def test_report_plan_finishes_each_breadth_first_round_before_the_next():
         ("A01", 3),
         ("A02", 3),
     ]
+
+
+def test_stop_after_defaults_to_capability_and_bounds_report_work(tmp_path):
+    args = evaluate_v1.build_parser().parse_args(["--live", "--output", str(tmp_path)])
+    assert args.stop_after == "capability"
+
+    plan = evaluate_v1.report_plan([{"id": "A01"}, {"id": "A02"}])
+    assert evaluate_v1.reports_for_stop_after(plan, "capability") == []
+    assert evaluate_v1.reports_for_stop_after(plan, "retrieval") == []
+    assert [
+        (sample["id"], repetition)
+        for sample, repetition in evaluate_v1.reports_for_stop_after(
+            plan, "round-one"
+        )
+    ] == [("A01", 1), ("A02", 1)]
+    assert evaluate_v1.reports_for_stop_after(plan, "automated") == plan
+
+
+@pytest.mark.parametrize(
+    ("stop_after", "expected_publications", "expected_reports", "expected_reason"),
+    [
+        ("capability", 0, [], "STOP_AFTER_CAPABILITY"),
+        ("retrieval", 3, [], "STOP_AFTER_RETRIEVAL"),
+        (
+            "round-one",
+            3,
+            [(f"A{index:02}", 1) for index in range(1, 11)],
+            "ROUND_ONE_SEMANTIC_REVIEW_REQUIRED",
+        ),
+    ],
+)
+def test_staged_run_never_crosses_the_authorized_boundary(
+    tmp_path,
+    monkeypatch,
+    stop_after,
+    expected_publications,
+    expected_reports,
+    expected_reason,
+):
+    samples = [
+        {
+            "id": f"A{index:02}",
+            "caseId": "case-one",
+            "question": "Question",
+            "rules": [],
+            "insufficient": False,
+        }
+        for index in range(1, 11)
+    ]
+    corpus = {
+        "pages": ["Page one"],
+        "productCode": "AUTO",
+        "clauseVersion": "2025",
+    }
+    output = tmp_path / stop_after
+    publications = []
+    reports = []
+    original_read_json = evaluate_v1._read_json
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://offline-test")
+    monkeypatch.setattr(evaluate_v1, "load_environment", lambda: None)
+    monkeypatch.setattr(
+        evaluate_v1,
+        "load",
+        lambda name: samples if name == "reports.json" else corpus,
+    )
+    monkeypatch.setattr(
+        evaluate_v1, "build_source_manifest", lambda root: {"source": "frozen"}
+    )
+    monkeypatch.setattr(evaluate_v1, "BudgetLedger", _Ledger)
+    monkeypatch.setattr(evaluate_v1.subprocess, "Popen", lambda *args, **kwargs: _Process())
+    monkeypatch.setattr(evaluate_v1.httpx, "get", lambda *args, **kwargs: _Response())
+    monkeypatch.setattr(evaluate_v1.httpx, "Client", _Client)
+    monkeypatch.setattr(
+        evaluate_v1,
+        "_read_json",
+        lambda path: {"status": "passed"}
+        if path.name == "capabilities.json"
+        else original_read_json(path),
+    )
+
+    def fake_publication(state, client, *, item, **kwargs):
+        publications.append(item)
+        return "generation-one" if item == "original" else f"generation-{item}"
+
+    def fake_report(state, client, sample, repetition, *args):
+        reports.append((sample["id"], repetition))
+
+    monkeypatch.setattr(evaluate_v1, "_ensure_publication", fake_publication)
+    monkeypatch.setattr(evaluate_v1, "_run_report", fake_report)
+
+    args = SimpleNamespace(
+        live=True,
+        resume=False,
+        stop_after=stop_after,
+        model_limit=270,
+        embedding_limit=110,
+        budget_ledger=tmp_path / "shared-ledger.json",
+        output=output,
+        keep_server=False,
+    )
+    assert evaluate_v1.run(args) == 0
+
+    result = json.loads((output / "results.json").read_text(encoding="utf-8"))
+    assert len(publications) == expected_publications
+    assert reports == expected_reports
+    assert result["reason"] == expected_reason
+    assert result["providerStopped"] is None
 
 
 def test_report_gate_requires_evidence_and_all_three_section_calls():
