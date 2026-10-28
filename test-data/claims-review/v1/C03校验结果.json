@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-28T17:20:00+08:00",
+  "providerCalls": 0,
+  "status": "passed",
+  "scope": {
+    "datasetCaseId": "C03",
+    "initialPdfCount": 12,
+    "supplementPdfCount": 1,
+    "pdfPageCount": 13,
+    "reviewStepCount": 11,
+    "visualInspection": "passed"
+  },
+  "minimumScopeDecisions": [
+    "只制作三条疑点演示所需的首次案件材料、S01、独立 S10、标准答案和人工复核脚本。",
+    "暂不制作 C03 变体、并发操作、故障注入、全局 evidence-map 或 coverage 映射。",
+    "后补计算书不进入 inputs/C03，也不改写首次 case.json。"
+  ],
+  "checks": [
+    {
+      "name": "schema_and_relationships",
+      "status": "passed",
+      "description": "case、expected 和 review-steps 通过 JSON Schema、实体引用、证据引用、条款版本、附件路径及哈希校验。"
+    },
+    {
+      "name": "first_input_boundary",
+      "status": "passed",
+      "description": "首次 case.json 将商业三者险计算书记录为 not_obtained 且没有文件路径；补件仅存在于 supplements/C03。"
+    },
+    {
+      "name": "three_findings",
+      "status": "passed",
+      "description": "F-C03-01 为审批与支付差额并确认问题；F-C03-02 为有 S01 支持的合理调整并排除；F-C03-03 先待补充核实，补件后修订为排除。"
+    },
+    {
+      "name": "amount_semantics",
+      "status": "passed",
+      "description": "商业三者险审批 800000 分、成功支付 900000 分，差额 100000 分；申请与认可金额差异同为 100000 分且由旧划痕调整材料支持，两种差异没有混用。"
+    },
+    {
+      "name": "report_gate",
+      "status": "passed",
+      "description": "补件前检查点只允许阶段报告；三条疑点处理完成并由人工确认检查覆盖后才允许保存车损最终报告。"
+    },
+    {
+      "name": "pdf_quality",
+      "status": "passed",
+      "description": "13 份 PDF 均为可提取文字的单页文件并带演示数据标记；Poppler 渲染未见截断、重叠、黑块或表格溢出。"
+    }
+  ],
+  "files": {
+    "case": "inputs/C03/case.json",
+    "caseSha256": "9aab24003689db32dcaa6ca6ae690ab7d9789fa92877de906203a72c969998b9",
+    "expected": "expected/C03.json",
+    "expectedSha256": "13ad6f37c2d5f6a901d798924d103738f63758ed999099c7456cad95212f1ece",
+    "reviewSteps": "review-steps/C03.json",
+    "reviewStepsSha256": "f414ab014d9bfb90b807b3761ab3600caf5e241ee3b83d60a2131ed6e46bf121",
+    "supplementManifest": "supplements/C03/manifest.json",
+    "supplementManifestSha256": "f51a0b49c6e9477c1398b6d5344f0034734c4b918ba6a6479e928e8c62787e26"
+  }
+}

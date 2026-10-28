@@ -1,0 +1,618 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:casepilot:claims-review:v1:common",
+  "title": "准备资料共享定义",
+  "$defs": {
+    "policyType": {
+      "type": "string",
+      "enum": [
+        "ctpl",
+        "commercial",
+        "unknown"
+      ]
+    },
+    "policyAvailability": {
+      "type": "string",
+      "enum": [
+        "available",
+        "not_obtained",
+        "not_insured",
+        "unidentified"
+      ]
+    },
+    "coverageStatus": {
+      "type": "string",
+      "enum": [
+        "insured",
+        "not_insured",
+        "unknown"
+      ]
+    },
+    "coverageCode": {
+      "type": "string",
+      "enum": [
+        "CTPL",
+        "OWN_DAMAGE",
+        "THIRD_PARTY",
+        "OCCUPANT_DRIVER",
+        "OCCUPANT_PASSENGER",
+        "RIDER_DEDUCTIBLE",
+        "RIDER_WHEEL",
+        "RIDER_EQUIPMENT",
+        "RIDER_SCRATCH",
+        "RIDER_REPAIR_ALLOWANCE",
+        "RIDER_ENGINE_WATER_EXCLUSION",
+        "RIDER_CARGO",
+        "RIDER_MENTAL",
+        "RIDER_HOLIDAY_LIMIT",
+        "RIDER_NON_BASIC_MEDICAL",
+        "RIDER_SERVICE",
+        "UNKNOWN"
+      ]
+    },
+    "closureType": {
+      "type": "string",
+      "enum": [
+        "paid_closed",
+        "refused_closed",
+        "zero_closed",
+        "other_closed",
+        "unknown"
+      ]
+    },
+    "originalPaymentStatus": {
+      "type": "string",
+      "enum": [
+        "settled",
+        "partial",
+        "pending",
+        "failed",
+        "not_applicable",
+        "unknown"
+      ]
+    },
+    "transactionStatus": {
+      "type": "string",
+      "enum": [
+        "succeeded",
+        "failed",
+        "pending",
+        "cancelled",
+        "unknown"
+      ]
+    },
+    "transactionKind": {
+      "type": "string",
+      "enum": [
+        "disbursement",
+        "refund",
+        "reversal"
+      ]
+    },
+    "amountStatus": {
+      "type": "string",
+      "enum": [
+        "known",
+        "unknown",
+        "not_applicable"
+      ]
+    },
+    "automaticExecutionState": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "running",
+        "completed",
+        "failed",
+        "awaiting_recovery"
+      ]
+    },
+    "humanReviewState": {
+      "type": "string",
+      "enum": [
+        "pending_review",
+        "reviewing",
+        "pending_verification",
+        "vehicle_review_completed"
+      ]
+    },
+    "professionalFollowUpState": {
+      "type": "string",
+      "enum": [
+        "not_referred",
+        "referred",
+        "received",
+        "opinion_recorded",
+        "resolved"
+      ]
+    },
+    "recordStatus": {
+      "type": "string",
+      "enum": [
+        "final",
+        "draft",
+        "superseded",
+        "unknown"
+      ]
+    },
+    "approvalStatus": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "pending",
+        "superseded",
+        "unknown"
+      ]
+    },
+    "vehicleRole": {
+      "type": "string",
+      "enum": [
+        "insured",
+        "third_party",
+        "other",
+        "unknown"
+      ]
+    },
+    "partyKind": {
+      "type": "string",
+      "enum": [
+        "person",
+        "organization",
+        "unknown"
+      ]
+    },
+    "personRelationship": {
+      "type": "string",
+      "enum": [
+        "insured_driver",
+        "insured_passenger",
+        "third_party",
+        "unknown"
+      ]
+    },
+    "declaredInjuryStatus": {
+      "type": "string",
+      "enum": [
+        "injury_reported",
+        "no_injury_reported",
+        "unknown"
+      ]
+    },
+    "injuryStatus": {
+      "type": "string",
+      "enum": [
+        "no_injury_indication",
+        "injury_present",
+        "insufficient_information",
+        "conflicting_information"
+      ]
+    },
+    "lossType": {
+      "type": "string",
+      "enum": [
+        "own_vehicle",
+        "third_party_vehicle",
+        "other_property",
+        "injury",
+        "unknown"
+      ]
+    },
+    "materialType": {
+      "type": "string",
+      "enum": [
+        "ctpl_policy",
+        "commercial_policy",
+        "endorsement",
+        "claim_notification",
+        "accident_proof",
+        "survey",
+        "vehicle_driver_summary",
+        "assessment",
+        "repair_cost",
+        "calculation",
+        "approval",
+        "transaction",
+        "closure",
+        "adjustment",
+        "injury_summary",
+        "medical_summary",
+        "collection_scope",
+        "professional_opinion",
+        "refusal_notice",
+        "zero_closure_reason",
+        "payment_authorization",
+        "other"
+      ]
+    },
+    "documentStatus": {
+      "type": "string",
+      "enum": [
+        "available",
+        "not_obtained",
+        "unreadable",
+        "unsupported",
+        "partial"
+      ]
+    },
+    "normalizationStatus": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "missing",
+        "invalid",
+        "not_normalized"
+      ]
+    },
+    "nodeId": {
+      "type": "string",
+      "enum": [
+        "archive",
+        "policy",
+        "materials",
+        "clauses",
+        "amounts",
+        "summary"
+      ]
+    },
+    "checkStatus": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "running",
+        "completed",
+        "failed",
+        "cannot_execute",
+        "not_applicable"
+      ]
+    },
+    "findingSource": {
+      "type": "string",
+      "enum": [
+        "rule",
+        "ai",
+        "human"
+      ]
+    },
+    "findingScope": {
+      "type": "string",
+      "enum": [
+        "vehicle",
+        "injury",
+        "shared_fact"
+      ]
+    },
+    "findingState": {
+      "type": "string",
+      "enum": [
+        "unreviewed",
+        "confirmed",
+        "excluded",
+        "pending_evidence",
+        "referred"
+      ]
+    },
+    "decisionAction": {
+      "type": "string",
+      "enum": [
+        "confirm",
+        "exclude",
+        "pending",
+        "refer"
+      ]
+    },
+    "reportStage": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "interim",
+        "final_vehicle"
+      ]
+    },
+    "gapKind": {
+      "type": "string",
+      "enum": [
+        "not_obtained",
+        "original_not_collected_confirmed",
+        "unreadable",
+        "unknown_value",
+        "unresolved_conflict",
+        "other"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9._:-]{0,127}$"
+    },
+    "datasetCaseId": {
+      "type": "string",
+      "pattern": "^C[0-9]{2}(-V[0-9]{2})?$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+    },
+    "primitive": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "ids": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "nullableText": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/amountStatus"
+        },
+        "amountFen": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "const": "CNY"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "amountFen",
+        "currency",
+        "reason"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "known"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "amountFen": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "amountFen": {
+                "type": "null"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "clauseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "documentId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "documentSha256": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/sha256"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sectionIds": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "documentId",
+        "documentSha256",
+        "version",
+        "sectionIds"
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/decisionAction"
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 5
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "missingItems": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "followUpOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "professionalRecipient": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "professionalReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action",
+        "comment",
+        "evidenceRefs",
+        "missingItems",
+        "followUpOwner",
+        "professionalRecipient",
+        "professionalReason"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "enum": [
+                  "confirm",
+                  "exclude"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidenceRefs": {
+                "type": "array",
+                "items": {
+                  "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "pending"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "missingItems": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "followUpOwner": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "refer"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "professionalRecipient": {
+                "type": "string",
+                "minLength": 1
+              },
+              "professionalReason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

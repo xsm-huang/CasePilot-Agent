@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-28T17:00:00+08:00",
+  "providerCalls": 0,
+  "status": "passed",
+  "scope": {
+    "cases": [
+      "C01",
+      "C02"
+    ],
+    "pdfCount": 27,
+    "pdfPageCount": 27,
+    "visualInspection": "passed"
+  },
+  "checks": [
+    {
+      "name": "schema_and_relationships",
+      "status": "passed",
+      "description": "case、expected 和 review-steps 均通过现有 JSON Schema、实体引用、证据引用、条款版本、附件路径及哈希校验。"
+    },
+    {
+      "name": "pdf_text_extraction",
+      "status": "passed",
+      "description": "27 份 PDF 均为单页文字 PDF；逐份可提取文字且包含演示数据标记。"
+    },
+    {
+      "name": "pdf_visual_rendering",
+      "status": "passed",
+      "description": "27 页均使用 Poppler 渲染检查；未见文字截断、表格溢出、重叠、黑块或缺失页眉页脚。"
+    },
+    {
+      "name": "amount_chain",
+      "status": "passed",
+      "description": "逐案核对计算行、计算总额、审批金额和成功支付分配；C01 为 728000 分，C02 为 680000、200000、720000 分，全部一致。"
+    },
+    {
+      "name": "c02_third_party_allocation",
+      "status": "passed",
+      "description": "C02 第三方车辆损失 920000 分明确分为交强险 200000 分和商业三者险 720000 分，未与本车损失混用。"
+    },
+    {
+      "name": "normal_case_oracle",
+      "status": "passed",
+      "description": "两案预期疑点均为空，并列明禁止误报项；人工复核脚本要求无疑点案件仍确认检查覆盖后才能保存车损最终报告。"
+    }
+  ],
+  "caseResults": [
+    {
+      "datasetCaseId": "C01",
+      "documents": 11,
+      "pages": 11,
+      "minimumExtractedCharactersPerDocument": 357,
+      "calculations": 1,
+      "approvals": 1,
+      "payments": 1,
+      "files": {
+        "case": "inputs/C01/case.json",
+        "caseSha256": "bd40e4c20f4914dc8b54bfc2764f2d521ccaa0df3d2a65a8d70e55d2cd156de7",
+        "expected": "expected/C01.json",
+        "expectedSha256": "352ceb4d348b95e40ad2971d6865b81e12c42f1400a08b55397ecfc5a0c9f92e",
+        "reviewSteps": "review-steps/C01.json",
+        "reviewStepsSha256": "d06896ab9811a1f4c7b3913546c1fe9da62458a0497d3012ea9da70641e0b98d"
+      }
+    },
+    {
+      "datasetCaseId": "C02",
+      "documents": 16,
+      "pages": 16,
+      "minimumExtractedCharactersPerDocument": 384,
+      "calculations": 3,
+      "approvals": 3,
+      "payments": 3,
+      "files": {
+        "case": "inputs/C02/case.json",
+        "caseSha256": "1d09136386f30f7b064cd1b3d70077badfc6fb6d09219da391f4997965dbc5ad",
+        "expected": "expected/C02.json",
+        "expectedSha256": "7bff28d93c2ac5ae7a21380f84806284c6413748d7cae338c591b712261e9002",
+        "reviewSteps": "review-steps/C02.json",
+        "reviewStepsSha256": "5759fdebbfd5ec3275c73f6e9642cb8f7dc2b946787cb6a1b2d88ba4644108ae"
+      }
+    }
+  ]
+}

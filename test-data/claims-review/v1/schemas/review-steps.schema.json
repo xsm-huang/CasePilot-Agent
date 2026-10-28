@@ -1,0 +1,664 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:casepilot:claims-review:v1:review-steps",
+  "title": "人工复核操作脚本",
+  "description": "findingKey对应标准答案逻辑键，测试执行时匹配实际发现，不依赖模型生成的随机ID；脚本不是原理赔档案。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "datasetCaseId": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/datasetCaseId"
+    },
+    "caseRevision": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+    },
+    "expectedFile": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "inspect_finding"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "evidenceRefs": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "evidenceRefs"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "decide_finding"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "decision": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/decision"
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "decision"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "amend_decision"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "changeReason": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "decision": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/decision"
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "changeReason",
+                  "decision"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "provide_evidence"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "supplementPackage": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+                  },
+                  "newEvidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "supplementPackage",
+                  "newEvidenceIds",
+                  "note"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "add_manual_finding"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "scope": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+                  },
+                  "entityIds": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "evidenceRefs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "scope",
+                  "entityIds",
+                  "description",
+                  "evidenceRefs"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "record_professional_opinion"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "professionalNameOrRole": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "opinion": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "evidenceRefs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "professionalNameOrRole",
+                  "opinion",
+                  "evidenceRefs"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "confirm_coverage"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "comment": {
+                    "type": "string",
+                    "minLength": 5
+                  },
+                  "checkIds": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "comment",
+                  "checkIds"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "save_report"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "stage": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/reportStage"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "minLength": 5
+                  }
+                },
+                "required": [
+                  "stage",
+                  "comment"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "actorId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "at": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+              },
+              "action": {
+                "const": "start_reanalysis"
+              },
+              "expectedRevision": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+              },
+              "idempotencyKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "newInputFile": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5
+                  }
+                },
+                "required": [
+                  "newInputFile",
+                  "reason"
+                ]
+              },
+              "expectedOutcome": {
+                "enum": [
+                  "accepted",
+                  "conflict",
+                  "validation_error"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "stepId",
+              "actorId",
+              "at",
+              "action",
+              "expectedRevision",
+              "idempotencyKey",
+              "payload",
+              "expectedOutcome",
+              "note"
+            ]
+          }
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "datasetCaseId",
+    "caseRevision",
+    "expectedFile",
+    "steps"
+  ]
+}

@@ -1,0 +1,1095 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "1.0.0",
+  "preparedOn": "2026-10-27",
+  "sourceManifest": "sources.json",
+  "pageNumberBase": 1,
+  "lineNumberBase": 1,
+  "extractor": {
+    "library": "pypdf",
+    "version": "6.21.2"
+  },
+  "lineExtraction": "pypdf page.extract_text().splitlines(); whitespace removed only for anchor comparison; end boundary excludes blank lines and standalone page-number footers",
+  "boundaryPolicy": "Inclusive page and line ranges in this exact source hash; adjacent sections may share a page. Preserve original PDF page numbers, use section anchors to distinguish same-page content and numbered table-of-contents mentions.",
+  "matchingPolicy": [
+    "匹配实际保单、产品、版本和SHA-256；不能按险种代码跨产品回退。",
+    "通用章节要随适用险种上下文提供；目录出现某险种不构成承保或责任依据。",
+    "人伤、车上货物和服务内容保留原文，但不扩展首期车损审查范围。",
+    "服务规范、产品目录和空白模板不能进入合同责任正文检索。"
+  ],
+  "documents": [
+    {
+      "documentId": "PA-CTPL-2020-CONTENT",
+      "version": "2020修订内容",
+      "sha256": "b8d04712b5a394c9050e8853fa3cb3582434450cea9f97d45dae834f2370a461",
+      "localFile": "clauses/pingan/机动车交通事故责任强制保险条款_2020修订内容.pdf",
+      "pageCount": 9,
+      "category": "contract_terms",
+      "eligibleForContractRetrieval": true,
+      "sections": [
+        {
+          "sectionId": "CTPL-GENERAL",
+          "title": "总则",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 1,
+          "startLine": 9,
+          "startAnchorNormalized": "总则",
+          "endPage": 1,
+          "endLine": 20,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 1,
+              "line": 10
+            },
+            {
+              "article": "第二条",
+              "page": 1,
+              "line": 13
+            },
+            {
+              "article": "第三条",
+              "page": 1,
+              "line": 16
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-DEFINITIONS",
+          "title": "定义",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 1,
+          "startLine": 21,
+          "startAnchorNormalized": "定义",
+          "endPage": 2,
+          "endLine": 22,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第四条",
+              "page": 2,
+              "line": 2
+            },
+            {
+              "article": "第五条",
+              "page": 2,
+              "line": 6
+            },
+            {
+              "article": "第六条",
+              "page": 2,
+              "line": 9
+            },
+            {
+              "article": "第七条",
+              "page": 2,
+              "line": 16
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-LIABILITY",
+          "title": "保险责任",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "contract",
+          "startPage": 3,
+          "startLine": 3,
+          "startAnchorNormalized": "保险责任",
+          "endPage": 3,
+          "endLine": 22,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第八条",
+              "page": 3,
+              "line": 4
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-ADVANCE",
+          "title": "垫付与追偿",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "professional_reference",
+          "startPage": 4,
+          "startLine": 3,
+          "startAnchorNormalized": "垫付与追偿",
+          "endPage": 4,
+          "endLine": 16,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第九条",
+              "page": 4,
+              "line": 4
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-EXCLUSIONS",
+          "title": "责任免除",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "contract",
+          "startPage": 4,
+          "startLine": 18,
+          "startAnchorNormalized": "责任免除",
+          "endPage": 5,
+          "endLine": 7,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第十条",
+              "page": 4,
+              "line": 19
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-PERIOD",
+          "title": "保险期间",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 5,
+          "startLine": 9,
+          "startAnchorNormalized": "保险期间",
+          "endPage": 5,
+          "endLine": 11,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第十一条",
+              "page": 5,
+              "line": 10
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-DUTIES",
+          "title": "投保人、被保险人义务",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 5,
+          "startLine": 13,
+          "startAnchorNormalized": "投保人、被保险人义务",
+          "endPage": 6,
+          "endLine": 16,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第十二条",
+              "page": 5,
+              "line": 14
+            },
+            {
+              "article": "第十三条",
+              "page": 6,
+              "line": 2
+            },
+            {
+              "article": "第十四条",
+              "page": 6,
+              "line": 4
+            },
+            {
+              "article": "第十五条",
+              "page": 6,
+              "line": 6
+            },
+            {
+              "article": "第十六条",
+              "page": 6,
+              "line": 10
+            },
+            {
+              "article": "第十七条",
+              "page": 6,
+              "line": 13
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-SETTLEMENT",
+          "title": "赔偿处理",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "contract",
+          "startPage": 6,
+          "startLine": 18,
+          "startAnchorNormalized": "赔偿处理",
+          "endPage": 8,
+          "endLine": 11,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第十八条",
+              "page": 6,
+              "line": 19
+            },
+            {
+              "article": "第十九条",
+              "page": 7,
+              "line": 14
+            },
+            {
+              "article": "第二十条",
+              "page": 7,
+              "line": 19
+            },
+            {
+              "article": "第二十一条",
+              "page": 8,
+              "line": 4
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-CHANGES",
+          "title": "合同变更与终止",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 8,
+          "startLine": 13,
+          "startAnchorNormalized": "合同变更与终止",
+          "endPage": 9,
+          "endLine": 7,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第二十二条",
+              "page": 8,
+              "line": 14
+            },
+            {
+              "article": "第二十三条",
+              "page": 8,
+              "line": 17
+            },
+            {
+              "article": "第二十四条",
+              "page": 9,
+              "line": 4
+            }
+          ]
+        },
+        {
+          "sectionId": "CTPL-SUPPLEMENT",
+          "title": "附则",
+          "coverageCodes": [
+            "CTPL"
+          ],
+          "scope": "context",
+          "startPage": 9,
+          "startLine": 9,
+          "startAnchorNormalized": "附则",
+          "endPage": 9,
+          "endLine": 18,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第二十五条",
+              "page": 9,
+              "line": 10
+            },
+            {
+              "article": "第二十六条",
+              "page": 9,
+              "line": 15
+            },
+            {
+              "article": "第二十七条",
+              "page": 9,
+              "line": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "documentId": "PA-COMMERCIAL-MOTOR-2020",
+      "version": "2020版",
+      "sha256": "a8908c3ee830bc59774d3baa1d093510be87993dbcaa89213906dff85e84489a",
+      "localFile": "clauses/pingan/机动车商业保险条款_2020版.pdf",
+      "pageCount": 14,
+      "category": "contract_terms",
+      "eligibleForContractRetrieval": true,
+      "sections": [
+        {
+          "sectionId": "COMM-GENERAL",
+          "title": "总则",
+          "coverageCodes": [],
+          "scope": "context",
+          "startPage": 1,
+          "startLine": 5,
+          "startAnchorNormalized": "总则",
+          "endPage": 1,
+          "endLine": 23,
+          "requiresActualCoverage": false,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 1,
+              "line": 6
+            },
+            {
+              "article": "第二条",
+              "page": 1,
+              "line": 12
+            },
+            {
+              "article": "第三条",
+              "page": 1,
+              "line": 16
+            },
+            {
+              "article": "第四条",
+              "page": 1,
+              "line": 18
+            },
+            {
+              "article": "第五条",
+              "page": 1,
+              "line": 20
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-OWN",
+          "title": "机动车损失保险",
+          "coverageCodes": [
+            "OWN_DAMAGE"
+          ],
+          "scope": "contract",
+          "startPage": 1,
+          "startLine": 24,
+          "startAnchorNormalized": "第一章机动车损失保险",
+          "endPage": 3,
+          "endLine": 17,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第六条",
+              "page": 1,
+              "line": 26
+            },
+            {
+              "article": "第七条",
+              "page": 1,
+              "line": 29
+            },
+            {
+              "article": "第八条",
+              "page": 1,
+              "line": 32
+            },
+            {
+              "article": "第九条",
+              "page": 1,
+              "line": 37
+            },
+            {
+              "article": "第十条",
+              "page": 2,
+              "line": 8
+            },
+            {
+              "article": "第十一条",
+              "page": 2,
+              "line": 14
+            },
+            {
+              "article": "第十二条",
+              "page": 2,
+              "line": 24
+            },
+            {
+              "article": "第十三条",
+              "page": 2,
+              "line": 27
+            },
+            {
+              "article": "第十四条",
+              "page": 2,
+              "line": 32
+            },
+            {
+              "article": "第十五条",
+              "page": 2,
+              "line": 34
+            },
+            {
+              "article": "第十六条",
+              "page": 2,
+              "line": 37
+            },
+            {
+              "article": "第十七条",
+              "page": 2,
+              "line": 39
+            },
+            {
+              "article": "第十八条",
+              "page": 3,
+              "line": 6
+            },
+            {
+              "article": "第十九条",
+              "page": 3,
+              "line": 15
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-THIRD",
+          "title": "机动车第三者责任保险",
+          "coverageCodes": [
+            "THIRD_PARTY"
+          ],
+          "scope": "contract",
+          "startPage": 3,
+          "startLine": 18,
+          "startAnchorNormalized": "第二章机动车第三者责任保险",
+          "endPage": 5,
+          "endLine": 14,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第二十条",
+              "page": 3,
+              "line": 20
+            },
+            {
+              "article": "第二十一条",
+              "page": 3,
+              "line": 24
+            },
+            {
+              "article": "第二十二条",
+              "page": 3,
+              "line": 33
+            },
+            {
+              "article": "第二十三条",
+              "page": 4,
+              "line": 3
+            },
+            {
+              "article": "第二十四条",
+              "page": 4,
+              "line": 9
+            },
+            {
+              "article": "第二十五条",
+              "page": 4,
+              "line": 30
+            },
+            {
+              "article": "第二十六条",
+              "page": 4,
+              "line": 31
+            },
+            {
+              "article": "第二十七条",
+              "page": 4,
+              "line": 35
+            },
+            {
+              "article": "第二十八条",
+              "page": 4,
+              "line": 42
+            },
+            {
+              "article": "第二十九条",
+              "page": 5,
+              "line": 3
+            },
+            {
+              "article": "第三十条",
+              "page": 5,
+              "line": 11
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-OCCUPANT",
+          "title": "机动车车上人员责任保险",
+          "coverageCodes": [
+            "OCCUPANT_DRIVER",
+            "OCCUPANT_PASSENGER"
+          ],
+          "scope": "injury_reference",
+          "startPage": 5,
+          "startLine": 15,
+          "startAnchorNormalized": "第三章机动车车上人员责任保险",
+          "endPage": 6,
+          "endLine": 33,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第三十一条",
+              "page": 5,
+              "line": 17
+            },
+            {
+              "article": "第三十二条",
+              "page": 5,
+              "line": 20
+            },
+            {
+              "article": "第三十三条",
+              "page": 5,
+              "line": 29
+            },
+            {
+              "article": "第三十四条",
+              "page": 5,
+              "line": 43
+            },
+            {
+              "article": "第三十五条",
+              "page": 6,
+              "line": 4
+            },
+            {
+              "article": "第三十六条",
+              "page": 6,
+              "line": 17
+            },
+            {
+              "article": "第三十七条",
+              "page": 6,
+              "line": 21
+            },
+            {
+              "article": "第三十八条",
+              "page": 6,
+              "line": 30
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-COMMON",
+          "title": "通用条款",
+          "coverageCodes": [],
+          "scope": "context",
+          "startPage": 6,
+          "startLine": 34,
+          "startAnchorNormalized": "第四章通用条款",
+          "endPage": 7,
+          "endLine": 36,
+          "requiresActualCoverage": false,
+          "articleLocations": [
+            {
+              "article": "第三十九条",
+              "page": 6,
+              "line": 36
+            },
+            {
+              "article": "第四十条",
+              "page": 6,
+              "line": 38
+            },
+            {
+              "article": "第四十一条",
+              "page": 7,
+              "line": 9
+            },
+            {
+              "article": "第四十二条",
+              "page": 7,
+              "line": 11
+            },
+            {
+              "article": "第四十三条",
+              "page": 7,
+              "line": 16
+            },
+            {
+              "article": "第四十四条",
+              "page": 7,
+              "line": 18
+            },
+            {
+              "article": "第四十五条",
+              "page": 7,
+              "line": 21
+            },
+            {
+              "article": "第四十六条",
+              "page": 7,
+              "line": 23
+            },
+            {
+              "article": "第四十七条",
+              "page": 7,
+              "line": 27
+            },
+            {
+              "article": "第四十八条",
+              "page": 7,
+              "line": 32
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-GENERAL",
+          "title": "附加险通用说明和目录",
+          "coverageCodes": [],
+          "scope": "context",
+          "startPage": 8,
+          "startLine": 2,
+          "startAnchorNormalized": "附加险",
+          "endPage": 8,
+          "endLine": 16,
+          "requiresActualCoverage": false,
+          "articleLocations": []
+        },
+        {
+          "sectionId": "COMM-RIDER-DEDUCTIBLE",
+          "title": "附加绝对免赔率特约条款",
+          "coverageCodes": [
+            "RIDER_DEDUCTIBLE"
+          ],
+          "scope": "contract",
+          "startPage": 8,
+          "startLine": 18,
+          "startAnchorNormalized": "附加绝对免赔率特约条款",
+          "endPage": 8,
+          "endLine": 23,
+          "requiresActualCoverage": true,
+          "articleLocations": []
+        },
+        {
+          "sectionId": "COMM-RIDER-WHEEL",
+          "title": "附加车轮单独损失险",
+          "coverageCodes": [
+            "RIDER_WHEEL"
+          ],
+          "scope": "contract",
+          "startPage": 8,
+          "startLine": 24,
+          "startAnchorNormalized": "附加车轮单独损失险",
+          "endPage": 8,
+          "endLine": 41,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 8,
+              "line": 26
+            },
+            {
+              "article": "第二条",
+              "page": 8,
+              "line": 31
+            },
+            {
+              "article": "第三条",
+              "page": 8,
+              "line": 35
+            },
+            {
+              "article": "第四条",
+              "page": 8,
+              "line": 37
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-EQUIPMENT",
+          "title": "附加新增加设备损失险",
+          "coverageCodes": [
+            "RIDER_EQUIPMENT"
+          ],
+          "scope": "contract",
+          "startPage": 8,
+          "startLine": 42,
+          "startAnchorNormalized": "附加新增加设备损失险",
+          "endPage": 9,
+          "endLine": 10,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 8,
+              "line": 44
+            },
+            {
+              "article": "第二条",
+              "page": 9,
+              "line": 4
+            },
+            {
+              "article": "第三条",
+              "page": 9,
+              "line": 7
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-SCRATCH",
+          "title": "附加车身划痕损失险",
+          "coverageCodes": [
+            "RIDER_SCRATCH"
+          ],
+          "scope": "contract",
+          "startPage": 9,
+          "startLine": 11,
+          "startAnchorNormalized": "附加车身划痕损失险",
+          "endPage": 9,
+          "endLine": 27,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 9,
+              "line": 13
+            },
+            {
+              "article": "第二条",
+              "page": 9,
+              "line": 16
+            },
+            {
+              "article": "第三条",
+              "page": 9,
+              "line": 20
+            },
+            {
+              "article": "第四条",
+              "page": 9,
+              "line": 23
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-REPAIR",
+          "title": "附加修理期间费用补偿险",
+          "coverageCodes": [
+            "RIDER_REPAIR_ALLOWANCE"
+          ],
+          "scope": "contract",
+          "startPage": 9,
+          "startLine": 28,
+          "startAnchorNormalized": "附加修理期间费用补偿险",
+          "endPage": 10,
+          "endLine": 2,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 9,
+              "line": 30
+            },
+            {
+              "article": "第二条",
+              "page": 9,
+              "line": 34
+            },
+            {
+              "article": "第三条",
+              "page": 9,
+              "line": 39
+            },
+            {
+              "article": "第四条",
+              "page": 9,
+              "line": 42
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-ENGINE",
+          "title": "附加发动机进水损坏除外特约条款",
+          "coverageCodes": [
+            "RIDER_ENGINE_WATER_EXCLUSION"
+          ],
+          "scope": "contract",
+          "startPage": 10,
+          "startLine": 3,
+          "startAnchorNormalized": "附加发动机进水损坏除外特约条款",
+          "endPage": 10,
+          "endLine": 6,
+          "requiresActualCoverage": true,
+          "articleLocations": []
+        },
+        {
+          "sectionId": "COMM-RIDER-CARGO",
+          "title": "附加车上货物责任险",
+          "coverageCodes": [
+            "RIDER_CARGO"
+          ],
+          "scope": "outside_vehicle_scope",
+          "startPage": 10,
+          "startLine": 7,
+          "startAnchorNormalized": "附加车上货物责任险",
+          "endPage": 10,
+          "endLine": 26,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 10,
+              "line": 9
+            },
+            {
+              "article": "第二条",
+              "page": 10,
+              "line": 12
+            },
+            {
+              "article": "第三条",
+              "page": 10,
+              "line": 20
+            },
+            {
+              "article": "第四条",
+              "page": 10,
+              "line": 22
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-MENTAL",
+          "title": "附加精神损害抚慰金责任险",
+          "coverageCodes": [
+            "RIDER_MENTAL"
+          ],
+          "scope": "injury_reference",
+          "startPage": 10,
+          "startLine": 28,
+          "startAnchorNormalized": "附加精神损害抚慰金责任险",
+          "endPage": 11,
+          "endLine": 3,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 10,
+              "line": 33
+            },
+            {
+              "article": "第二条",
+              "page": 10,
+              "line": 39
+            },
+            {
+              "article": "第三条",
+              "page": 10,
+              "line": 43
+            },
+            {
+              "article": "第四条",
+              "page": 10,
+              "line": 45
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-HOLIDAY",
+          "title": "附加法定节假日限额翻倍险",
+          "coverageCodes": [
+            "RIDER_HOLIDAY_LIMIT"
+          ],
+          "scope": "contract",
+          "startPage": 11,
+          "startLine": 4,
+          "startAnchorNormalized": "附加法定节假日限额翻倍险",
+          "endPage": 11,
+          "endLine": 8,
+          "requiresActualCoverage": true,
+          "articleLocations": []
+        },
+        {
+          "sectionId": "COMM-RIDER-MEDICAL",
+          "title": "附加医保外医疗费用责任险",
+          "coverageCodes": [
+            "RIDER_NON_BASIC_MEDICAL"
+          ],
+          "scope": "injury_reference",
+          "startPage": 11,
+          "startLine": 9,
+          "startAnchorNormalized": "附加医保外医疗费用责任险",
+          "endPage": 11,
+          "endLine": 26,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 11,
+              "line": 11
+            },
+            {
+              "article": "第二条",
+              "page": 11,
+              "line": 16
+            },
+            {
+              "article": "第三条",
+              "page": 11,
+              "line": 21
+            },
+            {
+              "article": "第四条",
+              "page": 11,
+              "line": 23
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-RIDER-SERVICE",
+          "title": "附加机动车增值服务特约条款",
+          "coverageCodes": [
+            "RIDER_SERVICE"
+          ],
+          "scope": "outside_vehicle_scope",
+          "startPage": 11,
+          "startLine": 27,
+          "startAnchorNormalized": "附加机动车增值服务特约条款",
+          "endPage": 12,
+          "endLine": 42,
+          "requiresActualCoverage": true,
+          "articleLocations": [
+            {
+              "article": "第一条",
+              "page": 11,
+              "line": 28
+            },
+            {
+              "article": "第二条",
+              "page": 11,
+              "line": 29
+            },
+            {
+              "article": "第三条",
+              "page": 11,
+              "line": 34
+            },
+            {
+              "article": "第四条",
+              "page": 11,
+              "line": 41
+            },
+            {
+              "article": "第五条",
+              "page": 11,
+              "line": 45
+            },
+            {
+              "article": "第六条",
+              "page": 12,
+              "line": 5
+            },
+            {
+              "article": "第七条",
+              "page": 12,
+              "line": 18
+            },
+            {
+              "article": "第八条",
+              "page": 12,
+              "line": 22
+            },
+            {
+              "article": "第九条",
+              "page": 12,
+              "line": 26
+            },
+            {
+              "article": "第十条",
+              "page": 12,
+              "line": 30
+            },
+            {
+              "article": "第十一条",
+              "page": 12,
+              "line": 32
+            },
+            {
+              "article": "第十二条",
+              "page": 12,
+              "line": 35
+            },
+            {
+              "article": "第十三条",
+              "page": 12,
+              "line": 39
+            }
+          ]
+        },
+        {
+          "sectionId": "COMM-DEFINITIONS",
+          "title": "释义",
+          "coverageCodes": [],
+          "scope": "context",
+          "startPage": 13,
+          "startLine": 2,
+          "startAnchorNormalized": "释义",
+          "endPage": 14,
+          "endLine": 13,
+          "requiresActualCoverage": false,
+          "articleLocations": []
+        }
+      ]
+    },
+    {
+      "documentId": "PA-PRODUCT-CATALOG-SNAPSHOT",
+      "version": "本次下载的官方目录快照；未确认发布日期或当前在售状态",
+      "sha256": "e82542cfbacc798fff17fc67c92951dcf2d31823df04f37afd3e71ff81fa3134",
+      "localFile": "references/pingan/车险产品及备案信息目录_官方存档.pdf",
+      "pageCount": 5,
+      "category": "product_catalog_reference",
+      "eligibleForContractRetrieval": false,
+      "sections": []
+    },
+    {
+      "documentId": "IAC-CLAIMS-SERVICE-52-2024",
+      "version": "T/IAC 52—2024",
+      "sha256": "b3b2a04595bcd50e80e28fa9cc6520e38e7df1729f759c717483c1b2faaa676d",
+      "localFile": "references/iachina/机动车辆保险理赔服务规范_TIAC52-2024.pdf",
+      "pageCount": 15,
+      "category": "industry_service_reference",
+      "eligibleForContractRetrieval": false,
+      "sections": []
+    },
+    {
+      "documentId": "PA-CLAIM-APPLICATION-TEMPLATE",
+      "version": "平安公开下载的空白模板；文件未标版本日期",
+      "sha256": "6082108334692806be6b48588fd99f568020d8ab609dfd6d9e4e8a5c01b12e07",
+      "localFile": "templates/pingan/机动车辆保险索赔申请书_空白模板.pdf",
+      "pageCount": 1,
+      "category": "blank_form_template",
+      "eligibleForContractRetrieval": false,
+      "sections": []
+    },
+    {
+      "documentId": "PA-PAYMENT-AUTHORIZATION-TEMPLATE",
+      "version": "平安公开下载的空白模板；文件未标版本日期",
+      "sha256": "e7373e33bd3e983b11630f6856d929f4d95591fa80ae30ed16f5e7bfc02a2e69",
+      "localFile": "templates/pingan/转账支付授权书_空白模板.pdf",
+      "pageCount": 1,
+      "category": "blank_form_template",
+      "eligibleForContractRetrieval": false,
+      "sections": []
+    }
+  ]
+}

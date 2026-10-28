@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "datasetCaseId": "C01",
+  "caseRevision": 1,
+  "expectedFile": "expected/C01.json",
+  "steps": [
+    {
+      "stepId": "STEP-C01-01",
+      "actorId": "AUDITOR-NORMAL-01",
+      "at": "2026-10-28T16:00:00+08:00",
+      "action": "confirm_coverage",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C01-COVERAGE-V1",
+      "payload": {
+        "comment": "已逐项核对全部适用检查、材料和不适用项，未发现疑点。",
+        "checkIds": [
+          "FACT-MISSING",
+          "FACT-INVALID",
+          "FACT-CONFLICT",
+          "POLICY-AVAILABILITY",
+          "POLICY-PERIOD",
+          "POLICY-COVERAGE",
+          "CLAUSE-BINDING",
+          "AMOUNT-LINE-SUM",
+          "AMOUNT-RECORDED-OP",
+          "AMOUNT-ADJUSTMENT",
+          "PAYMENT-EFFECTIVE",
+          "PAYMENT-APPROVAL-GAP",
+          "PAYMENT-DUPLICATE",
+          "INJURY-IDENTIFICATION",
+          "INJURY-SHARED-FACT",
+          "REPORT-COMPLETION"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "无疑点正常案仍需人工确认检查覆盖。"
+    },
+    {
+      "stepId": "STEP-C01-02",
+      "actorId": "AUDITOR-NORMAL-01",
+      "at": "2026-10-28T16:05:00+08:00",
+      "action": "save_report",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C01-REPORT-V1",
+      "payload": {
+        "stage": "final_vehicle",
+        "comment": "已确认报告范围、材料覆盖及无疑点结论，保存车损最终报告。"
+      },
+      "expectedOutcome": "accepted",
+      "note": "满足范围内检查完成和人工覆盖确认门禁。"
+    }
+  ]
+}

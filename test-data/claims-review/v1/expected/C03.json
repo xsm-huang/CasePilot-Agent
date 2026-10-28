@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "dictionaryVersion": "1.0.0",
+  "datasetCaseId": "C03",
+  "caseRevision": 1,
+  "isTestOracle": true,
+  "annotatedBy": "测试资料人工标注组",
+  "annotatedAt": "2026-10-28T15:30:00+08:00",
+  "annotationStatus": "reviewed",
+  "annotationBasis": "人工逐项核对首次输入与独立补件；标准答案不引用模型输出。",
+  "expectedInjuryStatus": "no_injury_indication",
+  "expectedChecks": [
+    {
+      "ruleId": "FACT-MISSING",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "识别到商业三者险计算书首次未取得并形成 F-C03-03"
+    },
+    {
+      "ruleId": "FACT-INVALID",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "已取得材料中的日期、金额和对象标识均可规范化"
+    },
+    {
+      "ruleId": "FACT-CONFLICT",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "事故、责任、车辆与新损事实无跨来源冲突"
+    },
+    {
+      "ruleId": "POLICY-AVAILABILITY",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "目标和关联赔案所需保单均已取得"
+    },
+    {
+      "ruleId": "POLICY-PERIOD",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "事故发生在两份保单有效期间内"
+    },
+    {
+      "ruleId": "POLICY-COVERAGE",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "第三方损失与交强险及商业三者险承保关系明确"
+    },
+    {
+      "ruleId": "CLAUSE-BINDING",
+      "nodeId": "clauses",
+      "status": "completed",
+      "reason": "两份保单引用共享条款版本和哈希一致"
+    },
+    {
+      "ruleId": "AMOUNT-LINE-SUM",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "首次输入可核对交强险计算；商业险计算书缺件单独提示"
+    },
+    {
+      "ruleId": "AMOUNT-RECORDED-OP",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "交强险分摊和商业险审批口径均有明确记录"
+    },
+    {
+      "ruleId": "AMOUNT-ADJUSTMENT",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "申请 9,000.00 元调整为 8,000.00 元有 S01 支持，形成可排除疑点 F-C03-02"
+    },
+    {
+      "ruleId": "PAYMENT-EFFECTIVE",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "两笔付款均成功且无退款冲销"
+    },
+    {
+      "ruleId": "PAYMENT-APPROVAL-GAP",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "识别商业险审批 8,000.00 元与支付 9,000.00 元差额，形成 F-C03-01"
+    },
+    {
+      "ruleId": "PAYMENT-DUPLICATE",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "不存在其他商业险付款或重复交易解释"
+    },
+    {
+      "ruleId": "INJURY-IDENTIFICATION",
+      "nodeId": "archive",
+      "status": "completed",
+      "reason": "三个来源均明确无人伤"
+    },
+    {
+      "ruleId": "INJURY-SHARED-FACT",
+      "nodeId": "materials",
+      "status": "not_applicable",
+      "reason": "无人伤且无影响车损的共用事实冲突"
+    },
+    {
+      "ruleId": "REPORT-COMPLETION",
+      "nodeId": "summary",
+      "status": "completed",
+      "reason": "F-C03-03 补件前只能阶段报告，全部范围内疑点处理并确认覆盖后方可最终报告"
+    }
+  ],
+  "expectedFindings": [
+    {
+      "findingKey": "F-C03-01",
+      "source": "rule",
+      "ruleId": "PAYMENT-APPROVAL-GAP",
+      "scope": "vehicle",
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "APR-C03-COM-TP",
+        "PAY-C03-COM-TP"
+      ],
+      "requiredMeaning": "商业三者险审批 8,000.00 元，但关联成功支付为 9,000.00 元，且无退款、冲销、其他审批或失败重付解释。",
+      "requiredEvidenceIds": [
+        "EV-DOC-C03-10",
+        "EV-DOC-C03-11"
+      ],
+      "prohibitedClaims": [
+        "不得将交强险另付 2,000.00 元计入该商业险差额。",
+        "不得执行追回或资金调整。"
+      ],
+      "initialState": "unreviewed",
+      "expectedHumanAction": "confirm",
+      "humanRationale": "支付差额有审批和成功交易原始记录支持，应确认问题并交支付经办岗位核查。"
+    },
+    {
+      "findingKey": "F-C03-02",
+      "source": "rule",
+      "ruleId": "AMOUNT-ADJUSTMENT",
+      "scope": "vehicle",
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "LOSS-C03-COM-TP",
+        "APR-C03-COM-TP"
+      ],
+      "requiredMeaning": "商业三者险初始申请 9,000.00 元与审批 8,000.00 元存在 1,000.00 元差异，需要核对调整依据。",
+      "requiredEvidenceIds": [
+        "EV-DOC-C03-07",
+        "EV-DOC-C03-09",
+        "EV-DOC-C03-10"
+      ],
+      "prohibitedClaims": [
+        "不得仅因申请金额大于审批金额认定错赔。",
+        "不得把该合理调整用来解释支付多出 1,000.00 元。"
+      ],
+      "initialState": "unreviewed",
+      "expectedHumanAction": "exclude",
+      "humanRationale": "查勘、定损和损失确认说明共同证明 1,000.00 元为非本次事故旧划痕，差异合理。"
+    },
+    {
+      "findingKey": "F-C03-03",
+      "source": "rule",
+      "ruleId": "FACT-MISSING",
+      "scope": "vehicle",
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "APR-C03-COM-TP",
+        "DOC-C03-CALC-MISSING"
+      ],
+      "requiredMeaning": "首次审查未取得商业三者险赔款计算书，不能仅依据首次输入完整复核 8,000.00 元险种分摊计算。",
+      "requiredEvidenceIds": [
+        "EV-C03-CALC-GAP"
+      ],
+      "prohibitedClaims": [
+        "不得在首次 AI 输入中引用后补计算书。",
+        "不得因审批记录写有金额就宣称计算书已取得。"
+      ],
+      "initialState": "unreviewed",
+      "expectedHumanAction": "pending",
+      "humanRationale": "先标记待补充核实；取得独立 S10 后补计算书并核对通过后再修订为排除疑点。"
+    }
+  ],
+  "forbiddenFindings": [
+    {
+      "entityIds": [
+        "CLM-C03-CTPL",
+        "PAY-C03-CTPL"
+      ],
+      "prohibitedMeaning": "交强险 2,000.00 元与商业三者险付款构成重复支付",
+      "reason": "两笔付款对应不同赔案、险种和审批，交强险是明确的先行分摊。"
+    },
+    {
+      "entityIds": [
+        "ACC-C03",
+        "VEH-C03-A",
+        "VEH-C03-B"
+      ],
+      "prohibitedMeaning": "存在人伤或人伤状态未知",
+      "reason": "报案、事故责任记录和查勘均明确无人伤。"
+    }
+  ],
+  "initialCheckpoint": {
+    "checkpointId": "CP-C03-INITIAL",
+    "afterStepId": null,
+    "reportStage": "draft",
+    "finalReportAllowed": false,
+    "coverageConfirmedByHuman": false,
+    "inScopeChecksComplete": false,
+    "findingStates": [
+      {
+        "findingKey": "F-C03-01",
+        "scope": "vehicle",
+        "state": "unreviewed"
+      },
+      {
+        "findingKey": "F-C03-02",
+        "scope": "vehicle",
+        "state": "unreviewed"
+      },
+      {
+        "findingKey": "F-C03-03",
+        "scope": "vehicle",
+        "state": "unreviewed"
+      }
+    ],
+    "requiredDisclosures": []
+  },
+  "reviewCheckpoints": [
+    {
+      "checkpointId": "CP-C03-INTERIM",
+      "afterStepId": "STEP-C03-06",
+      "reportStage": "interim",
+      "finalReportAllowed": false,
+      "coverageConfirmedByHuman": false,
+      "inScopeChecksComplete": false,
+      "findingStates": [
+        {
+          "findingKey": "F-C03-01",
+          "scope": "vehicle",
+          "state": "confirmed"
+        },
+        {
+          "findingKey": "F-C03-02",
+          "scope": "vehicle",
+          "state": "excluded"
+        },
+        {
+          "findingKey": "F-C03-03",
+          "scope": "vehicle",
+          "state": "pending_evidence"
+        }
+      ],
+      "requiredDisclosures": []
+    },
+    {
+      "checkpointId": "CP-C03-AFTER-SUPPLEMENT",
+      "afterStepId": "STEP-C03-09",
+      "reportStage": "interim",
+      "finalReportAllowed": false,
+      "coverageConfirmedByHuman": false,
+      "inScopeChecksComplete": true,
+      "findingStates": [
+        {
+          "findingKey": "F-C03-01",
+          "scope": "vehicle",
+          "state": "confirmed"
+        },
+        {
+          "findingKey": "F-C03-02",
+          "scope": "vehicle",
+          "state": "excluded"
+        },
+        {
+          "findingKey": "F-C03-03",
+          "scope": "vehicle",
+          "state": "excluded"
+        }
+      ],
+      "requiredDisclosures": []
+    },
+    {
+      "checkpointId": "CP-C03-FINAL",
+      "afterStepId": "STEP-C03-11",
+      "reportStage": "final_vehicle",
+      "finalReportAllowed": true,
+      "coverageConfirmedByHuman": true,
+      "inScopeChecksComplete": true,
+      "findingStates": [
+        {
+          "findingKey": "F-C03-01",
+          "scope": "vehicle",
+          "state": "confirmed"
+        },
+        {
+          "findingKey": "F-C03-02",
+          "scope": "vehicle",
+          "state": "excluded"
+        },
+        {
+          "findingKey": "F-C03-03",
+          "scope": "vehicle",
+          "state": "excluded"
+        }
+      ],
+      "requiredDisclosures": []
+    }
+  ],
+  "reviewStepsFile": "review-steps/C03.json",
+  "acceptanceIds": [
+    "A01",
+    "A03",
+    "A06",
+    "A07",
+    "A09",
+    "A10",
+    "A13",
+    "A14",
+    "A15",
+    "A16",
+    "A18",
+    "A20"
+  ]
+}

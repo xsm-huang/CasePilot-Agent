@@ -1,0 +1,745 @@
+{
+  "schemaVersion": 1,
+  "dictionaryVersion": "1.0.0",
+  "preparedOn": "2026-10-27",
+  "status": "preparation_contract_not_runtime_implementation",
+  "moneyUnit": "fen",
+  "currency": "CNY",
+  "rateUnit": "basis_points",
+  "pageNumberBase": 1,
+  "timestampPolicy": "ISO 8601 with explicit UTC offset or Z; never silently convert date-only facts to midnight",
+  "enums": {
+    "policyType": [
+      {
+        "code": "ctpl",
+        "label": "交强险"
+      },
+      {
+        "code": "commercial",
+        "label": "商业车险"
+      },
+      {
+        "code": "unknown",
+        "label": "保单类型未知"
+      }
+    ],
+    "policyAvailability": [
+      {
+        "code": "available",
+        "label": "已取得"
+      },
+      {
+        "code": "not_obtained",
+        "label": "未取得"
+      },
+      {
+        "code": "not_insured",
+        "label": "已确认未投保"
+      },
+      {
+        "code": "unidentified",
+        "label": "无法识别承保情况"
+      }
+    ],
+    "coverageStatus": [
+      {
+        "code": "insured",
+        "label": "已承保"
+      },
+      {
+        "code": "not_insured",
+        "label": "未承保"
+      },
+      {
+        "code": "unknown",
+        "label": "承保情况未知"
+      }
+    ],
+    "coverageCode": [
+      {
+        "code": "CTPL",
+        "label": "机动车交通事故责任强制保险"
+      },
+      {
+        "code": "OWN_DAMAGE",
+        "label": "机动车损失保险"
+      },
+      {
+        "code": "THIRD_PARTY",
+        "label": "机动车第三者责任保险"
+      },
+      {
+        "code": "OCCUPANT_DRIVER",
+        "label": "车上人员责任保险（驾驶人）"
+      },
+      {
+        "code": "OCCUPANT_PASSENGER",
+        "label": "车上人员责任保险（乘客）"
+      },
+      {
+        "code": "RIDER_DEDUCTIBLE",
+        "label": "附加绝对免赔率特约条款"
+      },
+      {
+        "code": "RIDER_WHEEL",
+        "label": "附加车轮单独损失险"
+      },
+      {
+        "code": "RIDER_EQUIPMENT",
+        "label": "附加新增加设备损失险"
+      },
+      {
+        "code": "RIDER_SCRATCH",
+        "label": "附加车身划痕损失险"
+      },
+      {
+        "code": "RIDER_REPAIR_ALLOWANCE",
+        "label": "附加修理期间费用补偿险"
+      },
+      {
+        "code": "RIDER_ENGINE_WATER_EXCLUSION",
+        "label": "附加发动机进水损坏除外特约条款"
+      },
+      {
+        "code": "RIDER_CARGO",
+        "label": "附加车上货物责任险"
+      },
+      {
+        "code": "RIDER_MENTAL",
+        "label": "附加精神损害抚慰金责任险"
+      },
+      {
+        "code": "RIDER_HOLIDAY_LIMIT",
+        "label": "附加法定节假日限额翻倍险"
+      },
+      {
+        "code": "RIDER_NON_BASIC_MEDICAL",
+        "label": "附加医保外医疗费用责任险"
+      },
+      {
+        "code": "RIDER_SERVICE",
+        "label": "附加机动车增值服务特约条款"
+      },
+      {
+        "code": "UNKNOWN",
+        "label": "险种未知"
+      }
+    ],
+    "closureType": [
+      {
+        "code": "paid_closed",
+        "label": "赔付结案"
+      },
+      {
+        "code": "refused_closed",
+        "label": "拒赔结案"
+      },
+      {
+        "code": "zero_closed",
+        "label": "零赔付结案"
+      },
+      {
+        "code": "other_closed",
+        "label": "其他结案"
+      },
+      {
+        "code": "unknown",
+        "label": "结案类型未知"
+      }
+    ],
+    "originalPaymentStatus": [
+      {
+        "code": "settled",
+        "label": "已完成支付"
+      },
+      {
+        "code": "partial",
+        "label": "部分支付"
+      },
+      {
+        "code": "pending",
+        "label": "待支付"
+      },
+      {
+        "code": "failed",
+        "label": "支付失败"
+      },
+      {
+        "code": "not_applicable",
+        "label": "无支付事项"
+      },
+      {
+        "code": "unknown",
+        "label": "支付情况未知"
+      }
+    ],
+    "transactionStatus": [
+      {
+        "code": "succeeded",
+        "label": "成功"
+      },
+      {
+        "code": "failed",
+        "label": "失败"
+      },
+      {
+        "code": "pending",
+        "label": "待处理"
+      },
+      {
+        "code": "cancelled",
+        "label": "已取消"
+      },
+      {
+        "code": "unknown",
+        "label": "状态未知"
+      }
+    ],
+    "transactionKind": [
+      {
+        "code": "disbursement",
+        "label": "付款"
+      },
+      {
+        "code": "refund",
+        "label": "退款"
+      },
+      {
+        "code": "reversal",
+        "label": "冲销"
+      }
+    ],
+    "amountStatus": [
+      {
+        "code": "known",
+        "label": "金额已知"
+      },
+      {
+        "code": "unknown",
+        "label": "金额未知"
+      },
+      {
+        "code": "not_applicable",
+        "label": "该金额口径不适用"
+      }
+    ],
+    "automaticExecutionState": [
+      {
+        "code": "not_started",
+        "label": "未启动"
+      },
+      {
+        "code": "running",
+        "label": "执行中"
+      },
+      {
+        "code": "completed",
+        "label": "已结束"
+      },
+      {
+        "code": "failed",
+        "label": "执行失败"
+      },
+      {
+        "code": "awaiting_recovery",
+        "label": "待恢复"
+      }
+    ],
+    "humanReviewState": [
+      {
+        "code": "pending_review",
+        "label": "待人工复核"
+      },
+      {
+        "code": "reviewing",
+        "label": "复核中"
+      },
+      {
+        "code": "pending_verification",
+        "label": "待核实"
+      },
+      {
+        "code": "vehicle_review_completed",
+        "label": "车损审查完成"
+      }
+    ],
+    "professionalFollowUpState": [
+      {
+        "code": "not_referred",
+        "label": "未转交"
+      },
+      {
+        "code": "referred",
+        "label": "已转交"
+      },
+      {
+        "code": "received",
+        "label": "已接收"
+      },
+      {
+        "code": "opinion_recorded",
+        "label": "已记录专业意见"
+      },
+      {
+        "code": "resolved",
+        "label": "已明确作出复核决定"
+      }
+    ],
+    "recordStatus": [
+      {
+        "code": "final",
+        "label": "有效最终记录"
+      },
+      {
+        "code": "draft",
+        "label": "草稿"
+      },
+      {
+        "code": "superseded",
+        "label": "已被后续记录替代"
+      },
+      {
+        "code": "unknown",
+        "label": "有效性未知"
+      }
+    ],
+    "approvalStatus": [
+      {
+        "code": "approved",
+        "label": "审批通过"
+      },
+      {
+        "code": "rejected",
+        "label": "审批拒绝"
+      },
+      {
+        "code": "pending",
+        "label": "待审批"
+      },
+      {
+        "code": "superseded",
+        "label": "已被替代"
+      },
+      {
+        "code": "unknown",
+        "label": "审批状态未知"
+      }
+    ],
+    "vehicleRole": [
+      {
+        "code": "insured",
+        "label": "被保险车辆"
+      },
+      {
+        "code": "third_party",
+        "label": "第三方车辆"
+      },
+      {
+        "code": "other",
+        "label": "其他车辆"
+      },
+      {
+        "code": "unknown",
+        "label": "归属未知"
+      }
+    ],
+    "partyKind": [
+      {
+        "code": "person",
+        "label": "自然人"
+      },
+      {
+        "code": "organization",
+        "label": "组织"
+      },
+      {
+        "code": "unknown",
+        "label": "主体类型未知"
+      }
+    ],
+    "personRelationship": [
+      {
+        "code": "insured_driver",
+        "label": "本车驾驶人"
+      },
+      {
+        "code": "insured_passenger",
+        "label": "本车乘客"
+      },
+      {
+        "code": "third_party",
+        "label": "第三方人员"
+      },
+      {
+        "code": "unknown",
+        "label": "身份未确定"
+      }
+    ],
+    "declaredInjuryStatus": [
+      {
+        "code": "injury_reported",
+        "label": "原记录有人伤"
+      },
+      {
+        "code": "no_injury_reported",
+        "label": "原记录报告无人伤"
+      },
+      {
+        "code": "unknown",
+        "label": "原记录未明确"
+      }
+    ],
+    "injuryStatus": [
+      {
+        "code": "no_injury_indication",
+        "label": "未发现人伤线索"
+      },
+      {
+        "code": "injury_present",
+        "label": "有人伤"
+      },
+      {
+        "code": "insufficient_information",
+        "label": "信息不足"
+      },
+      {
+        "code": "conflicting_information",
+        "label": "信息冲突"
+      }
+    ],
+    "lossType": [
+      {
+        "code": "own_vehicle",
+        "label": "本车车辆损失"
+      },
+      {
+        "code": "third_party_vehicle",
+        "label": "第三方车辆损失"
+      },
+      {
+        "code": "other_property",
+        "label": "其他财产损失"
+      },
+      {
+        "code": "injury",
+        "label": "人伤"
+      },
+      {
+        "code": "unknown",
+        "label": "损失类型未知"
+      }
+    ],
+    "materialType": [
+      {
+        "code": "ctpl_policy",
+        "label": "交强险保单"
+      },
+      {
+        "code": "commercial_policy",
+        "label": "商业险保单"
+      },
+      {
+        "code": "endorsement",
+        "label": "批单或特别约定"
+      },
+      {
+        "code": "claim_notification",
+        "label": "报案或初始申请记录"
+      },
+      {
+        "code": "accident_proof",
+        "label": "事故证明或协议"
+      },
+      {
+        "code": "survey",
+        "label": "查勘记录"
+      },
+      {
+        "code": "vehicle_driver_summary",
+        "label": "车辆驾驶人摘要"
+      },
+      {
+        "code": "assessment",
+        "label": "定损核损明细"
+      },
+      {
+        "code": "repair_cost",
+        "label": "维修清单及费用证明"
+      },
+      {
+        "code": "calculation",
+        "label": "赔款计算书"
+      },
+      {
+        "code": "approval",
+        "label": "核赔审批"
+      },
+      {
+        "code": "transaction",
+        "label": "支付退款冲销记录"
+      },
+      {
+        "code": "closure",
+        "label": "结案记录"
+      },
+      {
+        "code": "adjustment",
+        "label": "调整或损失确认"
+      },
+      {
+        "code": "injury_summary",
+        "label": "受伤情况"
+      },
+      {
+        "code": "medical_summary",
+        "label": "诊疗费用摘要"
+      },
+      {
+        "code": "collection_scope",
+        "label": "材料收集范围"
+      },
+      {
+        "code": "professional_opinion",
+        "label": "专业复核意见"
+      },
+      {
+        "code": "refusal_notice",
+        "label": "拒赔通知"
+      },
+      {
+        "code": "zero_closure_reason",
+        "label": "零赔付说明"
+      },
+      {
+        "code": "payment_authorization",
+        "label": "收款授权"
+      },
+      {
+        "code": "other",
+        "label": "其他材料"
+      }
+    ],
+    "documentStatus": [
+      {
+        "code": "available",
+        "label": "可读取"
+      },
+      {
+        "code": "not_obtained",
+        "label": "未取得"
+      },
+      {
+        "code": "unreadable",
+        "label": "无法读取"
+      },
+      {
+        "code": "unsupported",
+        "label": "格式不支持"
+      },
+      {
+        "code": "partial",
+        "label": "仅取得部分内容"
+      }
+    ],
+    "normalizationStatus": [
+      {
+        "code": "valid",
+        "label": "可归一化"
+      },
+      {
+        "code": "missing",
+        "label": "缺失"
+      },
+      {
+        "code": "invalid",
+        "label": "无效原值"
+      },
+      {
+        "code": "not_normalized",
+        "label": "尚未归一化"
+      }
+    ],
+    "nodeId": [
+      {
+        "code": "archive",
+        "label": "档案整理与范围识别"
+      },
+      {
+        "code": "policy",
+        "label": "保单与承保险种核验"
+      },
+      {
+        "code": "materials",
+        "label": "材料一致性核对"
+      },
+      {
+        "code": "clauses",
+        "label": "条款检索与依据核对"
+      },
+      {
+        "code": "amounts",
+        "label": "金额与支付核对"
+      },
+      {
+        "code": "summary",
+        "label": "发现与报告汇总"
+      }
+    ],
+    "checkStatus": [
+      {
+        "code": "not_started",
+        "label": "未开始"
+      },
+      {
+        "code": "running",
+        "label": "执行中"
+      },
+      {
+        "code": "completed",
+        "label": "已完成"
+      },
+      {
+        "code": "failed",
+        "label": "执行失败"
+      },
+      {
+        "code": "cannot_execute",
+        "label": "无法执行"
+      },
+      {
+        "code": "not_applicable",
+        "label": "不适用"
+      }
+    ],
+    "findingSource": [
+      {
+        "code": "rule",
+        "label": "规则发现"
+      },
+      {
+        "code": "ai",
+        "label": "模型推断"
+      },
+      {
+        "code": "human",
+        "label": "人工补充"
+      }
+    ],
+    "findingScope": [
+      {
+        "code": "vehicle",
+        "label": "车损范围"
+      },
+      {
+        "code": "injury",
+        "label": "人伤范围外"
+      },
+      {
+        "code": "shared_fact",
+        "label": "影响车损的共用事实"
+      }
+    ],
+    "findingState": [
+      {
+        "code": "unreviewed",
+        "label": "待复核"
+      },
+      {
+        "code": "confirmed",
+        "label": "确认问题"
+      },
+      {
+        "code": "excluded",
+        "label": "排除疑点"
+      },
+      {
+        "code": "pending_evidence",
+        "label": "待补充核实"
+      },
+      {
+        "code": "referred",
+        "label": "转专业复核"
+      }
+    ],
+    "decisionAction": [
+      {
+        "code": "confirm",
+        "label": "确认问题"
+      },
+      {
+        "code": "exclude",
+        "label": "排除疑点"
+      },
+      {
+        "code": "pending",
+        "label": "待补充核实"
+      },
+      {
+        "code": "refer",
+        "label": "转专业复核"
+      }
+    ],
+    "reportStage": [
+      {
+        "code": "draft",
+        "label": "待复核报告"
+      },
+      {
+        "code": "interim",
+        "label": "阶段报告"
+      },
+      {
+        "code": "final_vehicle",
+        "label": "车损最终审查报告"
+      }
+    ],
+    "gapKind": [
+      {
+        "code": "not_obtained",
+        "label": "本次未取得"
+      },
+      {
+        "code": "original_not_collected_confirmed",
+        "label": "有依据确认原作业未收集"
+      },
+      {
+        "code": "unreadable",
+        "label": "材料不可读"
+      },
+      {
+        "code": "unknown_value",
+        "label": "字段未知"
+      },
+      {
+        "code": "unresolved_conflict",
+        "label": "冲突未决"
+      },
+      {
+        "code": "other",
+        "label": "其他缺口"
+      }
+    ]
+  },
+  "decisionToState": {
+    "confirm": "confirmed",
+    "exclude": "excluded",
+    "pending": "pending_evidence",
+    "refer": "referred"
+  },
+  "finalFindingStates": [
+    "confirmed",
+    "excluded"
+  ],
+  "unresolvedFindingStates": [
+    "unreviewed",
+    "pending_evidence",
+    "referred"
+  ],
+  "principles": [
+    "原赔案状态、自动执行状态、人工审查状态分别管理；结案不推断支付成功。",
+    "空数组表示当前未列出记录，不单独证明不存在；未知字段保留null并记录资料缺口。",
+    "reported injury status is an original declaration, not the Agent conclusion; expected injury status is stored only in expected data.",
+    "confirmed/excluded require human evidence and comments; referral is unresolved.",
+    "dictionary codes are dataset identifiers, not insurer official product or rule codes."
+  ]
+}

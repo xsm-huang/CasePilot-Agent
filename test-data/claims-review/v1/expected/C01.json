@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "dictionaryVersion": "1.0.0",
+  "datasetCaseId": "C01",
+  "caseRevision": 1,
+  "isTestOracle": true,
+  "annotatedBy": "测试资料人工标注组",
+  "annotatedAt": "2026-10-28T15:00:00+08:00",
+  "annotationStatus": "reviewed",
+  "annotationBasis": "逐项核对事故、保单、损失、理算、审批、支付、结案材料及结构化记录；本答案独立于模型输出。",
+  "expectedInjuryStatus": "no_injury_indication",
+  "expectedChecks": [
+    {
+      "ruleId": "FACT-MISSING",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "必需材料均已取得，未见未知关键值"
+    },
+    {
+      "ruleId": "FACT-INVALID",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "日期、金额和对象标识均可规范化"
+    },
+    {
+      "ruleId": "FACT-CONFLICT",
+      "nodeId": "materials",
+      "status": "completed",
+      "reason": "跨材料事故、责任、车辆和金额事实一致"
+    },
+    {
+      "ruleId": "POLICY-AVAILABILITY",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "目标赔案所需保单已取得"
+    },
+    {
+      "ruleId": "POLICY-PERIOD",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "事故发生在保单有效期间内"
+    },
+    {
+      "ruleId": "POLICY-COVERAGE",
+      "nodeId": "policy",
+      "status": "completed",
+      "reason": "损失项目与实际承保险种逐项对应"
+    },
+    {
+      "ruleId": "CLAUSE-BINDING",
+      "nodeId": "clauses",
+      "status": "completed",
+      "reason": "保单引用与共享条款版本及哈希一致"
+    },
+    {
+      "ruleId": "AMOUNT-LINE-SUM",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "各赔款计算明细加总等于计算总额"
+    },
+    {
+      "ruleId": "AMOUNT-RECORDED-OP",
+      "nodeId": "amounts",
+      "status": "not_applicable",
+      "reason": "C01 无独立分摊或冲销运算"
+    },
+    {
+      "ruleId": "AMOUNT-ADJUSTMENT",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "申请、定损和认可金额差异均有明细说明"
+    },
+    {
+      "ruleId": "PAYMENT-EFFECTIVE",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "仅存在成功付款，无退款、冲销或失败重付"
+    },
+    {
+      "ruleId": "PAYMENT-APPROVAL-GAP",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "每笔审批金额与对应有效支付金额一致"
+    },
+    {
+      "ruleId": "PAYMENT-DUPLICATE",
+      "nodeId": "amounts",
+      "status": "completed",
+      "reason": "付款对象、险种和审批分配唯一，无重复记录"
+    },
+    {
+      "ruleId": "INJURY-IDENTIFICATION",
+      "nodeId": "archive",
+      "status": "completed",
+      "reason": "报案、事故证明和查勘均明确无人伤"
+    },
+    {
+      "ruleId": "INJURY-SHARED-FACT",
+      "nodeId": "materials",
+      "status": "not_applicable",
+      "reason": "无人伤且不存在影响车损的共用事实冲突"
+    },
+    {
+      "ruleId": "REPORT-COMPLETION",
+      "nodeId": "summary",
+      "status": "completed",
+      "reason": "范围内检查完整，无疑点，需人工确认覆盖后完成"
+    }
+  ],
+  "expectedFindings": [],
+  "forbiddenFindings": [
+    {
+      "entityIds": [
+        "CLM-C01-OWN"
+      ],
+      "prohibitedMeaning": "核赔金额与有效支付金额不一致或存在漏付",
+      "reason": "审批与成功支付按赔案逐笔一致。"
+    },
+    {
+      "entityIds": [
+        "PAY-C01-OWN"
+      ],
+      "prohibitedMeaning": "存在重复支付、无效付款或未解释的冲销退款",
+      "reason": "每笔交易号唯一，均为成功付款且只分配至对应审批。"
+    },
+    {
+      "entityIds": [
+        "LOSS-C01-OWN"
+      ],
+      "prohibitedMeaning": "申请金额与定损金额不同即认定错赔",
+      "reason": "定损及核赔材料已说明合理剔减或分摊，不能仅按数字差异判错。"
+    },
+    {
+      "entityIds": [
+        "VEH-C01-A"
+      ],
+      "prohibitedMeaning": "存在人伤线索或人伤状态未知",
+      "reason": "三个独立来源均明确无人受伤，人员与车辆范围完整。"
+    },
+    {
+      "entityIds": [
+        "CLM-C01-OWN"
+      ],
+      "prohibitedMeaning": "因未提供第三方损失或交强险赔款材料而认定资料缺失",
+      "reason": "C01 为无第三方人车物损失的单车事故，相关检查是不适用而非资料缺失或未投保。"
+    }
+  ],
+  "initialCheckpoint": {
+    "checkpointId": "CP-C01-INITIAL",
+    "afterStepId": null,
+    "reportStage": "draft",
+    "finalReportAllowed": false,
+    "coverageConfirmedByHuman": false,
+    "inScopeChecksComplete": true,
+    "findingStates": [],
+    "requiredDisclosures": []
+  },
+  "reviewCheckpoints": [
+    {
+      "checkpointId": "CP-C01-FINAL",
+      "afterStepId": "STEP-C01-02",
+      "reportStage": "final_vehicle",
+      "finalReportAllowed": true,
+      "coverageConfirmedByHuman": true,
+      "inScopeChecksComplete": true,
+      "findingStates": [],
+      "requiredDisclosures": []
+    }
+  ],
+  "reviewStepsFile": "review-steps/C01.json",
+  "acceptanceIds": [
+    "A01",
+    "A06",
+    "A07",
+    "A09",
+    "A14",
+    "A15",
+    "A17",
+    "A20"
+  ]
+}

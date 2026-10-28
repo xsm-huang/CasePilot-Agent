@@ -1,0 +1,1497 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:casepilot:claims-review:v1:case",
+  "title": "已结案车险审查输入档案",
+  "description": "业务异常可以合法输入；引用完整性另作语义校验。禁止在输入中夹带标准答案。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "dictionaryVersion": {
+      "const": "1.0.0"
+    },
+    "datasetCaseId": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/datasetCaseId"
+    },
+    "caseRevision": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+    },
+    "isSynthetic": {
+      "const": true
+    },
+    "preparedAt": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+    },
+    "reviewScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetClaimIds": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "relatedClaimIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "lossTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "own_vehicle",
+              "third_party_vehicle"
+            ]
+          }
+        },
+        "scopeLimitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "targetClaimIds",
+        "relatedClaimIds",
+        "lossTypes",
+        "scopeLimitations"
+      ]
+    },
+    "accident": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accidentId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "liabilityDescription": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "accidentId",
+        "occurredAt",
+        "location",
+        "description",
+        "liabilityDescription",
+        "evidenceRefs"
+      ]
+    },
+    "parties": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/party"
+      },
+      "minItems": 0
+    },
+    "vehicles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/vehicle"
+      },
+      "minItems": 0
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      },
+      "minItems": 1
+    },
+    "policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/policy"
+      },
+      "minItems": 0
+    },
+    "endorsements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/endorsement"
+      },
+      "minItems": 0
+    },
+    "losses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/loss"
+      },
+      "minItems": 0
+    },
+    "calculations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/calculation"
+      },
+      "minItems": 0
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/approval"
+      },
+      "minItems": 0
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/payment"
+      },
+      "minItems": 0
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/document"
+      },
+      "minItems": 0
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "minItems": 0
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      },
+      "minItems": 0
+    },
+    "dataGaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/gap"
+      },
+      "minItems": 0
+    },
+    "knowledgeRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:casepilot:claims-review:v1:common#/$defs/clauseRef"
+      },
+      "minItems": 0
+    },
+    "injury": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "declaredStatus": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/declaredInjuryStatus"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "injuredPersons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "partyId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "vehicleId": {
+                "anyOf": [
+                  {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relationship": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/personRelationship"
+              },
+              "evidenceRefs": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+              }
+            },
+            "required": [
+              "partyId",
+              "vehicleId",
+              "relationship",
+              "evidenceRefs"
+            ]
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "declaredStatus",
+        "evidenceRefs",
+        "injuredPersons"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "dictionaryVersion",
+    "datasetCaseId",
+    "caseRevision",
+    "isSynthetic",
+    "preparedAt",
+    "reviewScope",
+    "accident",
+    "parties",
+    "vehicles",
+    "claims",
+    "policies",
+    "endorsements",
+    "losses",
+    "calculations",
+    "approvals",
+    "payments",
+    "documents",
+    "evidence",
+    "observations",
+    "dataGaps",
+    "knowledgeRefs",
+    "injury"
+  ],
+  "$defs": {
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "partyId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/partyKind"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "partyId",
+        "displayName",
+        "kind",
+        "evidenceRefs"
+      ]
+    },
+    "vehicle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vehicleId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "role": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/vehicleRole"
+        },
+        "plateNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerPartyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "driverPartyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "powerType": {
+          "enum": [
+            "fuel",
+            "new_energy",
+            "other",
+            "unknown"
+          ]
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "vehicleId",
+        "role",
+        "plateNumber",
+        "ownerPartyId",
+        "driverPartyId",
+        "usage",
+        "powerType",
+        "evidenceRefs"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claimId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "reportNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "claimNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "handlingOrganization": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "closureType": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/closureType"
+        },
+        "closedAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originalConclusion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originalPaymentStatus": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/originalPaymentStatus"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "claimId",
+        "reportNumber",
+        "claimNumber",
+        "handlingOrganization",
+        "closureType",
+        "closedAt",
+        "originalConclusion",
+        "originalPaymentStatus",
+        "evidenceRefs"
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverageId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "coverageCode": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/coverageCode"
+        },
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/coverageStatus"
+        },
+        "parentCoverageId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "insuranceAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "perAccidentLimit": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "deductibleAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "deductibleBasisPoints": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/clauseRef"
+          },
+          "minItems": 0
+        },
+        "specialConditions": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "coverageId",
+        "coverageCode",
+        "status",
+        "parentCoverageId",
+        "insuranceAmount",
+        "perAccidentLimit",
+        "deductibleAmount",
+        "deductibleBasisPoints",
+        "terms",
+        "specialConditions",
+        "evidenceRefs"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policyId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "policyNumber": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "availability": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/policyAvailability"
+        },
+        "policyType": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/policyType"
+        },
+        "insurerCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vehicleId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policyholderPartyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "insuredPartyIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "effectiveFrom": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/coverage"
+          },
+          "minItems": 0
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/clauseRef"
+          },
+          "minItems": 0
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "policyId",
+        "policyNumber",
+        "availability",
+        "policyType",
+        "insurerCode",
+        "vehicleId",
+        "policyholderPartyId",
+        "insuredPartyIds",
+        "effectiveFrom",
+        "effectiveTo",
+        "coverages",
+        "terms",
+        "evidenceRefs"
+      ]
+    },
+    "endorsement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "endorsementId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "policyId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "effectiveFrom": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "affectedCoverageIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "changeDescription": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/clauseRef"
+          },
+          "minItems": 0
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "endorsementId",
+        "policyId",
+        "effectiveFrom",
+        "affectedCoverageIds",
+        "changeDescription",
+        "terms",
+        "evidenceRefs"
+      ]
+    },
+    "loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lossId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "claimId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "vehicleId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "personPartyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lossType": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/lossType"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claimedAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "assessedAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "agreedAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "lossId",
+        "claimId",
+        "vehicleId",
+        "personPartyId",
+        "lossType",
+        "description",
+        "claimedAmount",
+        "assessedAmount",
+        "agreedAmount",
+        "evidenceRefs"
+      ]
+    },
+    "calculationLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lineId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "lossId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "enum": [
+            "sum",
+            "difference",
+            "recorded_formula",
+            "unknown"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "amount": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+              }
+            },
+            "required": [
+              "name",
+              "amount"
+            ]
+          },
+          "minItems": 0
+        },
+        "formulaText": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "result": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "lineId",
+        "lossId",
+        "description",
+        "operation",
+        "inputs",
+        "formulaText",
+        "result",
+        "evidenceRefs"
+      ]
+    },
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calculationId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "claimId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "policyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverageId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/recordStatus"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/calculationLine"
+          },
+          "minItems": 0
+        },
+        "totalAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "adjustmentReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "calculationId",
+        "claimId",
+        "policyId",
+        "coverageId",
+        "status",
+        "lines",
+        "totalAmount",
+        "adjustmentReason",
+        "evidenceRefs"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "approvalId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "claimId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "policyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverageId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "calculationIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "lossIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/approvalStatus"
+        },
+        "approvedAmount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "decidedAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "approvalId",
+        "claimId",
+        "policyId",
+        "coverageId",
+        "calculationIds",
+        "lossIds",
+        "status",
+        "approvedAmount",
+        "decidedAt",
+        "reason",
+        "evidenceRefs"
+      ]
+    },
+    "payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paymentId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "claimId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "externalTransactionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/transactionKind"
+        },
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/transactionStatus"
+        },
+        "amount": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payeePartyId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originalPaymentId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvalAllocations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "approvalId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "amount": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/money"
+              }
+            },
+            "required": [
+              "approvalId",
+              "amount"
+            ]
+          },
+          "minItems": 0
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "paymentId",
+        "claimId",
+        "externalTransactionId",
+        "kind",
+        "status",
+        "amount",
+        "occurredAt",
+        "payeePartyId",
+        "originalPaymentId",
+        "approvalAllocations",
+        "evidenceRefs"
+      ]
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "documentId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "materialType": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/materialType"
+        },
+        "status": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/documentStatus"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relativePath": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pageCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "claimIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "entityIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "issuedAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receivedAt": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceDescription": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isSynthetic": {
+          "const": true
+        }
+      },
+      "required": [
+        "documentId",
+        "title",
+        "materialType",
+        "status",
+        "version",
+        "relativePath",
+        "sha256",
+        "pageCount",
+        "claimIds",
+        "entityIds",
+        "issuedAt",
+        "receivedAt",
+        "sourceDescription",
+        "isSynthetic"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "available"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "relativePath": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+              },
+              "sha256": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/sha256"
+              },
+              "pageCount": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_obtained"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "relativePath": {
+                "type": "null"
+              },
+              "sha256": {
+                "type": "null"
+              },
+              "pageCount": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidenceId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "sourceType": {
+          "enum": [
+            "case_document",
+            "shared_document",
+            "structured_record"
+          ]
+        },
+        "documentId": {
+          "anyOf": [
+            {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "documentVersion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "page": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "recordPointer": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^/"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance": {
+          "enum": [
+            "original_document",
+            "manual_transcription",
+            "structured_business_record"
+          ]
+        }
+      },
+      "required": [
+        "evidenceId",
+        "sourceType",
+        "documentId",
+        "documentVersion",
+        "page",
+        "recordPointer",
+        "quote",
+        "provenance"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "enum": [
+                  "case_document",
+                  "shared_document"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "documentId": {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              "documentVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "recordPointer": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "structured_record"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "recordPointer": {
+                "type": "string",
+                "pattern": "^/"
+              },
+              "page": {
+                "type": "null"
+              },
+              "documentId": {
+                "type": "null"
+              },
+              "documentVersion": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observationId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "entityId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "fieldPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rawValue": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/primitive"
+        },
+        "normalizedValue": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/primitive"
+        },
+        "normalizationStatus": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/normalizationStatus"
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "observationId",
+        "entityId",
+        "fieldPath",
+        "rawValue",
+        "normalizedValue",
+        "normalizationStatus",
+        "evidenceRefs"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "normalizationStatus": {
+                "enum": [
+                  "missing",
+                  "invalid",
+                  "not_normalized"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "normalizedValue": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gapId": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+        },
+        "kind": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/gapKind"
+        },
+        "entityIds": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        },
+        "fieldPaths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceRefs": {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+        }
+      },
+      "required": [
+        "gapId",
+        "kind",
+        "entityIds",
+        "fieldPaths",
+        "description",
+        "evidenceRefs"
+      ]
+    }
+  }
+}

@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "ruleSetVersion": "1.0.0",
+  "preparedOn": "2026-10-27",
+  "status": "data_preparation_specification_not_executable_business_engine",
+  "authority": "本项目审查需求及透明的数据核对口径；不是平安内部规则或自动赔付规范",
+  "unknownPolicy": "unknown is not false, not zero, not not-applicable; retain provenance and request verification",
+  "rules": [
+    {
+      "ruleId": "FACT-MISSING",
+      "title": "事实缺失",
+      "nodeId": "materials",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "observations",
+        "dataGaps"
+      ],
+      "preconditions": [
+        "已定义本次检查所需字段"
+      ],
+      "operation": "列出normalizationStatus=missing或明确unknown_value缺口；区分not_obtained和original_not_collected_confirmed。",
+      "resultMeaning": "资料缺口或待核实事项",
+      "whenUnknown": "cannot_execute或对应事项pending_evidence，不使用0补值。",
+      "evidenceRequirements": [
+        "字段路径、材料收集范围和已知来源"
+      ],
+      "mustNotInfer": [
+        "不能推断原作业违规或拒赔"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "FACT-INVALID",
+      "title": "原始事实无效",
+      "nodeId": "materials",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "observations"
+      ],
+      "preconditions": [
+        "原值已保留，归一化失败有记录"
+      ],
+      "operation": "针对invalid观察值记录具体原值及错误；有效规范字段保留null，不把非法日期填入timestamp。",
+      "resultMeaning": "原始数据质量线索",
+      "whenUnknown": "未归一化不等同无效；留待核实。",
+      "evidenceRequirements": [
+        "observationId、fieldPath、rawValue、evidenceRefs"
+      ],
+      "mustNotInfer": [
+        "不删除冲突来源，不猜测正确日期"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "FACT-CONFLICT",
+      "title": "跨来源事实冲突",
+      "nodeId": "materials",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "observations"
+      ],
+      "preconditions": [
+        "同一entityId和fieldPath存在两个及以上可比较有效观察"
+      ],
+      "operation": "同一事实按明确单位和时区归一化后比较；不同有效值产生冲突线索；无效值由FACT-INVALID处理。",
+      "resultMeaning": "存在不同来源值，非事实裁决",
+      "whenUnknown": "精度或语义不一致时待核实，不强行比较。",
+      "evidenceRequirements": [
+        "所有冲突值及各自来源"
+      ],
+      "mustNotInfer": [
+        "不得用多数票、材料顺序或模型偏好确定真值"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "POLICY-AVAILABILITY",
+      "title": "保单和承保资料不足",
+      "nodeId": "policy",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "policies",
+        "reviewScope",
+        "dataGaps"
+      ],
+      "preconditions": [
+        "已识别目标赔案及需要匹配的损失"
+      ],
+      "operation": "分别展示available/not_obtained/not_insured/unidentified，检查目标损失关联的承保信息是否充分。",
+      "resultMeaning": "适用性缺口或已确认承保事实",
+      "whenUnknown": "受影响检查无法执行，其他项目继续。",
+      "evidenceRequirements": [
+        "保单或未取得说明，涉及的车辆和损失"
+      ],
+      "mustNotInfer": [
+        "未取得不等于未投保，条款存在不等于已承保"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "POLICY-PERIOD",
+      "title": "事故与保险期间比较",
+      "nodeId": "policy",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "accident.occurredAt",
+        "policies.effectiveFrom",
+        "policies.effectiveTo",
+        "endorsements"
+      ],
+      "preconditions": [
+        "时间精度和时区明确、来源无未决冲突，适用批改已明确"
+      ],
+      "operation": "按实际保单约定解释起止边界；若约定无法解析则停止该项。将事故时间与已确认区间比较，保留原值和边界说明。",
+      "resultMeaning": "时间不匹配线索，需人工核实",
+      "whenUnknown": "cannot_execute/pending_evidence，日期精度不足不自动补零点。",
+      "evidenceRequirements": [
+        "事故来源、保单起止与相关批单"
+      ],
+      "mustNotInfer": [
+        "不得直接输出拒赔；不得把交强险与商业险的期间合并"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "POLICY-COVERAGE",
+      "title": "险种与原处理项目对应",
+      "nodeId": "policy",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "policies.coverages",
+        "calculations",
+        "approvals",
+        "losses"
+      ],
+      "preconditions": [
+        "已取得实际承保信息和项目归属"
+      ],
+      "operation": "核对原理算或审批引用的coverageId所属保单及承保状态；明确未承保却出现对应处理时形成核实线索。",
+      "resultMeaning": "承保或归属关系待核实",
+      "whenUnknown": "未知承保不按未承保处理。",
+      "evidenceRequirements": [
+        "实际保单、处理记录与损失对象"
+      ],
+      "mustNotInfer": [
+        "不得将第三方车辆费用计入本车损失，不自动判定违法赔付"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "CLAUSE-BINDING",
+      "title": "条款版本及来源匹配",
+      "nodeId": "clauses",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "knowledgeRefs",
+        "policies.terms",
+        "policies.coverages.terms",
+        "endorsements.terms"
+      ],
+      "preconditions": [
+        "已有来源目录及准确文件hash"
+      ],
+      "operation": "逐项核对documentId、version、SHA-256、sectionId及类别；匹配保单实际约定，禁止回退到相似产品。",
+      "resultMeaning": "资料绑定有效或不匹配",
+      "whenUnknown": "缺少适用信息则cannot_execute；不选择最新版本代替。",
+      "evidenceRequirements": [
+        "保单适用说明、原条款及目录"
+      ],
+      "mustNotInfer": [
+        "元数据匹配不证明原文支持结论；不得把模板或服务规范当合同"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "AMOUNT-LINE-SUM",
+      "title": "计算明细加总核对",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "calculations.lines",
+        "calculations.totalAmount"
+      ],
+      "preconditions": [
+        "同一有效计算记录、同一币种口径，金额均已知且项目组成完整"
+      ],
+      "operation": "使用整数分求所有有效明细result.amountFen之和，与记录totalAmount.amountFen比较，精确到分不设隐含容差。",
+      "resultMeaning": "算术差额事实",
+      "whenUnknown": "金额未知、状态未知或组成不完整时不加总成0。",
+      "evidenceRequirements": [
+        "计算编号、明细、输入值、总额和差额"
+      ],
+      "mustNotInfer": [
+        "算术一致不代表保险责任、价格或公式正确"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "AMOUNT-RECORDED-OP",
+      "title": "明确记录的加减运算",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "calculations.lines"
+      ],
+      "preconditions": [
+        "operation为sum或difference，顺序、输入、结果、币种明确且已知"
+      ],
+      "operation": "sum为输入加总；difference为第一个输入依次减去后续输入。输入为空或出现负结果/未知值时标记无法确认。仅比较记录运算，不推导未给出的合同公式。",
+      "resultMeaning": "明确算式与记录结果不一致线索",
+      "whenUnknown": "recorded_formula和unknown不自动求值，转核实。",
+      "evidenceRequirements": [
+        "实际输入、运算、记录结果与原始计算书"
+      ],
+      "mustNotInfer": [
+        "不执行任意字符串公式，不由模型随意选取免赔或责任比例"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "AMOUNT-ADJUSTMENT",
+      "title": "不同金额口径及调整说明",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "losses",
+        "calculations.adjustmentReason",
+        "approvals.reason"
+      ],
+      "preconditions": [
+        "同一损失和处理范围已明确"
+      ],
+      "operation": "展示申请、定损、约定、理算、核赔的差额及已有说明。已有说明作为待核对依据，不直接确认其合理性。",
+      "resultMeaning": "差异事实或需核实的说明缺口",
+      "whenUnknown": "无法对齐范围时不比较整案总数。",
+      "evidenceRequirements": [
+        "各口径原值、调整意见及确认材料"
+      ],
+      "mustNotInfer": [
+        "金额不同不直接等于多赔或少赔；说明存在也不自动证明合理"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "PAYMENT-EFFECTIVE",
+      "title": "有效支付及退款冲销口径",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "payments",
+        "approvals"
+      ],
+      "preconditions": [
+        "目标审批、交易方向、状态、关联和币种明确"
+      ],
+      "operation": "只纳入succeeded且分配范围明确的记录；付款为正，关联付款的成功退款为负。reversal按所引用交易的相反方向计入；按引用树核对部分金额，禁止循环引用或重复扣除。failed/pending/cancelled不计作已付。",
+      "resultMeaning": "同一审批范围的可核对实付净额",
+      "whenUnknown": "状态、重复导入、分配或冲销关系不明确时停止该范围净额结论，保留流水待核实。",
+      "evidenceRequirements": [
+        "交易编号、有效状态、原交易关联、审批分配及收款对象"
+      ],
+      "mustNotInfer": [
+        "同一外部交易的重复导入不等于真实支付两次；不能简单全部加总"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "PAYMENT-APPROVAL-GAP",
+      "title": "核赔与有效支付差额",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "approvals",
+        "payments"
+      ],
+      "preconditions": [
+        "同一审批口径，PAYMENT-EFFECTIVE可确认且审批金额已知"
+      ],
+      "operation": "deltaFen=有效实付净额-审批金额；保留差额和待付、失败、补充审批等解释。差额为正负都仅先形成核实线索。",
+      "resultMeaning": "支付与审批差异",
+      "whenUnknown": "不能确定支付范围时cannot_execute，不推断少付。",
+      "evidenceRequirements": [
+        "审批、流水、分配及已有调整说明"
+      ],
+      "mustNotInfer": [
+        "负差额不自动认定少赔，正差额不自动认定违规，不触发资金操作"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "PAYMENT-DUPLICATE",
+      "title": "重复计入或支付线索",
+      "nodeId": "amounts",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "losses",
+        "calculations.lines",
+        "payments"
+      ],
+      "preconditions": [
+        "可追溯到同一损失和记录关系"
+      ],
+      "operation": "检查同一损失的多条记录及同一外部交易编号；分别区分多险种分摊、分笔支付、重复导入、失败重付与真实重复，查找冲销或退款依据。",
+      "resultMeaning": "待人工核实的重复线索",
+      "whenUnknown": "仅金额、名称相同不足以确认；关联不足时待核实。",
+      "evidenceRequirements": [
+        "损失ID、交易与计算记录、状态及冲销信息"
+      ],
+      "mustNotInfer": [
+        "不得仅按出现次数或同金额确认重复赔付"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "INJURY-IDENTIFICATION",
+      "title": "人伤四态与专业转交",
+      "nodeId": "archive",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "injury",
+        "observations",
+        "documents",
+        "dataGaps"
+      ],
+      "preconditions": [
+        "已读取实际可用资料并保留人伤声明及来源"
+      ],
+      "operation": "将明确受伤记录和来源线索与原声明比较。有肯定证据且无矛盾则injury_present；有相反声明或关键冲突则conflicting_information；资料不够则insufficient_information。明确无伤声明和足够已读资料无相反线索时仅输出no_injury_indication。非结构化线索仍需模型或人工提取，不宣称字典本身能读懂病历。",
+      "resultMeaning": "范围识别和专业转交提示",
+      "whenUnknown": "不能把未填写字段或未读取材料推断为无人伤。",
+      "evidenceRequirements": [
+        "声明、受伤人员身份、实际材料或观察值"
+      ],
+      "mustNotInfer": [
+        "不得自动审核医疗合理性、人伤赔款或伤残等级"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "INJURY-SHARED-FACT",
+      "title": "人伤共用事实影响车损",
+      "nodeId": "materials",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "observations",
+        "losses",
+        "injury"
+      ],
+      "preconditions": [
+        "人伤资料与车损共享的时间、责任等事实有依赖关系"
+      ],
+      "operation": "共享事实未决时仅阻止受影响车损项目最终完成；无依赖车损检查可继续。独立范围外的人伤转交不单独阻止车损报告。",
+      "resultMeaning": "影响范围和未决依赖",
+      "whenUnknown": "依赖关系不明确时需要人工确认并披露。",
+      "evidenceRequirements": [
+        "冲突来源及受影响项目"
+      ],
+      "mustNotInfer": [
+        "不能因有人伤停止所有车损检查，也不能忽略对车损有影响的冲突"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    },
+    {
+      "ruleId": "REPORT-COMPLETION",
+      "title": "车损最终报告门禁",
+      "nodeId": "summary",
+      "mode": "deterministic_data_check",
+      "inputPaths": [
+        "checks",
+        "findingStates",
+        "humanCoverageConfirmation",
+        "scopeLimitations"
+      ],
+      "preconditions": [
+        "本次范围和输入已固定"
+      ],
+      "operation": "所有范围内必要检查完成，或有明确批准的范围调整和披露；车损/shared_fact疑点均confirmed或excluded；人员已确认覆盖与报告。范围外人伤可未决但必须披露。",
+      "resultMeaning": "允许final_vehicle或只允许draft/interim",
+      "whenUnknown": "失败、无法检查、未复核、待补件和范围内转专业未完结不能伪装成通过。",
+      "evidenceRequirements": [
+        "节点结果、逐条复核历史、人员确认及范围调整"
+      ],
+      "mustNotInfer": [
+        "无疑点也需人工确认；问题确认不等于整改完成；不改写原赔案"
+      ],
+      "basis": {
+        "type": "project_requirement",
+        "reference": "已结案车险赔案审查agent需求：资料一致性、范围及人工确认要求"
+      },
+      "findingInitialState": "unreviewed",
+      "implementedInBusinessRuntime": false
+    }
+  ],
+  "paymentReconciliationContract": {
+    "amountUnit": "integer_fen",
+    "allocationRequirement": "Only reconcile a target approval when successful transaction allocations are explicit and sum to each transaction amount; otherwise show unknown allocation and stop that reconciliation.",
+    "signs": {
+      "disbursement": "+1",
+      "refund": "-1",
+      "reversal": "-sign(originalPaymentId)"
+    },
+    "correctionRequirement": "Refund/reversal must link to an existing, originally effective transaction in the relevant scope. Keep original success and correction events separately; do not mark the original cancelled and subtract the correction again. Partial corrections require known amounts and matching allocations. Ambiguous or excessive corrections remain pending.",
+    "excludedStatuses": [
+      "failed",
+      "pending",
+      "cancelled"
+    ],
+    "unknownStatus": "block affected net-amount result; never silently count zero",
+    "duplicateExternalId": "Verify duplicate import vs actual duplicate transaction before summing; do not silently deduplicate genuine payments or count one imported transaction twice.",
+    "netFen": "sum(sign(entry) * allocation.amountFen) for verified succeeded entries in the selected approval scope",
+    "deltaFen": "netFen - approval.approvedAmount.amountFen",
+    "conclusion": "delta is an arithmetic fact; underpayment/overpayment requires evidence and human review, not automatic settlement"
+  },
+  "requiresEvidenceAssistedReview": [
+    {
+      "checkId": "CLAUSE-SEMANTIC-SUPPORT",
+      "nodeId": "clauses",
+      "description": "条款是否支持结论，是否遗漏限制或特别约定；不能由ID/hash匹配替代",
+      "outcomeWhenUncertain": "pending_evidence_or_professional_review"
+    },
+    {
+      "checkId": "REPAIR-PROFESSIONAL-JUDGMENT",
+      "nodeId": "amounts",
+      "description": "事故关联、维修必要性及价格合理性，需要明确资料与专业依据",
+      "outcomeWhenUncertain": "professional_review"
+    },
+    {
+      "checkId": "ENDORSEMENT-INTERPRETATION",
+      "nodeId": "policy",
+      "description": "批单及特别约定的适用或冲突含义，须结合完整合同核实",
+      "outcomeWhenUncertain": "pending_evidence_or_professional_review"
+    }
+  ],
+  "semanticValidationBoundary": "JSON Schema验证形状、类型和条件；跨对象引用、唯一标识、条款hash/页码及操作前后关系另行校验。故意业务冲突属于合法测试输入，不在格式层当坏数据删除。"
+}

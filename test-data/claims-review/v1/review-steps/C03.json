@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "datasetCaseId": "C03",
+  "caseRevision": 1,
+  "expectedFile": "expected/C03.json",
+  "steps": [
+    {
+      "stepId": "STEP-C03-01",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:00:00+08:00",
+      "action": "inspect_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-01-V1",
+      "payload": {
+        "findingKey": "F-C03-01",
+        "evidenceRefs": [
+          "EV-DOC-C03-10",
+          "EV-DOC-C03-11"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "查看目标赔案审批与支付记录。"
+    },
+    {
+      "stepId": "STEP-C03-02",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:05:00+08:00",
+      "action": "decide_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-02-V1",
+      "payload": {
+        "findingKey": "F-C03-01",
+        "decision": {
+          "action": "confirm",
+          "comment": "审批 8,000.00 元与成功支付 9,000.00 元差额成立，且无冲销或其他审批解释；确认问题并交支付经办岗位核查。",
+          "evidenceRefs": [
+            "EV-DOC-C03-10",
+            "EV-DOC-C03-11"
+          ],
+          "missingItems": [],
+          "followUpOwner": null,
+          "professionalRecipient": null,
+          "professionalReason": null
+        }
+      },
+      "expectedOutcome": "accepted",
+      "note": "系统只保存审查结论，不执行资金操作。"
+    },
+    {
+      "stepId": "STEP-C03-03",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:10:00+08:00",
+      "action": "inspect_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-03-V1",
+      "payload": {
+        "findingKey": "F-C03-02",
+        "evidenceRefs": [
+          "EV-DOC-C03-07",
+          "EV-DOC-C03-09",
+          "EV-DOC-C03-10"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "核对定损、损失确认及审批调整。"
+    },
+    {
+      "stepId": "STEP-C03-04",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:15:00+08:00",
+      "action": "decide_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-04-V1",
+      "payload": {
+        "findingKey": "F-C03-02",
+        "decision": {
+          "action": "exclude",
+          "comment": "1,000.00 元差额对应非本次事故旧划痕，查勘、定损和损失确认记录一致；排除该疑点。",
+          "evidenceRefs": [
+            "EV-DOC-C03-07",
+            "EV-DOC-C03-09",
+            "EV-DOC-C03-10"
+          ],
+          "missingItems": [],
+          "followUpOwner": null,
+          "professionalRecipient": null,
+          "professionalReason": null
+        }
+      },
+      "expectedOutcome": "accepted",
+      "note": "合理金额调整不等同于错赔。"
+    },
+    {
+      "stepId": "STEP-C03-05",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:20:00+08:00",
+      "action": "inspect_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-05-V1",
+      "payload": {
+        "findingKey": "F-C03-03",
+        "evidenceRefs": [
+          "EV-C03-CALC-GAP"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "确认首次材料目录中的计算书缺件状态。"
+    },
+    {
+      "stepId": "STEP-C03-06",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:25:00+08:00",
+      "action": "decide_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-06-V1",
+      "payload": {
+        "findingKey": "F-C03-03",
+        "decision": {
+          "action": "pending",
+          "comment": "首次档案未取得商业三者险赔款计算书，先标记待补充核实。",
+          "evidenceRefs": [],
+          "missingItems": [
+            "商业三者险赔款计算书"
+          ],
+          "followUpOwner": "理算资料管理岗",
+          "professionalRecipient": null,
+          "professionalReason": null
+        }
+      },
+      "expectedOutcome": "accepted",
+      "note": "此时只能生成阶段报告。"
+    },
+    {
+      "stepId": "STEP-C03-07",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:40:00+08:00",
+      "action": "provide_evidence",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-07-V1",
+      "payload": {
+        "findingKey": "F-C03-03",
+        "supplementPackage": "supplements/C03/manifest.json",
+        "newEvidenceIds": [
+          "EV-SUPP-C03-CALC"
+        ],
+        "note": "补件包仅包含商业三者险计算书，不覆盖首次输入。"
+      },
+      "expectedOutcome": "accepted",
+      "note": "将 S10 后补材料独立加入复核。"
+    },
+    {
+      "stepId": "STEP-C03-08",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:45:00+08:00",
+      "action": "inspect_finding",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-08-V1",
+      "payload": {
+        "findingKey": "F-C03-03",
+        "evidenceRefs": [
+          "EV-SUPP-C03-CALC"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "查看后补计算书的险种分摊公式和金额。"
+    },
+    {
+      "stepId": "STEP-C03-09",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:50:00+08:00",
+      "action": "amend_decision",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-09-V1",
+      "payload": {
+        "findingKey": "F-C03-03",
+        "changeReason": "取得并核对后补商业三者险赔款计算书。",
+        "decision": {
+          "action": "exclude",
+          "comment": "后补计算书载明 10,000.00 - 2,000.00 = 8,000.00 元，与审批一致；原缺件疑点完成核实并排除。",
+          "evidenceRefs": [
+            "EV-SUPP-C03-CALC"
+          ],
+          "missingItems": [],
+          "followUpOwner": null,
+          "professionalRecipient": null,
+          "professionalReason": null
+        }
+      },
+      "expectedOutcome": "accepted",
+      "note": "保留原待核实决定及本次修订原因。"
+    },
+    {
+      "stepId": "STEP-C03-10",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T16:55:00+08:00",
+      "action": "confirm_coverage",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-10-V1",
+      "payload": {
+        "comment": "已核对全部适用检查、三条疑点及后补材料边界。",
+        "checkIds": [
+          "FACT-MISSING",
+          "FACT-INVALID",
+          "FACT-CONFLICT",
+          "POLICY-AVAILABILITY",
+          "POLICY-PERIOD",
+          "POLICY-COVERAGE",
+          "CLAUSE-BINDING",
+          "AMOUNT-LINE-SUM",
+          "AMOUNT-RECORDED-OP",
+          "AMOUNT-ADJUSTMENT",
+          "PAYMENT-EFFECTIVE",
+          "PAYMENT-APPROVAL-GAP",
+          "PAYMENT-DUPLICATE",
+          "INJURY-IDENTIFICATION",
+          "INJURY-SHARED-FACT",
+          "REPORT-COMPLETION"
+        ]
+      },
+      "expectedOutcome": "accepted",
+      "note": "人工确认检查覆盖。"
+    },
+    {
+      "stepId": "STEP-C03-11",
+      "actorId": "AUDITOR-C03-01",
+      "at": "2026-10-28T17:00:00+08:00",
+      "action": "save_report",
+      "expectedRevision": 1,
+      "idempotencyKey": "IDEM-C03-11-V1",
+      "payload": {
+        "stage": "final_vehicle",
+        "comment": "三条范围内疑点均已形成确认或排除结论，保存车损最终报告。"
+      },
+      "expectedOutcome": "accepted",
+      "note": "F-C03-01 保持确认问题；系统不执行资金处置。"
+    }
+  ]
+}

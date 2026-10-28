@@ -261,17 +261,153 @@ export type Comment1 = string;
 export type Schemaversion9 = 0;
 export type Readonly = true;
 export type Expectedrevision = number;
+export type Accidentid = string;
+export type Occurredat = string;
+export type Location = string;
+export type Description = string;
+export type Liabilitydescription = string;
+export type Evidenceid = string;
+export type Sourcetype1 = "case_document" | "shared_document" | "structured_record";
+export type Title8 = string;
+export type Documentid1 = string | null;
+export type Documentversion = string | null;
+export type Page2 = number | null;
+export type Recordpointer = string | null;
+export type Quote = string | null;
+export type Sources = ReviewEvidenceSource[];
+export type Id6 = string;
+export type Revision16 = number;
+export type Issynthetic = boolean;
+export type Preparedat = string;
+export type Latestreviewstatus = "not_started";
+export type Losstypes = string[];
+export type Scopelimitations = string[];
+export type Declaredstatus = string;
+export type Injuredpersonids = string[];
+export type Sources1 = ReviewEvidenceSource[];
+export type Partyid = string;
+export type Displayname = string;
+export type Kind1 = string;
+export type Parties = ReviewParty[];
+export type Vehicleid = string;
+export type Role1 = string;
+export type Platenumber = string;
+export type Ownername = string | null;
+export type Drivername = string | null;
+export type Usage = string | null;
+export type Powertype = string | null;
+export type Sources2 = ReviewEvidenceSource[];
+export type Vehicles = ReviewVehicleDetail[];
+export type Claimid = string;
+export type Claimnumber = string;
+export type Reportnumber = string;
+export type Scoperole = "target" | "related";
+export type Closuretype = string;
+export type Closedat = string;
+export type Originalpaymentstatus = string;
+export type Handlingorganization = string;
+export type Originalconclusion = string;
+export type Sources3 = ReviewEvidenceSource[];
+export type Claims = ReviewClaimDetail[];
+export type Policyid = string;
+export type Policynumber = string | null;
+export type Availability = string;
+export type Policytype = string;
+export type Vehicleid1 = string | null;
+export type Effectivefrom = string | null;
+export type Effectiveto = string | null;
+export type Coverageid = string;
+export type Coveragecode = string;
+export type Status4 = string;
+export type Status5 = "known" | "unknown" | "not_applicable";
+export type Amountfen = number | null;
+export type Currency = string;
+export type Reason1 = string | null;
+export type Deductiblebasispoints = number | null;
+export type Specialconditions = string | null;
+export type Documentid2 = string;
+export type Version = string;
+export type Sectionids = string[];
+export type Terms = ReviewTermRef[];
+export type Sources4 = ReviewEvidenceSource[];
+export type Coverages = ReviewCoverage[];
+export type Sources5 = ReviewEvidenceSource[];
+export type Policies = ReviewPolicy[];
+export type Lossid = string;
+export type Claimid1 = string;
+export type Vehicleid2 = string | null;
+export type Personpartyid = string | null;
+export type Losstype = string;
+export type Description1 = string;
+export type Sources6 = ReviewEvidenceSource[];
+export type Losses = ReviewLoss[];
+export type Recordid = string;
+export type Recordtype = "calculation" | "approval" | "payment";
+export type Claimid2 = string;
+export type Title9 = string;
+export type Status6 = string;
+export type Occurredat1 = string | null;
+export type Detail3 = string | null;
+export type Sources7 = ReviewEvidenceSource[];
+export type Processingrecords = ReviewProcessingRecord[];
+export type Entryid = string;
+export type Eventtype = string;
+export type Occurredat2 = string;
+export type Title10 = string;
+export type Detail4 = string | null;
+export type Sources8 = ReviewEvidenceSource[];
+export type Timeline1 = ReviewTimelineEntry[];
+export type Documentid3 = string;
+export type Title11 = string;
+export type Materialtype = string;
+export type Status7 = string;
+export type Version1 = string;
+export type Pagecount = number | null;
+export type Claimids = string[];
+export type Entityids = string[];
+export type Issuedat = string | null;
+export type Receivedat = string | null;
+export type Sourcedescription = string;
+export type Contenturl = string | null;
+export type Documents = ReviewDocument[];
+export type Gapid = string;
+export type Kind2 = string;
+export type Entityids1 = string[];
+export type Fieldpaths = string[];
+export type Description2 = string;
+export type Sources9 = ReviewEvidenceSource[];
+export type Datagaps = ReviewDataGap[];
+export type Id7 = string;
+export type Revision17 = number;
+export type Claimid3 = string;
+export type Claimnumber1 = string;
+export type Reportnumber1 = string;
+export type Scoperole1 = "target" | "related";
+export type Closuretype1 = string;
+export type Closedat1 = string;
+export type Originalpaymentstatus1 = string;
+export type Targetclaims = ReviewClaimSummary[];
+export type Relatedclaims = ReviewClaimSummary[];
+export type Vehicleid3 = string;
+export type Role2 = string;
+export type Platenumber1 = string;
+export type Vehicles1 = ReviewVehicleSummary[];
+export type Accidentat = string;
+export type Injurystatus = string;
+export type Latestreviewstatus1 = "not_started";
+export type Datastatus = "ready" | "not_imported";
+export type Items = ReviewCaseListItem[];
 export type Decision2 = "approve" | "reject";
 export type Comment2 = string;
 export type Interruptkey2 = string;
 export type Expectedrevision1 = number;
-export type Id6 = string;
+export type Id8 = string;
 export type Caseid5 = string;
-export type Status4 = "running" | "waiting_review" | "completed" | "rejected" | "failed";
+export type Status8 = "running" | "waiting_review" | "completed" | "rejected" | "failed";
 export type Events1 = V0TimelineEvent[];
 export type Findings2 = V0Finding[];
 export type Citations3 = V0ClauseCitation[];
-export type Id7 = string;
+export type Id9 = string;
 export type Claimant = string;
 export type Productcode1 = string;
 export type Clauseversion1 = string;
@@ -281,23 +417,23 @@ export type Claimamount = number;
 export type Type10 = string;
 export type Name1 = string;
 export type Materials = V0Material[];
-export type Id8 = string;
+export type Id10 = string;
 export type Productcode2 = string;
-export type Version = string;
-export type Title8 = string;
+export type Version2 = string;
+export type Title12 = string;
 export type Content5 = string;
 export type Keywords = string[];
 export type Accepted1 = true;
 export type Taskid1 = string;
 export type Schemaversion10 = 1;
-export type Id9 = string;
+export type Id11 = string;
 export type Caseid6 = string;
 export type Conversationid10 = string;
-export type Kind1 = "initial" | "followup";
+export type Kind3 = "initial" | "followup";
 export type Question1 = string;
-export type Status5 =
+export type Status9 =
   "queued" | "running" | "waiting_review" | "resuming" | "recoverable" | "completed" | "rejected" | "failed";
-export type Revision16 = number;
+export type Revision18 = number;
 export type Lasteventseq = number;
 export type Usermessageid = string;
 export type Assistantmessageid1 = string | null;
@@ -307,7 +443,7 @@ export type Modelfindings1 = ModelFinding[];
 export type Citations4 = Citation[];
 export type Sections1 = ReportSection[];
 export type Attempt1 = number;
-export type Status6 = "queued" | "parsing" | "chunking" | "embedding" | "ready" | "failed";
+export type Status10 = "queued" | "parsing" | "chunking" | "embedding" | "ready" | "failed";
 export type Startedat = string;
 export type Finishedat = string | null;
 export type Code3 = string;
@@ -318,15 +454,15 @@ export type Httpstatus = number | null;
 export type Requestid1 = string | null;
 export type Retryafter = number | null;
 export type Generationid2 = string;
-export type Documentid1 = string;
+export type Documentid4 = string;
 export type Productcode3 = string;
 export type Clauseversion2 = string;
 export type Filename1 = string;
 export type Sha256 = string;
-export type Status7 = "queued" | "parsing" | "chunking" | "embedding" | "ready" | "failed";
-export type Revision17 = number;
+export type Status11 = "queued" | "parsing" | "chunking" | "embedding" | "ready" | "failed";
+export type Revision19 = number;
 export type Attempt2 = number;
-export type Pagecount = number;
+export type Pagecount1 = number;
 export type Chunkcount = number;
 export type Embeddedcount = number;
 export type Isactive = boolean;
@@ -832,6 +968,282 @@ export interface RecoverRequest {
 }
 /**
  * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewAccident".
+ */
+export interface ReviewAccident {
+  accidentId: Accidentid;
+  occurredAt: Occurredat;
+  location: Location;
+  description: Description;
+  liabilityDescription: Liabilitydescription;
+  sources: Sources;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewEvidenceSource".
+ */
+export interface ReviewEvidenceSource {
+  evidenceId: Evidenceid;
+  sourceType: Sourcetype1;
+  title: Title8;
+  documentId?: Documentid1;
+  documentVersion?: Documentversion;
+  page?: Page2;
+  recordPointer?: Recordpointer;
+  quote?: Quote;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewCaseDetail".
+ */
+export interface ReviewCaseDetail {
+  id: Id6;
+  revision: Revision16;
+  isSynthetic: Issynthetic;
+  preparedAt: Preparedat;
+  latestReviewStatus?: Latestreviewstatus;
+  scope: ReviewScope;
+  accident: ReviewAccident;
+  injury: ReviewInjury;
+  parties: Parties;
+  vehicles: Vehicles;
+  claims: Claims;
+  policies: Policies;
+  losses: Losses;
+  processingRecords: Processingrecords;
+  timeline: Timeline1;
+  documents: Documents;
+  dataGaps: Datagaps;
+  originalApprovedAmount: ReviewMoney;
+  effectivePaidAmount: ReviewMoney;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewScope".
+ */
+export interface ReviewScope {
+  lossTypes: Losstypes;
+  scopeLimitations: Scopelimitations;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewInjury".
+ */
+export interface ReviewInjury {
+  declaredStatus: Declaredstatus;
+  injuredPersonIds: Injuredpersonids;
+  sources: Sources1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewParty".
+ */
+export interface ReviewParty {
+  partyId: Partyid;
+  displayName: Displayname;
+  kind: Kind1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewVehicleDetail".
+ */
+export interface ReviewVehicleDetail {
+  vehicleId: Vehicleid;
+  role: Role1;
+  plateNumber: Platenumber;
+  ownerName?: Ownername;
+  driverName?: Drivername;
+  usage?: Usage;
+  powerType?: Powertype;
+  sources: Sources2;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewClaimDetail".
+ */
+export interface ReviewClaimDetail {
+  claimId: Claimid;
+  claimNumber: Claimnumber;
+  reportNumber: Reportnumber;
+  scopeRole: Scoperole;
+  closureType: Closuretype;
+  closedAt: Closedat;
+  originalPaymentStatus: Originalpaymentstatus;
+  handlingOrganization: Handlingorganization;
+  originalConclusion: Originalconclusion;
+  sources: Sources3;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewPolicy".
+ */
+export interface ReviewPolicy {
+  policyId: Policyid;
+  policyNumber?: Policynumber;
+  availability: Availability;
+  policyType: Policytype;
+  vehicleId?: Vehicleid1;
+  effectiveFrom?: Effectivefrom;
+  effectiveTo?: Effectiveto;
+  coverages: Coverages;
+  sources: Sources5;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewCoverage".
+ */
+export interface ReviewCoverage {
+  coverageId: Coverageid;
+  coverageCode: Coveragecode;
+  status: Status4;
+  insuranceAmount: ReviewMoney;
+  perAccidentLimit: ReviewMoney;
+  deductibleAmount: ReviewMoney;
+  deductibleBasisPoints?: Deductiblebasispoints;
+  specialConditions?: Specialconditions;
+  terms: Terms;
+  sources: Sources4;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewMoney".
+ */
+export interface ReviewMoney {
+  status: Status5;
+  amountFen: Amountfen;
+  currency?: Currency;
+  reason?: Reason1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewTermRef".
+ */
+export interface ReviewTermRef {
+  documentId: Documentid2;
+  version: Version;
+  sectionIds: Sectionids;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewLoss".
+ */
+export interface ReviewLoss {
+  lossId: Lossid;
+  claimId: Claimid1;
+  vehicleId?: Vehicleid2;
+  personPartyId?: Personpartyid;
+  lossType: Losstype;
+  description: Description1;
+  claimedAmount: ReviewMoney;
+  assessedAmount: ReviewMoney;
+  agreedAmount: ReviewMoney;
+  sources: Sources6;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewProcessingRecord".
+ */
+export interface ReviewProcessingRecord {
+  recordId: Recordid;
+  recordType: Recordtype;
+  claimId: Claimid2;
+  title: Title9;
+  status: Status6;
+  occurredAt?: Occurredat1;
+  amount?: ReviewMoney | null;
+  detail?: Detail3;
+  sources: Sources7;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewTimelineEntry".
+ */
+export interface ReviewTimelineEntry {
+  entryId: Entryid;
+  eventType: Eventtype;
+  occurredAt: Occurredat2;
+  title: Title10;
+  detail?: Detail4;
+  sources: Sources8;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewDocument".
+ */
+export interface ReviewDocument {
+  documentId: Documentid3;
+  title: Title11;
+  materialType: Materialtype;
+  status: Status7;
+  version: Version1;
+  pageCount?: Pagecount;
+  claimIds: Claimids;
+  entityIds: Entityids;
+  issuedAt?: Issuedat;
+  receivedAt?: Receivedat;
+  sourceDescription: Sourcedescription;
+  contentUrl?: Contenturl;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewDataGap".
+ */
+export interface ReviewDataGap {
+  gapId: Gapid;
+  kind: Kind2;
+  entityIds: Entityids1;
+  fieldPaths: Fieldpaths;
+  description: Description2;
+  sources: Sources9;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewCaseListItem".
+ */
+export interface ReviewCaseListItem {
+  id: Id7;
+  revision: Revision17;
+  targetClaims: Targetclaims;
+  relatedClaims: Relatedclaims;
+  vehicles: Vehicles1;
+  accidentAt: Accidentat;
+  originalApprovedAmount: ReviewMoney;
+  effectivePaidAmount: ReviewMoney;
+  injuryStatus: Injurystatus;
+  latestReviewStatus?: Latestreviewstatus1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewClaimSummary".
+ */
+export interface ReviewClaimSummary {
+  claimId: Claimid3;
+  claimNumber: Claimnumber1;
+  reportNumber: Reportnumber1;
+  scopeRole: Scoperole1;
+  closureType: Closuretype1;
+  closedAt: Closedat1;
+  originalPaymentStatus: Originalpaymentstatus1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewVehicleSummary".
+ */
+export interface ReviewVehicleSummary {
+  vehicleId: Vehicleid3;
+  role: Role2;
+  plateNumber: Platenumber1;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
+ * via the `definition` "ReviewCaseListResponse".
+ */
+export interface ReviewCaseListResponse {
+  dataStatus: Datastatus;
+  items: Items;
+}
+/**
+ * This interface was referenced by `TransportContract`'s JSON-Schema
  * via the `definition` "ReviewRequest".
  */
 export interface ReviewRequest {
@@ -845,9 +1257,9 @@ export interface ReviewRequest {
  * via the `definition` "V0AnalysisTask".
  */
 export interface V0AnalysisTask {
-  id: Id6;
+  id: Id8;
   caseId: Caseid5;
-  status: Status4;
+  status: Status8;
   events: Events1;
   findings: Findings2;
   citations: Citations3;
@@ -859,7 +1271,7 @@ export interface V0AnalysisTask {
  * via the `definition` "V0ClaimCase".
  */
 export interface V0ClaimCase {
-  id: Id7;
+  id: Id9;
   claimant: Claimant;
   productCode: Productcode1;
   clauseVersion: Clauseversion1;
@@ -885,10 +1297,10 @@ export interface Fields {
  * via the `definition` "V0Clause".
  */
 export interface V0Clause {
-  id: Id8;
+  id: Id10;
   productCode: Productcode2;
-  version: Version;
-  title: Title8;
+  version: Version2;
+  title: Title12;
   content: Content5;
   keywords: Keywords;
 }
@@ -906,14 +1318,14 @@ export interface V0ReviewAccepted {
  */
 export interface V1AnalysisTask {
   schemaVersion: Schemaversion10;
-  id: Id9;
+  id: Id11;
   caseId: Caseid6;
   conversationId: Conversationid10;
-  kind: Kind1;
+  kind: Kind3;
   question: Question1;
-  status: Status5;
+  status: Status9;
   caseSnapshot: V0ClaimCase;
-  revision: Revision16;
+  revision: Revision18;
   lastEventSeq: Lasteventseq;
   userMessageId: Usermessageid;
   assistantMessageId: Assistantmessageid1;
@@ -934,7 +1346,7 @@ export interface V1AnalysisTask {
  */
 export interface V1KnowledgeAttempt {
   attempt: Attempt1;
-  status: Status6;
+  status: Status10;
   startedAt: Startedat;
   finishedAt?: Finishedat;
   error?: V1KnowledgeError | null;
@@ -958,15 +1370,15 @@ export interface V1KnowledgeError {
  */
 export interface V1KnowledgeGeneration {
   generationId: Generationid2;
-  documentId: Documentid1;
+  documentId: Documentid4;
   productCode: Productcode3;
   clauseVersion: Clauseversion2;
   fileName: Filename1;
   sha256: Sha256;
-  status: Status7;
-  revision: Revision17;
+  status: Status11;
+  revision: Revision19;
   attempt: Attempt2;
-  pageCount: Pagecount;
+  pageCount: Pagecount1;
   chunkCount: Chunkcount;
   embeddedCount: Embeddedcount;
   isActive: Isactive;

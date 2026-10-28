@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "datasetCaseId": "C03",
+  "baseCaseRevision": 1,
+  "providedAt": "2026-10-28T16:40:00+08:00",
+  "reason": "人工对 F-C03-03 标记待补充核实后取得商业三者险赔款计算书。",
+  "files": [
+    {
+      "documentId": "SUPP-DOC-C03-01",
+      "title": "补充赔款计算书 - 第三方商业险（演示）",
+      "relativePath": "补充计算书_第三方商业险_演示.pdf",
+      "sha256": "c09dd6c22416049b134dcd601fd7e717394e4bea676c5193f9a66142843b1c33",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP"
+      ],
+      "isSynthetic": true
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "EV-SUPP-C03-CALC",
+      "documentId": "SUPP-DOC-C03-01",
+      "documentVersion": "v1",
+      "page": 1,
+      "quote": "商业三者险应付 = 10,000.00 - 2,000.00 = 8,000.00 元。"
+    }
+  ],
+  "boundary": "本补件独立于首次输入，只通过 review-steps/C03.json 的 provide_evidence 步骤进入人工复核。"
+}

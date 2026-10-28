@@ -1,0 +1,563 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:casepilot:claims-review:v1:expected",
+  "title": "独立测试标准答案",
+  "description": "按语义和证据匹配，不强制模型逐字复述；不得进入AI上下文或条款检索。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "dictionaryVersion": {
+      "const": "1.0.0"
+    },
+    "datasetCaseId": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/datasetCaseId"
+    },
+    "caseRevision": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/revision"
+    },
+    "isTestOracle": {
+      "const": true
+    },
+    "annotatedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "annotatedAt": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/timestamp"
+    },
+    "annotationStatus": {
+      "enum": [
+        "draft",
+        "reviewed"
+      ]
+    },
+    "annotationBasis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expectedInjuryStatus": {
+      "$ref": "urn:casepilot:claims-review:v1:common#/$defs/injuryStatus"
+    },
+    "expectedChecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ruleId": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+          },
+          "nodeId": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/nodeId"
+          },
+          "status": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/checkStatus"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "ruleId",
+          "nodeId",
+          "status",
+          "reason"
+        ]
+      },
+      "minItems": 0
+    },
+    "expectedFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "findingKey": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+          },
+          "source": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingSource"
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scope": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+          },
+          "entityIds": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+          },
+          "requiredMeaning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredEvidenceIds": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+          },
+          "prohibitedClaims": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "initialState": {
+            "const": "unreviewed"
+          },
+          "expectedHumanAction": {
+            "anyOf": [
+              {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/decisionAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "humanRationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "findingKey",
+          "source",
+          "ruleId",
+          "scope",
+          "entityIds",
+          "requiredMeaning",
+          "requiredEvidenceIds",
+          "prohibitedClaims",
+          "initialState",
+          "expectedHumanAction",
+          "humanRationale"
+        ]
+      },
+      "minItems": 0
+    },
+    "forbiddenFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entityIds": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/ids"
+          },
+          "prohibitedMeaning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "entityIds",
+          "prohibitedMeaning",
+          "reason"
+        ]
+      },
+      "minItems": 0
+    },
+    "initialCheckpoint": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "checkpointId": {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+            },
+            "afterStepId": {
+              "anyOf": [
+                {
+                  "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reportStage": {
+              "$ref": "urn:casepilot:claims-review:v1:common#/$defs/reportStage"
+            },
+            "finalReportAllowed": {
+              "type": "boolean"
+            },
+            "coverageConfirmedByHuman": {
+              "type": "boolean"
+            },
+            "inScopeChecksComplete": {
+              "type": "boolean"
+            },
+            "findingStates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "findingKey": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                  },
+                  "scope": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+                  },
+                  "state": {
+                    "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingState"
+                  }
+                },
+                "required": [
+                  "findingKey",
+                  "scope",
+                  "state"
+                ]
+              },
+              "minItems": 0
+            },
+            "requiredDisclosures": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "checkpointId",
+            "afterStepId",
+            "reportStage",
+            "finalReportAllowed",
+            "coverageConfirmedByHuman",
+            "inScopeChecksComplete",
+            "findingStates",
+            "requiredDisclosures"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "finalReportAllowed": {
+                    "const": true
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reportStage": {
+                    "const": "final_vehicle"
+                  },
+                  "coverageConfirmedByHuman": {
+                    "const": true
+                  },
+                  "inScopeChecksComplete": {
+                    "const": true
+                  },
+                  "findingStates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "findingKey": {
+                          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                        },
+                        "scope": {
+                          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+                        },
+                        "state": {
+                          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingState"
+                        }
+                      },
+                      "required": [
+                        "findingKey",
+                        "scope",
+                        "state"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "scope": {
+                                "enum": [
+                                  "vehicle",
+                                  "shared_fact"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "state": {
+                                "enum": [
+                                  "confirmed",
+                                  "excluded"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "minItems": 0
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "reportStage": {
+                    "const": "final_vehicle"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "finalReportAllowed": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "finalReportAllowed": {
+              "const": false
+            },
+            "coverageConfirmedByHuman": {
+              "const": false
+            }
+          }
+        }
+      ]
+    },
+    "reviewCheckpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "checkpointId": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+          },
+          "afterStepId": {
+            "anyOf": [
+              {
+                "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reportStage": {
+            "$ref": "urn:casepilot:claims-review:v1:common#/$defs/reportStage"
+          },
+          "finalReportAllowed": {
+            "type": "boolean"
+          },
+          "coverageConfirmedByHuman": {
+            "type": "boolean"
+          },
+          "inScopeChecksComplete": {
+            "type": "boolean"
+          },
+          "findingStates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "findingKey": {
+                  "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                },
+                "scope": {
+                  "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+                },
+                "state": {
+                  "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingState"
+                }
+              },
+              "required": [
+                "findingKey",
+                "scope",
+                "state"
+              ]
+            },
+            "minItems": 0
+          },
+          "requiredDisclosures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "checkpointId",
+          "afterStepId",
+          "reportStage",
+          "finalReportAllowed",
+          "coverageConfirmedByHuman",
+          "inScopeChecksComplete",
+          "findingStates",
+          "requiredDisclosures"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "finalReportAllowed": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "reportStage": {
+                  "const": "final_vehicle"
+                },
+                "coverageConfirmedByHuman": {
+                  "const": true
+                },
+                "inScopeChecksComplete": {
+                  "const": true
+                },
+                "findingStates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "findingKey": {
+                        "$ref": "urn:casepilot:claims-review:v1:common#/$defs/id"
+                      },
+                      "scope": {
+                        "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingScope"
+                      },
+                      "state": {
+                        "$ref": "urn:casepilot:claims-review:v1:common#/$defs/findingState"
+                      }
+                    },
+                    "required": [
+                      "findingKey",
+                      "scope",
+                      "state"
+                    ],
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "scope": {
+                              "enum": [
+                                "vehicle",
+                                "shared_fact"
+                              ]
+                            }
+                          }
+                        },
+                        "then": {
+                          "properties": {
+                            "state": {
+                              "enum": [
+                                "confirmed",
+                                "excluded"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "minItems": 0
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "reportStage": {
+                  "const": "final_vehicle"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "finalReportAllowed": {
+                  "const": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "minItems": 0
+    },
+    "reviewStepsFile": {
+      "anyOf": [
+        {
+          "$ref": "urn:casepilot:claims-review:v1:common#/$defs/relativePath"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "acceptanceIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^A(0[1-9]|1[0-9]|20)$"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "dictionaryVersion",
+    "datasetCaseId",
+    "caseRevision",
+    "isTestOracle",
+    "annotatedBy",
+    "annotatedAt",
+    "annotationStatus",
+    "annotationBasis",
+    "expectedInjuryStatus",
+    "expectedChecks",
+    "expectedFindings",
+    "forbiddenFindings",
+    "initialCheckpoint",
+    "reviewCheckpoints",
+    "reviewStepsFile",
+    "acceptanceIds"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "stage": "G02-G07_preparation_only",
+  "status": "passed",
+  "checks": {
+    "jsonSchemaCompilation": "passed_4_schemas",
+    "dictionarySchemaConsistency": "passed",
+    "sourceFileIntegrity": "passed_6_original_pdfs",
+    "sourceAnchorAndGeneratedFileConsistency": "passed",
+    "reviewContractBoundarySelfTests": {
+      "passed": 50,
+      "failed": 0
+    },
+    "pythonRuffCheck": "passed",
+    "pythonFormatCheck": "passed"
+  },
+  "counts": {
+    "primaryDeliverables": 6,
+    "supportingCommonSchemas": 1,
+    "sourceDocuments": 6,
+    "bodySections": 28,
+    "deterministicReviewSpecifications": 16,
+    "providerCalls": 0
+  },
+  "commands": [
+    "node test-data/claims-review/v1/tools/validate_step1.mjs --self-test",
+    "./.venv/Scripts/python.exe -X utf8 test-data/claims-review/v1/tools/build_step1.py --check",
+    "./.venv/Scripts/python.exe -m ruff check test-data/claims-review/v1/tools/build_step1.py",
+    "./.venv/Scripts/python.exe -m ruff format --check test-data/claims-review/v1/tools/build_step1.py"
+  ],
+  "fileFingerprints": [
+    {
+      "file": "shared/dictionaries.json",
+      "sha256": "7723fa9c96ef82f1ccbe2538a86ab2b805a867d3c99cd3b5405506ecf69f3089"
+    },
+    {
+      "file": "schemas/common.schema.json",
+      "sha256": "6d0720deb0dff7bb63e796f8cc93fe9ce8f90901bbc4b641792376cfbb1968e8"
+    },
+    {
+      "file": "schemas/case.schema.json",
+      "sha256": "cfcae7002e504b8adddaeb8e968003a177462345e2de8b106c4ab15313184ca2"
+    },
+    {
+      "file": "schemas/expected.schema.json",
+      "sha256": "845c9f0dbf351fa90f6b1a339ca801fbbde9ab79ae9e94c754b290e9859786a2"
+    },
+    {
+      "file": "schemas/review-steps.schema.json",
+      "sha256": "16d1e973d7633ca41d71cd9d4c1718f4dee57767a0779ff83b9e55e7970e00e2"
+    },
+    {
+      "file": "shared/clause-catalog.json",
+      "sha256": "d45836ae73f4ed7463097085c01436fcefd7e473b3c633efce4a32b547f1fd4d"
+    },
+    {
+      "file": "shared/review-rules.json",
+      "sha256": "37a75b93323478859db866b6773fe8422add4f96a1a8196b0e755da761039180"
+    },
+    {
+      "file": "tools/build_step1.py",
+      "sha256": "831a5f5c089b6659f370b388699763f61dbfe4d9271cf4257049438fbe9af493"
+    },
+    {
+      "file": "tools/validate_step1.mjs",
+      "sha256": "0617eb66f2ea9aff688a675409de938950202bb0bd4ef816588dff83c5337ad5"
+    },
+    {
+      "file": "步骤1资料规范.md",
+      "sha256": "9bb42cad3da362a8367090211af8b51271d832367b569d62161b86050ea320a1"
+    },
+    {
+      "file": "待准备资料清单.md",
+      "sha256": "d7a2fa3c5608ebcc1e9488b1ddd2b847d6b3cf960e3a48e462a7028e21c8c792"
+    }
+  ],
+  "limitations": [
+    "No C01-C16 inputs, oracle files or review scripts generated.",
+    "In-memory self-tests validate preparation contracts, not production Agent behavior or actual concurrency.",
+    "No database changes, ingestion, model calls or Embedding calls.",
+    "Rule table is a specification, not an integrated business rules engine.",
+    "Semantic support, professional judgment and real-model quality still require later case-based acceptance."
+  ]
+}

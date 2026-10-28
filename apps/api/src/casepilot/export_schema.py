@@ -6,6 +6,7 @@ from pydantic.json_schema import models_json_schema
 
 from .schemas.analysis import V0AnalysisTask, V0ClaimCase, V0Clause, V0ReviewAccepted
 from .schemas.knowledge import V1KnowledgeGeneration, V1KnowledgeRetry
+from .schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse
 from .schemas.workspace import (
     Citation,
     CitationContext,
@@ -33,6 +34,8 @@ def main():
                 V0ReviewAccepted,
                 V1KnowledgeGeneration,
                 V1KnowledgeRetry,
+                ReviewCaseListResponse,
+                ReviewCaseDetail,
                 WorkbenchTask,
                 WorkspaceEvent,
                 V1AnalysisTask,

@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "collectionId": "claims-review-pingan-public-baseline-v1",
+  "selectedOn": "2026-10-27",
+  "timezone": "Asia/Shanghai",
+  "purpose": "已结案车险赔案车损审查的公开资料基线；尚未导入应用知识库或生成 Embedding",
+  "selectionScope": "以平安公开的普通机动车条款为主，完整保留附加险及人伤相关章节；应用范围由具体保单和本次审查范围限定",
+  "originalFilesModified": false,
+  "automaticIngestion": false,
+  "documents": [
+    {
+      "documentId": "PA-CTPL-2020-CONTENT",
+      "titleInDocument": "机动车交通事故责任强制保险条款",
+      "localFile": "clauses/pingan/机动车交通事故责任强制保险条款_2020修订内容.pdf",
+      "category": "contract_terms",
+      "sourceOrganization": "中国平安财产保险股份有限公司官方文件服务",
+      "sourceUrl": "https://iobs.pingan.com.cn/download/icore-aops-base-dmz-prd/ICORE_CPS-1622135384760-52A50DD09FB74A65B33FF1CBF7D9F2BE-29964578",
+      "corroboratingUrls": [
+        "https://www.4008000000.com/help/toubao/chexian/tiaokuan.shtml"
+      ],
+      "version": "2020修订内容",
+      "versionBasis": "原 PDF 标题未标年份；责任限额及正文与平安官网所列修订后交强险条款核对。年份为本地识别标签，不是原 PDF 标题的一部分。",
+      "publicationDate": null,
+      "eligibleForContractRetrieval": true,
+      "applicability": "仅供确认适用该版本交强险条款的保单和事故使用；实际承保及适用时间须由案件保单确定。",
+      "extractionQuality": "readable_text",
+      "visualInspectionPages": [
+        1,
+        9
+      ],
+      "expectedPageCount": 9,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "byteLength": 184834,
+      "sha256": "b8d04712b5a394c9050e8853fa3cb3582434450cea9f97d45dae834f2370a461",
+      "pageCount": 9,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        392,
+        474,
+        433,
+        376,
+        405,
+        367,
+        448,
+        415,
+        269
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    },
+    {
+      "documentId": "PA-COMMERCIAL-MOTOR-2020",
+      "titleInDocument": "机动车商业保险条款（2020版）",
+      "localFile": "clauses/pingan/机动车商业保险条款_2020版.pdf",
+      "category": "contract_terms",
+      "sourceOrganization": "中国平安财产保险股份有限公司官方文件服务",
+      "sourceUrl": "https://iobs.pingan.com.cn/download/icore-aops-base-dmz-prd/ICORE_CPS-1622135562872-B724D11CD22046DAA95D932B8043190D-51537627",
+      "corroboratingUrls": [
+        "https://www.4008000000.com/help/toubao/chexian/tiaokuan.shtml"
+      ],
+      "version": "2020版",
+      "versionBasis": "原 PDF 标题明确标注；平安官网同时公开相应商业车险条款，备案名称可结合 PA-PRODUCT-CATALOG-SNAPSHOT 核对。",
+      "publicationDate": null,
+      "eligibleForContractRetrieval": true,
+      "applicability": "普通机动车对应产品；不能套用新能源汽车专属条款、特种车或其他产品。先确认保单实际承保险种、特别约定和批单。",
+      "extractionQuality": "readable_text",
+      "visualInspectionPages": [
+        1,
+        8,
+        14
+      ],
+      "expectedPageCount": 14,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "contains": [
+        "总则",
+        "机动车损失保险",
+        "机动车第三者责任保险",
+        "机动车车上人员责任保险",
+        "通用条款",
+        "附加绝对免赔率特约条款",
+        "附加车轮单独损失险",
+        "附加新增加设备损失险",
+        "附加车身划痕损失险",
+        "附加修理期间费用补偿险",
+        "附加发动机进水损坏除外特约条款",
+        "附加车上货物责任险",
+        "附加精神损害抚慰金责任险",
+        "附加法定节假日限额翻倍险",
+        "附加医保外医疗费用责任险",
+        "附加机动车增值服务特约条款",
+        "释义"
+      ],
+      "notes": [
+        "原 PDF 完整保留，未按险种拆页或裁掉总则、共同条款、释义。",
+        "包含某附加险条款不表示所有演示保单已承保该附加险。",
+        "人伤及其他范围外内容保留供范围识别和专业转交，不代表首期具备其赔偿合理性审查能力。"
+      ],
+      "byteLength": 437059,
+      "sha256": "a8908c3ee830bc59774d3baa1d093510be87993dbcaa89213906dff85e84489a",
+      "pageCount": 14,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        1030,
+        1186,
+        1085,
+        1277,
+        1088,
+        1115,
+        1115,
+        839,
+        1015,
+        1030,
+        1027,
+        761,
+        1057,
+        367
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    },
+    {
+      "documentId": "PA-PRODUCT-CATALOG-SNAPSHOT",
+      "titleInDocument": null,
+      "descriptiveTitle": "平安车险产品及备案信息目录（官方公开文件存档）",
+      "localFile": "references/pingan/车险产品及备案信息目录_官方存档.pdf",
+      "category": "product_catalog_reference",
+      "sourceOrganization": "中国平安财产保险股份有限公司官方文件服务",
+      "sourceUrl": "https://iobs.pingan.com.cn/download/icore-aops-base-dmz-prd/ICORE_CPS-1640670022963-B110C4F812A14D32813D181756B52BB1-72390789",
+      "version": "本次下载的官方目录快照；未确认发布日期或当前在售状态",
+      "publicationDate": null,
+      "eligibleForContractRetrieval": false,
+      "applicability": "用于核对产品名称、主附险分类及备案标识，不是保险责任正文，也不能证明某份保单实际承保。",
+      "extractionQuality": "readable_table_text_order_requires_care",
+      "visualInspectionPages": [
+        1
+      ],
+      "expectedPageCount": 5,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "byteLength": 498147,
+      "sha256": "e82542cfbacc798fff17fc67c92951dcf2d31823df04f37afd3e71ff81fa3134",
+      "pageCount": 5,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        1209,
+        1206,
+        1209,
+        1215,
+        609
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    },
+    {
+      "documentId": "IAC-CLAIMS-SERVICE-52-2024",
+      "titleInDocument": "机动车辆保险理赔服务规范",
+      "localFile": "references/iachina/机动车辆保险理赔服务规范_TIAC52-2024.pdf",
+      "category": "industry_service_reference",
+      "sourceOrganization": "中国保险行业协会",
+      "sourceUrl": "https://www.iachina.cn/module/download/downfile.jsp?classid=0&filename=d240c059d66c406cb271e11a16d001e6.pdf",
+      "version": "T/IAC 52—2024",
+      "publicationDate": "2024-11-19",
+      "effectiveDate": "2025-02-19",
+      "eligibleForContractRetrieval": false,
+      "applicability": "用于理解理赔服务、材料和流程背景；与合同条款分类检索，不能作为平安内部制度或直接作为拒赔、扣减依据。历史案件是否适用需另行确认。",
+      "extractionQuality": "readable_text",
+      "visualInspectionPages": [
+        1,
+        12
+      ],
+      "expectedPageCount": 15,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "byteLength": 1062075,
+      "sha256": "b3b2a04595bcd50e80e28fa9cc6520e38e7df1729f759c717483c1b2faaa676d",
+      "pageCount": 15,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        153,
+        672,
+        368,
+        434,
+        493,
+        513,
+        601,
+        428,
+        597,
+        585,
+        700,
+        675,
+        524,
+        204,
+        283
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    },
+    {
+      "documentId": "PA-CLAIM-APPLICATION-TEMPLATE",
+      "titleInDocument": "机动车辆保险索赔申请书",
+      "localFile": "templates/pingan/机动车辆保险索赔申请书_空白模板.pdf",
+      "category": "blank_form_template",
+      "sourceOrganization": "中国平安财产保险股份有限公司",
+      "sourceUrl": "https://www.4008000000.com/app_upload/file/property/jidong_shenqingshu.pdf",
+      "sourcePageUrl": "https://www.4008000000.com/help/ziliaoxiazai.shtml",
+      "version": "平安公开下载的空白模板；文件未标版本日期",
+      "publicationDate": null,
+      "eligibleForContractRetrieval": false,
+      "applicability": "仅作为制作虚构演示单证的字段和版式参考；空白模板不是案件证据或条款。",
+      "extractionQuality": "garbled_text_mapping_visual_reference_only",
+      "visualInspectionPages": [
+        1
+      ],
+      "expectedPageCount": 1,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "notes": [
+        "PDF 视觉显示正常，但字体字符映射导致 pypdf 提取乱码，不能声称可直接用于文字检索。",
+        "下载文件只有 1 页，正文提及背面索赔须知；本资料包未包含该背面，不应视作完整索赔须知。"
+      ],
+      "byteLength": 124191,
+      "sha256": "6082108334692806be6b48588fd99f568020d8ab609dfd6d9e4e8a5c01b12e07",
+      "pageCount": 1,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        366
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    },
+    {
+      "documentId": "PA-PAYMENT-AUTHORIZATION-TEMPLATE",
+      "titleInDocument": "转账支付授权书",
+      "localFile": "templates/pingan/转账支付授权书_空白模板.pdf",
+      "category": "blank_form_template",
+      "sourceOrganization": "中国平安财产保险股份有限公司",
+      "sourceUrl": "https://www.4008000000.com/app_upload/file/property/zhuanzhangzhifu_shouquan.pdf",
+      "sourcePageUrl": "https://www.4008000000.com/help/ziliaoxiazai.shtml",
+      "version": "平安公开下载的空白模板；文件未标版本日期",
+      "publicationDate": null,
+      "eligibleForContractRetrieval": false,
+      "applicability": "仅作为虚构收款授权材料的字段和版式参考；不能证明某一赔案已授权或已支付。",
+      "extractionQuality": "readable_form_text_layout_requires_visual_reference",
+      "visualInspectionPages": [
+        1
+      ],
+      "expectedPageCount": 1,
+      "sourceHttpStatus": 200,
+      "downloadedOriginal": true,
+      "notes": [
+        "下载文件只有 1 页，温馨提示提及背面说明；本资料包未包含该背面，不应视作完整说明书。"
+      ],
+      "byteLength": 128126,
+      "sha256": "e7373e33bd3e983b11630f6856d929f4d95591fa80ae30ed16f5e7bfc02a2e69",
+      "pageCount": 1,
+      "encrypted": false,
+      "pageTextCharacterCounts": [
+        529
+      ],
+      "visualInspectionResult": "representative_pages_readable",
+      "integrityCheck": "pdf_header_and_all_pages_parsed"
+    }
+  ]
+}

@@ -17,6 +17,7 @@ from .api.errors import (
     validation_error,
 )
 from .api.knowledge import router as knowledge_router
+from .api.review_cases import router as review_cases_router
 from .api.system import router as system_router
 from .bootstrap import lifespan
 from .config import load_environment
@@ -37,6 +38,7 @@ def create_app(*, chat=None, embedder=None):
     application.include_router(knowledge_router)
     application.include_router(system_router)
     application.include_router(cases_router)
+    application.include_router(review_cases_router)
     application.include_router(analyses_router)
     application.add_middleware(
         CORSMiddleware,

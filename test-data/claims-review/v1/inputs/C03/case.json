@@ -1,0 +1,978 @@
+{
+  "schemaVersion": 1,
+  "dictionaryVersion": "1.0.0",
+  "datasetCaseId": "C03",
+  "caseRevision": 1,
+  "isSynthetic": true,
+  "preparedAt": "2026-10-28T10:00:00+08:00",
+  "reviewScope": {
+    "targetClaimIds": [
+      "CLM-C03-COM-TP"
+    ],
+    "relatedClaimIds": [
+      "CLM-C03-CTPL"
+    ],
+    "lossTypes": [
+      "third_party_vehicle"
+    ],
+    "scopeLimitations": [
+      "目标范围仅为商业三者险赔案；交强险赔案作为第三方损失分摊的关联记录展示。首次审查未取得商业三者险赔款计算书。"
+    ]
+  },
+  "accident": {
+    "accidentId": "ACC-C03",
+    "occurredAt": "2026-06-08T09:10:00+08:00",
+    "location": "南京市建邺区演练路与测试街路口（虚构地点）",
+    "description": "演示-C03A 倒车驶出停车位时碰撞停放的演示-C03B。",
+    "liabilityDescription": "演示-C03A 驾驶人承担全部责任；第三方无责任。",
+    "evidenceRefs": [
+      "EV-DOC-C03-03",
+      "EV-DOC-C03-04",
+      "EV-DOC-C03-05"
+    ]
+  },
+  "parties": [
+    {
+      "partyId": "PTY-C03-INS",
+      "displayName": "陈某丁（虚构）",
+      "kind": "person",
+      "evidenceRefs": [
+        "EV-DOC-C03-01",
+        "EV-DOC-C03-02",
+        "EV-DOC-C03-06"
+      ]
+    },
+    {
+      "partyId": "PTY-C03-TP",
+      "displayName": "吴某戊（虚构）",
+      "kind": "person",
+      "evidenceRefs": [
+        "EV-DOC-C03-04",
+        "EV-DOC-C03-06",
+        "EV-DOC-C03-09"
+      ]
+    }
+  ],
+  "vehicles": [
+    {
+      "vehicleId": "VEH-C03-A",
+      "role": "insured",
+      "plateNumber": "演示-C03A",
+      "ownerPartyId": "PTY-C03-INS",
+      "driverPartyId": "PTY-C03-INS",
+      "usage": "家庭自用",
+      "powerType": "fuel",
+      "evidenceRefs": [
+        "EV-DOC-C03-01",
+        "EV-DOC-C03-02",
+        "EV-DOC-C03-06"
+      ]
+    },
+    {
+      "vehicleId": "VEH-C03-B",
+      "role": "third_party",
+      "plateNumber": "演示-C03B",
+      "ownerPartyId": "PTY-C03-TP",
+      "driverPartyId": "PTY-C03-TP",
+      "usage": "家庭自用",
+      "powerType": "fuel",
+      "evidenceRefs": [
+        "EV-DOC-C03-04",
+        "EV-DOC-C03-06"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "CLM-C03-COM-TP",
+      "reportNumber": "DEMO-RPT-C03",
+      "claimNumber": "DEMO-CLM-C03-COM-TP",
+      "handlingOrganization": "平安产险演示机构",
+      "closureType": "paid_closed",
+      "closedAt": "2026-06-15T16:30:00+08:00",
+      "originalConclusion": "商业三者险记录支付 9,000.00 元后结案。",
+      "originalPaymentStatus": "settled",
+      "evidenceRefs": [
+        "EV-DOC-C03-10",
+        "EV-DOC-C03-11",
+        "EV-DOC-C03-12"
+      ]
+    },
+    {
+      "claimId": "CLM-C03-CTPL",
+      "reportNumber": "DEMO-RPT-C03",
+      "claimNumber": "DEMO-CLM-C03-CTPL",
+      "handlingOrganization": "平安产险演示机构",
+      "closureType": "paid_closed",
+      "closedAt": "2026-06-15T16:30:00+08:00",
+      "originalConclusion": "交强险财产损失支付 2,000.00 元后结案。",
+      "originalPaymentStatus": "settled",
+      "evidenceRefs": [
+        "EV-DOC-C03-10",
+        "EV-DOC-C03-11",
+        "EV-DOC-C03-12"
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "policyId": "POL-C03-CTPL",
+      "policyNumber": "DEMO-CTPL-C03-2026",
+      "availability": "available",
+      "policyType": "ctpl",
+      "insurerCode": "PINGAN",
+      "vehicleId": "VEH-C03-A",
+      "policyholderPartyId": "PTY-C03-INS",
+      "insuredPartyIds": [
+        "PTY-C03-INS"
+      ],
+      "effectiveFrom": "2026-02-01T00:00:00+08:00",
+      "effectiveTo": "2027-01-31T23:59:59+08:00",
+      "coverages": [
+        {
+          "coverageId": "CV-C03-CTPL",
+          "coverageCode": "CTPL",
+          "status": "insured",
+          "parentCoverageId": null,
+          "insuranceAmount": {
+            "status": "not_applicable",
+            "amountFen": null,
+            "currency": "CNY",
+            "reason": "交强险使用分项责任限额口径"
+          },
+          "perAccidentLimit": {
+            "status": "known",
+            "amountFen": 200000,
+            "currency": "CNY",
+            "reason": null
+          },
+          "deductibleAmount": {
+            "status": "known",
+            "amountFen": 0,
+            "currency": "CNY",
+            "reason": null
+          },
+          "deductibleBasisPoints": 0,
+          "terms": [
+            {
+              "documentId": "PA-CTPL-2020-CONTENT",
+              "documentSha256": "b8d04712b5a394c9050e8853fa3cb3582434450cea9f97d45dae834f2370a461",
+              "version": "2020修订内容",
+              "sectionIds": [
+                "CTPL-LIABILITY",
+                "CTPL-SETTLEMENT"
+              ]
+            }
+          ],
+          "specialConditions": "本演示事故只使用财产损失限额。",
+          "evidenceRefs": [
+            "EV-DOC-C03-01"
+          ]
+        }
+      ],
+      "terms": [
+        {
+          "documentId": "PA-CTPL-2020-CONTENT",
+          "documentSha256": "b8d04712b5a394c9050e8853fa3cb3582434450cea9f97d45dae834f2370a461",
+          "version": "2020修订内容",
+          "sectionIds": [
+            "CTPL-LIABILITY",
+            "CTPL-SETTLEMENT"
+          ]
+        }
+      ],
+      "evidenceRefs": [
+        "EV-DOC-C03-01"
+      ]
+    },
+    {
+      "policyId": "POL-C03-COM",
+      "policyNumber": "DEMO-COM-C03-2026",
+      "availability": "available",
+      "policyType": "commercial",
+      "insurerCode": "PINGAN",
+      "vehicleId": "VEH-C03-A",
+      "policyholderPartyId": "PTY-C03-INS",
+      "insuredPartyIds": [
+        "PTY-C03-INS"
+      ],
+      "effectiveFrom": "2026-02-01T00:00:00+08:00",
+      "effectiveTo": "2027-01-31T23:59:59+08:00",
+      "coverages": [
+        {
+          "coverageId": "CV-C03-TP",
+          "coverageCode": "THIRD_PARTY",
+          "status": "insured",
+          "parentCoverageId": null,
+          "insuranceAmount": {
+            "status": "not_applicable",
+            "amountFen": null,
+            "currency": "CNY",
+            "reason": "本险种使用每次事故责任限额口径"
+          },
+          "perAccidentLimit": {
+            "status": "known",
+            "amountFen": 200000000,
+            "currency": "CNY",
+            "reason": null
+          },
+          "deductibleAmount": {
+            "status": "known",
+            "amountFen": 0,
+            "currency": "CNY",
+            "reason": null
+          },
+          "deductibleBasisPoints": 0,
+          "terms": [
+            {
+              "documentId": "PA-COMMERCIAL-MOTOR-2020",
+              "documentSha256": "a8908c3ee830bc59774d3baa1d093510be87993dbcaa89213906dff85e84489a",
+              "version": "2020版",
+              "sectionIds": [
+                "COMM-THIRD",
+                "COMM-COMMON"
+              ]
+            }
+          ],
+          "specialConditions": "第三方财产损失先由交强险分摊，剩余部分进入商业三者险。",
+          "evidenceRefs": [
+            "EV-DOC-C03-02"
+          ]
+        }
+      ],
+      "terms": [
+        {
+          "documentId": "PA-COMMERCIAL-MOTOR-2020",
+          "documentSha256": "a8908c3ee830bc59774d3baa1d093510be87993dbcaa89213906dff85e84489a",
+          "version": "2020版",
+          "sectionIds": [
+            "COMM-THIRD",
+            "COMM-COMMON"
+          ]
+        }
+      ],
+      "evidenceRefs": [
+        "EV-DOC-C03-02"
+      ]
+    }
+  ],
+  "endorsements": [],
+  "losses": [
+    {
+      "lossId": "LOSS-C03-CTPL",
+      "claimId": "CLM-C03-CTPL",
+      "vehicleId": "VEH-C03-B",
+      "personPartyId": null,
+      "lossType": "third_party_vehicle",
+      "description": "第三方车辆核定总损失中由交强险财产损失限额分摊的部分。",
+      "claimedAmount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "assessedAmount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "agreedAmount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "evidenceRefs": [
+        "EV-DOC-C03-07",
+        "EV-DOC-C03-08",
+        "EV-DOC-C03-10"
+      ]
+    },
+    {
+      "lossId": "LOSS-C03-COM-TP",
+      "claimId": "CLM-C03-COM-TP",
+      "vehicleId": "VEH-C03-B",
+      "personPartyId": null,
+      "lossType": "third_party_vehicle",
+      "description": "第三方车辆本次事故总损失扣除交强险分摊后的商业三者险部分。",
+      "claimedAmount": {
+        "status": "known",
+        "amountFen": 900000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "assessedAmount": {
+        "status": "known",
+        "amountFen": 800000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "agreedAmount": {
+        "status": "known",
+        "amountFen": 800000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "evidenceRefs": [
+        "EV-DOC-C03-07",
+        "EV-DOC-C03-08",
+        "EV-DOC-C03-09"
+      ]
+    }
+  ],
+  "calculations": [
+    {
+      "calculationId": "CALC-C03-CTPL",
+      "claimId": "CLM-C03-CTPL",
+      "policyId": "POL-C03-CTPL",
+      "coverageId": "CV-C03-CTPL",
+      "status": "final",
+      "lines": [
+        {
+          "lineId": "LINE-C03-CTPL",
+          "lossId": "LOSS-C03-CTPL",
+          "description": "交强险财产损失限额内分摊",
+          "operation": "recorded_formula",
+          "inputs": [
+            {
+              "name": "第三方核定总损失",
+              "amount": {
+                "status": "known",
+                "amountFen": 1000000,
+                "currency": "CNY",
+                "reason": null
+              }
+            },
+            {
+              "name": "交强险财产损失限额",
+              "amount": {
+                "status": "known",
+                "amountFen": 200000,
+                "currency": "CNY",
+                "reason": null
+              }
+            }
+          ],
+          "formulaText": "min(1000000, 200000)",
+          "result": {
+            "status": "known",
+            "amountFen": 200000,
+            "currency": "CNY",
+            "reason": null
+          },
+          "evidenceRefs": [
+            "EV-DOC-C03-07",
+            "EV-DOC-C03-10"
+          ]
+        }
+      ],
+      "totalAmount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "adjustmentReason": "第三方车辆本次事故核定总损失 10,000.00 元，先按交强险财产损失限额分摊 2,000.00 元。",
+      "evidenceRefs": [
+        "EV-DOC-C03-10"
+      ]
+    }
+  ],
+  "approvals": [
+    {
+      "approvalId": "APR-C03-CTPL",
+      "claimId": "CLM-C03-CTPL",
+      "policyId": "POL-C03-CTPL",
+      "coverageId": "CV-C03-CTPL",
+      "calculationIds": [
+        "CALC-C03-CTPL"
+      ],
+      "lossIds": [
+        "LOSS-C03-CTPL"
+      ],
+      "status": "approved",
+      "approvedAmount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "decidedAt": "2026-06-14T10:55:00+08:00",
+      "reason": "交强险财产损失限额内分摊。",
+      "evidenceRefs": [
+        "EV-DOC-C03-10"
+      ]
+    },
+    {
+      "approvalId": "APR-C03-COM-TP",
+      "claimId": "CLM-C03-COM-TP",
+      "policyId": "POL-C03-COM",
+      "coverageId": "CV-C03-TP",
+      "calculationIds": [],
+      "lossIds": [
+        "LOSS-C03-COM-TP"
+      ],
+      "status": "approved",
+      "approvedAmount": {
+        "status": "known",
+        "amountFen": 800000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "decidedAt": "2026-06-14T11:00:00+08:00",
+      "reason": "第三方本次事故总损失 10,000.00 元扣除交强险 2,000.00 元后，商业三者险审批 8,000.00 元；首次审查未取得对应计算书。",
+      "evidenceRefs": [
+        "EV-DOC-C03-09",
+        "EV-DOC-C03-10"
+      ]
+    }
+  ],
+  "payments": [
+    {
+      "paymentId": "PAY-C03-CTPL",
+      "claimId": "CLM-C03-CTPL",
+      "externalTransactionId": "DEMO-TXN-C03-001",
+      "kind": "disbursement",
+      "status": "succeeded",
+      "amount": {
+        "status": "known",
+        "amountFen": 200000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "occurredAt": "2026-06-15T10:00:00+08:00",
+      "payeePartyId": "PTY-C03-TP",
+      "originalPaymentId": null,
+      "approvalAllocations": [
+        {
+          "approvalId": "APR-C03-CTPL",
+          "amount": {
+            "status": "known",
+            "amountFen": 200000,
+            "currency": "CNY",
+            "reason": null
+          }
+        }
+      ],
+      "evidenceRefs": [
+        "EV-DOC-C03-11"
+      ]
+    },
+    {
+      "paymentId": "PAY-C03-COM-TP",
+      "claimId": "CLM-C03-COM-TP",
+      "externalTransactionId": "DEMO-TXN-C03-002",
+      "kind": "disbursement",
+      "status": "succeeded",
+      "amount": {
+        "status": "known",
+        "amountFen": 900000,
+        "currency": "CNY",
+        "reason": null
+      },
+      "occurredAt": "2026-06-15T10:10:00+08:00",
+      "payeePartyId": "PTY-C03-TP",
+      "originalPaymentId": null,
+      "approvalAllocations": [
+        {
+          "approvalId": "APR-C03-COM-TP",
+          "amount": {
+            "status": "known",
+            "amountFen": 900000,
+            "currency": "CNY",
+            "reason": null
+          }
+        }
+      ],
+      "evidenceRefs": [
+        "EV-DOC-C03-11"
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "documentId": "DOC-C03-01",
+      "title": "机动车交通事故责任强制保险单（演示）",
+      "materialType": "ctpl_policy",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/交强险保单_演示.pdf",
+      "sha256": "a00ba19c3fdd48b1f37e101ccfb0c3c0194093000595a1ef9037fff1071a3682",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "POL-C03-CTPL",
+        "CV-C03-CTPL",
+        "VEH-C03-A",
+        "PTY-C03-INS"
+      ],
+      "issuedAt": "2026-02-01T00:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "虚构交强险保单；仅用于说明本案第三方财产损失的先行分摊。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-02",
+      "title": "机动车商业保险单（演示）",
+      "materialType": "commercial_policy",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/商业险保单_演示.pdf",
+      "sha256": "e1dbb07d8bd14d60d1d64996d477305f2ffb245557af964f3d7a23d64b845d93",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP"
+      ],
+      "entityIds": [
+        "POL-C03-COM",
+        "CV-C03-TP",
+        "VEH-C03-A",
+        "PTY-C03-INS"
+      ],
+      "issuedAt": "2026-02-01T00:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "虚构商业险保单；本案仅审查商业三者险目标赔案。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-03",
+      "title": "机动车保险报案记录（演示）",
+      "materialType": "claim_notification",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/报案记录_演示.pdf",
+      "sha256": "83b3212e0ecdb1eaf308e89bc9e99185c534bdf748863926f7decb47a358907c",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "ACC-C03",
+        "VEH-C03-A",
+        "VEH-C03-B",
+        "PTY-C03-INS",
+        "PTY-C03-TP"
+      ],
+      "issuedAt": "2026-06-08T09:35:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "同一事故的交强险关联赔案和商业三者险目标赔案共用报案记录。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-04",
+      "title": "道路交通事故责任记录（演示）",
+      "materialType": "accident_proof",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/事故证明及责任记录_演示.pdf",
+      "sha256": "a2b08b3fbad003b4ff197bc9a6756f76fa0f85f9cab19fc4b93119e5d2213d0b",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "ACC-C03",
+        "VEH-C03-A",
+        "VEH-C03-B",
+        "PTY-C03-INS",
+        "PTY-C03-TP"
+      ],
+      "issuedAt": "2026-06-08T10:20:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "虚构事故责任记录，不对应真实交管文书。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-05",
+      "title": "机动车保险现场查勘报告（演示）",
+      "materialType": "survey",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/查勘报告_演示.pdf",
+      "sha256": "c7cc5159100d55aef166345204adcd5500a594a39d4f8b1525c9bba65055ce91",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "ACC-C03",
+        "VEH-C03-A",
+        "VEH-C03-B",
+        "LOSS-C03-CTPL",
+        "LOSS-C03-COM-TP"
+      ],
+      "issuedAt": "2026-06-08T11:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "查勘记录已区分本次新损与第三方车辆旧划痕。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-06",
+      "title": "车辆及驾驶人资料摘要（演示）",
+      "materialType": "vehicle_driver_summary",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/车辆及驾驶人资料摘要_演示.pdf",
+      "sha256": "3a5fd01aa036e0823aaac69a9d2b97c9ca7b399d53dea08b71046a214289ac6b",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "VEH-C03-A",
+        "VEH-C03-B",
+        "PTY-C03-INS",
+        "PTY-C03-TP"
+      ],
+      "issuedAt": "2026-06-08T12:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "对象一致性检查所需的虚构摘要。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-07",
+      "title": "第三方车辆定损及核损明细（演示）",
+      "materialType": "assessment",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/第三方车辆定损及核损明细_演示.pdf",
+      "sha256": "1a31d66ce5b03d143ab3f9c4be9c780f89cdc89bdf197c96cb0a0597689c8312",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "LOSS-C03-CTPL",
+        "LOSS-C03-COM-TP",
+        "VEH-C03-B"
+      ],
+      "issuedAt": "2026-06-10T14:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "第三方车辆总损失核定材料；险种分摊计算书首次审查时未取得。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-08",
+      "title": "第三方维修清单及费用证明（演示）",
+      "materialType": "repair_cost",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/第三方维修清单及费用证明_演示.pdf",
+      "sha256": "d5aba4a9746da2ccdf6ea87a82c63710aca34bd19cbde77800e0a5e68f29e8d1",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "LOSS-C03-CTPL",
+        "LOSS-C03-COM-TP",
+        "VEH-C03-B"
+      ],
+      "issuedAt": "2026-06-13T16:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "第三方车辆虚构维修结算摘要。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-09",
+      "title": "损失确认及金额调整说明（演示）",
+      "materialType": "adjustment",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/损失确认或金额调整说明_演示.pdf",
+      "sha256": "bd9c2e3f8196e642fd635c044c23f4fd580d02ba872cd50505fb9ce55dbd4b1c",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP"
+      ],
+      "entityIds": [
+        "LOSS-C03-COM-TP",
+        "VEH-C03-B",
+        "PTY-C03-TP"
+      ],
+      "issuedAt": "2026-06-11T10:30:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "S01：支持合理金额调整的独立演示材料。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-10",
+      "title": "核赔审批意见汇总（演示）",
+      "materialType": "approval",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/核赔审批意见_演示.pdf",
+      "sha256": "9b3006bf0645375bf2152d924b9a37818d2d4929e6b1d63d244e44798a474293",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "APR-C03-CTPL",
+        "APR-C03-COM-TP"
+      ],
+      "issuedAt": "2026-06-14T11:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "目标赔案审批金额为 8,000.00 元。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-11",
+      "title": "支付及冲销记录（演示）",
+      "materialType": "transaction",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/支付及冲销记录_演示.pdf",
+      "sha256": "9bf54035cdbfe07df4b8017aafc9b25de19ce640026b0e55abd884c40e9882b1",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "PAY-C03-CTPL",
+        "PAY-C03-COM-TP",
+        "PTY-C03-TP"
+      ],
+      "issuedAt": "2026-06-15T10:00:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "目标赔案存在审批与有效支付差额的虚构支付记录。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-12",
+      "title": "赔案结案记录汇总（演示）",
+      "materialType": "closure",
+      "status": "available",
+      "version": "v1",
+      "relativePath": "documents/结案记录_演示.pdf",
+      "sha256": "c073d94c03b4eb50475da579b2037e2b50f018d66f848271492210fff96ece4b",
+      "pageCount": 1,
+      "claimIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL"
+      ],
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "CLM-C03-CTPL",
+        "PAY-C03-CTPL",
+        "PAY-C03-COM-TP"
+      ],
+      "issuedAt": "2026-06-15T16:30:00+08:00",
+      "receivedAt": "2026-10-28T10:00:00+08:00",
+      "sourceDescription": "保留原结案状态，不因审查疑点改写原业务记录。",
+      "isSynthetic": true
+    },
+    {
+      "documentId": "DOC-C03-CALC-MISSING",
+      "title": "商业三者险赔款计算书（首次未取得）",
+      "materialType": "calculation",
+      "status": "not_obtained",
+      "version": "v1",
+      "relativePath": null,
+      "sha256": null,
+      "pageCount": null,
+      "claimIds": [
+        "CLM-C03-COM-TP"
+      ],
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "APR-C03-COM-TP",
+        "LOSS-C03-COM-TP"
+      ],
+      "issuedAt": null,
+      "receivedAt": null,
+      "sourceDescription": "首次审查材料目录明确记录该计算书未取得；后补文件不放入 inputs/C03。",
+      "isSynthetic": true
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "EV-DOC-C03-01",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-01",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "机动车交通事故责任强制保险单（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-02",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-02",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "机动车商业保险单（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-03",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-03",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "机动车保险报案记录（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-04",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-04",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "道路交通事故责任记录（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-05",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-05",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "机动车保险现场查勘报告（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-06",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-06",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "车辆及驾驶人资料摘要（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-07",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-07",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "第三方车辆定损及核损明细（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-08",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-08",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "第三方维修清单及费用证明（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-09",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-09",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "损失确认及金额调整说明（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-10",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-10",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "核赔审批意见汇总（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-11",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-11",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "支付及冲销记录（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-DOC-C03-12",
+      "sourceType": "case_document",
+      "documentId": "DOC-C03-12",
+      "documentVersion": "v1",
+      "page": 1,
+      "recordPointer": null,
+      "quote": "赔案结案记录汇总（演示）中的相关原始事实。",
+      "provenance": "original_document"
+    },
+    {
+      "evidenceId": "EV-C03-CALC-GAP",
+      "sourceType": "structured_record",
+      "documentId": null,
+      "documentVersion": null,
+      "page": null,
+      "recordPointer": "/documents/12/status",
+      "quote": "商业三者险赔款计算书状态为 not_obtained。",
+      "provenance": "structured_business_record"
+    }
+  ],
+  "observations": [],
+  "dataGaps": [
+    {
+      "gapId": "GAP-C03-CALC",
+      "kind": "not_obtained",
+      "entityIds": [
+        "CLM-C03-COM-TP",
+        "APR-C03-COM-TP"
+      ],
+      "fieldPaths": [
+        "calculations"
+      ],
+      "description": "首次审查档案未取得商业三者险赔款计算书，无法仅依据首次输入复核 8,000.00 元的险种分摊计算。",
+      "evidenceRefs": [
+        "EV-C03-CALC-GAP"
+      ]
+    }
+  ],
+  "knowledgeRefs": [
+    {
+      "documentId": "PA-CTPL-2020-CONTENT",
+      "documentSha256": "b8d04712b5a394c9050e8853fa3cb3582434450cea9f97d45dae834f2370a461",
+      "version": "2020修订内容",
+      "sectionIds": [
+        "CTPL-LIABILITY",
+        "CTPL-SETTLEMENT"
+      ]
+    },
+    {
+      "documentId": "PA-COMMERCIAL-MOTOR-2020",
+      "documentSha256": "a8908c3ee830bc59774d3baa1d093510be87993dbcaa89213906dff85e84489a",
+      "version": "2020版",
+      "sectionIds": [
+        "COMM-THIRD",
+        "COMM-COMMON"
+      ]
+    }
+  ],
+  "injury": {
+    "declaredStatus": "no_injury_reported",
+    "evidenceRefs": [
+      "EV-DOC-C03-03",
+      "EV-DOC-C03-04",
+      "EV-DOC-C03-05"
+    ],
+    "injuredPersons": []
+  }
+}

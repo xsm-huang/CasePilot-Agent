@@ -1369,6 +1369,600 @@ export const transportSchema = {
       "title": "ReviewAcceptedData",
       "type": "object"
     },
+    "ReviewAccident": {
+      "properties": {
+        "accidentId": {
+          "title": "Accidentid",
+          "type": "string"
+        },
+        "occurredAt": {
+          "title": "Occurredat",
+          "type": "string"
+        },
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "liabilityDescription": {
+          "title": "Liabilitydescription",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "accidentId",
+        "occurredAt",
+        "location",
+        "description",
+        "liabilityDescription",
+        "sources"
+      ],
+      "title": "ReviewAccident",
+      "type": "object"
+    },
+    "ReviewCaseDetail": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "isSynthetic": {
+          "title": "Issynthetic",
+          "type": "boolean"
+        },
+        "preparedAt": {
+          "title": "Preparedat",
+          "type": "string"
+        },
+        "latestReviewStatus": {
+          "const": "not_started",
+          "default": "not_started",
+          "title": "Latestreviewstatus",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/ReviewScope"
+        },
+        "accident": {
+          "$ref": "#/$defs/ReviewAccident"
+        },
+        "injury": {
+          "$ref": "#/$defs/ReviewInjury"
+        },
+        "parties": {
+          "items": {
+            "$ref": "#/$defs/ReviewParty"
+          },
+          "title": "Parties",
+          "type": "array"
+        },
+        "vehicles": {
+          "items": {
+            "$ref": "#/$defs/ReviewVehicleDetail"
+          },
+          "title": "Vehicles",
+          "type": "array"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/ReviewClaimDetail"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "policies": {
+          "items": {
+            "$ref": "#/$defs/ReviewPolicy"
+          },
+          "title": "Policies",
+          "type": "array"
+        },
+        "losses": {
+          "items": {
+            "$ref": "#/$defs/ReviewLoss"
+          },
+          "title": "Losses",
+          "type": "array"
+        },
+        "processingRecords": {
+          "items": {
+            "$ref": "#/$defs/ReviewProcessingRecord"
+          },
+          "title": "Processingrecords",
+          "type": "array"
+        },
+        "timeline": {
+          "items": {
+            "$ref": "#/$defs/ReviewTimelineEntry"
+          },
+          "title": "Timeline",
+          "type": "array"
+        },
+        "documents": {
+          "items": {
+            "$ref": "#/$defs/ReviewDocument"
+          },
+          "title": "Documents",
+          "type": "array"
+        },
+        "dataGaps": {
+          "items": {
+            "$ref": "#/$defs/ReviewDataGap"
+          },
+          "title": "Datagaps",
+          "type": "array"
+        },
+        "originalApprovedAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "effectivePaidAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "isSynthetic",
+        "preparedAt",
+        "scope",
+        "accident",
+        "injury",
+        "parties",
+        "vehicles",
+        "claims",
+        "policies",
+        "losses",
+        "processingRecords",
+        "timeline",
+        "documents",
+        "dataGaps",
+        "originalApprovedAmount",
+        "effectivePaidAmount"
+      ],
+      "title": "ReviewCaseDetail",
+      "type": "object"
+    },
+    "ReviewCaseListItem": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "targetClaims": {
+          "items": {
+            "$ref": "#/$defs/ReviewClaimSummary"
+          },
+          "title": "Targetclaims",
+          "type": "array"
+        },
+        "relatedClaims": {
+          "items": {
+            "$ref": "#/$defs/ReviewClaimSummary"
+          },
+          "title": "Relatedclaims",
+          "type": "array"
+        },
+        "vehicles": {
+          "items": {
+            "$ref": "#/$defs/ReviewVehicleSummary"
+          },
+          "title": "Vehicles",
+          "type": "array"
+        },
+        "accidentAt": {
+          "title": "Accidentat",
+          "type": "string"
+        },
+        "originalApprovedAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "effectivePaidAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "injuryStatus": {
+          "title": "Injurystatus",
+          "type": "string"
+        },
+        "latestReviewStatus": {
+          "const": "not_started",
+          "default": "not_started",
+          "title": "Latestreviewstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "targetClaims",
+        "relatedClaims",
+        "vehicles",
+        "accidentAt",
+        "originalApprovedAmount",
+        "effectivePaidAmount",
+        "injuryStatus"
+      ],
+      "title": "ReviewCaseListItem",
+      "type": "object"
+    },
+    "ReviewCaseListResponse": {
+      "properties": {
+        "dataStatus": {
+          "enum": [
+            "ready",
+            "not_imported"
+          ],
+          "title": "Datastatus",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ReviewCaseListItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "dataStatus",
+        "items"
+      ],
+      "title": "ReviewCaseListResponse",
+      "type": "object"
+    },
+    "ReviewClaimDetail": {
+      "properties": {
+        "claimId": {
+          "title": "Claimid",
+          "type": "string"
+        },
+        "claimNumber": {
+          "title": "Claimnumber",
+          "type": "string"
+        },
+        "reportNumber": {
+          "title": "Reportnumber",
+          "type": "string"
+        },
+        "scopeRole": {
+          "enum": [
+            "target",
+            "related"
+          ],
+          "title": "Scoperole",
+          "type": "string"
+        },
+        "closureType": {
+          "title": "Closuretype",
+          "type": "string"
+        },
+        "closedAt": {
+          "title": "Closedat",
+          "type": "string"
+        },
+        "originalPaymentStatus": {
+          "title": "Originalpaymentstatus",
+          "type": "string"
+        },
+        "handlingOrganization": {
+          "title": "Handlingorganization",
+          "type": "string"
+        },
+        "originalConclusion": {
+          "title": "Originalconclusion",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "claimId",
+        "claimNumber",
+        "reportNumber",
+        "scopeRole",
+        "closureType",
+        "closedAt",
+        "originalPaymentStatus",
+        "handlingOrganization",
+        "originalConclusion",
+        "sources"
+      ],
+      "title": "ReviewClaimDetail",
+      "type": "object"
+    },
+    "ReviewClaimSummary": {
+      "properties": {
+        "claimId": {
+          "title": "Claimid",
+          "type": "string"
+        },
+        "claimNumber": {
+          "title": "Claimnumber",
+          "type": "string"
+        },
+        "reportNumber": {
+          "title": "Reportnumber",
+          "type": "string"
+        },
+        "scopeRole": {
+          "enum": [
+            "target",
+            "related"
+          ],
+          "title": "Scoperole",
+          "type": "string"
+        },
+        "closureType": {
+          "title": "Closuretype",
+          "type": "string"
+        },
+        "closedAt": {
+          "title": "Closedat",
+          "type": "string"
+        },
+        "originalPaymentStatus": {
+          "title": "Originalpaymentstatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claimId",
+        "claimNumber",
+        "reportNumber",
+        "scopeRole",
+        "closureType",
+        "closedAt",
+        "originalPaymentStatus"
+      ],
+      "title": "ReviewClaimSummary",
+      "type": "object"
+    },
+    "ReviewCoverage": {
+      "properties": {
+        "coverageId": {
+          "title": "Coverageid",
+          "type": "string"
+        },
+        "coverageCode": {
+          "title": "Coveragecode",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "insuranceAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "perAccidentLimit": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "deductibleAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "deductibleBasisPoints": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deductiblebasispoints"
+        },
+        "specialConditions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Specialconditions"
+        },
+        "terms": {
+          "items": {
+            "$ref": "#/$defs/ReviewTermRef"
+          },
+          "title": "Terms",
+          "type": "array"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "coverageId",
+        "coverageCode",
+        "status",
+        "insuranceAmount",
+        "perAccidentLimit",
+        "deductibleAmount",
+        "terms",
+        "sources"
+      ],
+      "title": "ReviewCoverage",
+      "type": "object"
+    },
+    "ReviewDataGap": {
+      "properties": {
+        "gapId": {
+          "title": "Gapid",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "fieldPaths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fieldpaths",
+          "type": "array"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "gapId",
+        "kind",
+        "entityIds",
+        "fieldPaths",
+        "description",
+        "sources"
+      ],
+      "title": "ReviewDataGap",
+      "type": "object"
+    },
+    "ReviewDocument": {
+      "properties": {
+        "documentId": {
+          "title": "Documentid",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "materialType": {
+          "title": "Materialtype",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "pageCount": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pagecount"
+        },
+        "claimIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Claimids",
+          "type": "array"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "issuedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Issuedat"
+        },
+        "receivedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Receivedat"
+        },
+        "sourceDescription": {
+          "title": "Sourcedescription",
+          "type": "string"
+        },
+        "contentUrl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contenturl"
+        }
+      },
+      "required": [
+        "documentId",
+        "title",
+        "materialType",
+        "status",
+        "version",
+        "claimIds",
+        "entityIds",
+        "sourceDescription"
+      ],
+      "title": "ReviewDocument",
+      "type": "object"
+    },
     "ReviewEvent": {
       "additionalProperties": false,
       "properties": {
@@ -1423,6 +2017,433 @@ export const transportSchema = {
       "title": "ReviewEvent",
       "type": "object"
     },
+    "ReviewEvidenceSource": {
+      "properties": {
+        "evidenceId": {
+          "title": "Evidenceid",
+          "type": "string"
+        },
+        "sourceType": {
+          "enum": [
+            "case_document",
+            "shared_document",
+            "structured_record"
+          ],
+          "title": "Sourcetype",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "documentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Documentid"
+        },
+        "documentVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Documentversion"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "recordPointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recordpointer"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        }
+      },
+      "required": [
+        "evidenceId",
+        "sourceType",
+        "title"
+      ],
+      "title": "ReviewEvidenceSource",
+      "type": "object"
+    },
+    "ReviewInjury": {
+      "properties": {
+        "declaredStatus": {
+          "title": "Declaredstatus",
+          "type": "string"
+        },
+        "injuredPersonIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Injuredpersonids",
+          "type": "array"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "declaredStatus",
+        "injuredPersonIds",
+        "sources"
+      ],
+      "title": "ReviewInjury",
+      "type": "object"
+    },
+    "ReviewLoss": {
+      "properties": {
+        "lossId": {
+          "title": "Lossid",
+          "type": "string"
+        },
+        "claimId": {
+          "title": "Claimid",
+          "type": "string"
+        },
+        "vehicleId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vehicleid"
+        },
+        "personPartyId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Personpartyid"
+        },
+        "lossType": {
+          "title": "Losstype",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "claimedAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "assessedAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "agreedAmount": {
+          "$ref": "#/$defs/ReviewMoney"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "lossId",
+        "claimId",
+        "lossType",
+        "description",
+        "claimedAmount",
+        "assessedAmount",
+        "agreedAmount",
+        "sources"
+      ],
+      "title": "ReviewLoss",
+      "type": "object"
+    },
+    "ReviewMoney": {
+      "properties": {
+        "status": {
+          "enum": [
+            "known",
+            "unknown",
+            "not_applicable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "amountFen": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Amountfen"
+        },
+        "currency": {
+          "default": "CNY",
+          "title": "Currency",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "status",
+        "amountFen"
+      ],
+      "title": "ReviewMoney",
+      "type": "object"
+    },
+    "ReviewParty": {
+      "properties": {
+        "partyId": {
+          "title": "Partyid",
+          "type": "string"
+        },
+        "displayName": {
+          "title": "Displayname",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "partyId",
+        "displayName",
+        "kind"
+      ],
+      "title": "ReviewParty",
+      "type": "object"
+    },
+    "ReviewPolicy": {
+      "properties": {
+        "policyId": {
+          "title": "Policyid",
+          "type": "string"
+        },
+        "policyNumber": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policynumber"
+        },
+        "availability": {
+          "title": "Availability",
+          "type": "string"
+        },
+        "policyType": {
+          "title": "Policytype",
+          "type": "string"
+        },
+        "vehicleId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vehicleid"
+        },
+        "effectiveFrom": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effectivefrom"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effectiveto"
+        },
+        "coverages": {
+          "items": {
+            "$ref": "#/$defs/ReviewCoverage"
+          },
+          "title": "Coverages",
+          "type": "array"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "policyId",
+        "availability",
+        "policyType",
+        "coverages",
+        "sources"
+      ],
+      "title": "ReviewPolicy",
+      "type": "object"
+    },
+    "ReviewProcessingRecord": {
+      "properties": {
+        "recordId": {
+          "title": "Recordid",
+          "type": "string"
+        },
+        "recordType": {
+          "enum": [
+            "calculation",
+            "approval",
+            "payment"
+          ],
+          "title": "Recordtype",
+          "type": "string"
+        },
+        "claimId": {
+          "title": "Claimid",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Occurredat"
+        },
+        "amount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewMoney"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "recordId",
+        "recordType",
+        "claimId",
+        "title",
+        "status",
+        "sources"
+      ],
+      "title": "ReviewProcessingRecord",
+      "type": "object"
+    },
     "ReviewRequest": {
       "additionalProperties": false,
       "properties": {
@@ -1458,6 +2479,206 @@ export const transportSchema = {
         "expectedRevision"
       ],
       "title": "ReviewRequest",
+      "type": "object"
+    },
+    "ReviewScope": {
+      "properties": {
+        "lossTypes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Losstypes",
+          "type": "array"
+        },
+        "scopeLimitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Scopelimitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "lossTypes",
+        "scopeLimitations"
+      ],
+      "title": "ReviewScope",
+      "type": "object"
+    },
+    "ReviewTermRef": {
+      "properties": {
+        "documentId": {
+          "title": "Documentid",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "sectionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sectionids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "documentId",
+        "version",
+        "sectionIds"
+      ],
+      "title": "ReviewTermRef",
+      "type": "object"
+    },
+    "ReviewTimelineEntry": {
+      "properties": {
+        "entryId": {
+          "title": "Entryid",
+          "type": "string"
+        },
+        "eventType": {
+          "title": "Eventtype",
+          "type": "string"
+        },
+        "occurredAt": {
+          "title": "Occurredat",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entryId",
+        "eventType",
+        "occurredAt",
+        "title",
+        "sources"
+      ],
+      "title": "ReviewTimelineEntry",
+      "type": "object"
+    },
+    "ReviewVehicleDetail": {
+      "properties": {
+        "vehicleId": {
+          "title": "Vehicleid",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "plateNumber": {
+          "title": "Platenumber",
+          "type": "string"
+        },
+        "ownerName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ownername"
+        },
+        "driverName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Drivername"
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Usage"
+        },
+        "powerType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Powertype"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReviewEvidenceSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "vehicleId",
+        "role",
+        "plateNumber",
+        "sources"
+      ],
+      "title": "ReviewVehicleDetail",
+      "type": "object"
+    },
+    "ReviewVehicleSummary": {
+      "properties": {
+        "vehicleId": {
+          "title": "Vehicleid",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "plateNumber": {
+          "title": "Platenumber",
+          "type": "string"
+        }
+      },
+      "required": [
+        "vehicleId",
+        "role",
+        "plateNumber"
+      ],
+      "title": "ReviewVehicleSummary",
       "type": "object"
     },
     "RuleFinding": {
