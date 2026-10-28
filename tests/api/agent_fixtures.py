@@ -30,7 +30,7 @@ def clause(number=1, generation="generation-1"):
     }
 
 
-def assessment(*, fact="case:accidentDate", citation="chunk-1", insufficient=False):
+def assessment(*, fact="case:accident", citation="chunk-1", insufficient=False):
     return {
         "summary": "依据当前事实与条款，仍需核查事故和费用。",
         "findings": [

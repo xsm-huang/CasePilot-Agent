@@ -32,9 +32,9 @@ def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_pa
             seed_knowledge(api)
             _, created = new_task(
                 api,
-                "CASE-2026-001"
+                "C03"
                 if stage in {"review_accepted", "checkpoint_before_projection"}
-                else "CASE-2026-002",
+                else "C02",
             )
             if stage == "review_accepted":
                 paused = settle(api, created["id"], "waiting_review")

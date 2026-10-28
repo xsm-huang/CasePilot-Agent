@@ -1,18 +1,19 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mergeAnalysisEvent } from '../../../apps/web/src/domain/analysisEvents.ts';
-import { workspaceEventSchema, type V1AnalysisTask, type WorkspaceEvent } from '../../../packages/contracts/dist/workspace.js';
+import { workspaceEventSchema, type AnalysisTask, type WorkspaceEvent } from '../../../packages/contracts/dist/workspace.js';
 
 // Reducer fixture contains a complete public V1 snapshot, never a legacy write shape.
-const task = (): V1AnalysisTask => ({
-  schemaVersion: 1, id: 'analysis-a', caseId: 'case-a', conversationId: 'conversation-a', kind: 'initial', question: '核验', status: 'running',
-  caseSnapshot: { id: 'case-a', claimant: '测试', productCode: 'AUTO', clauseVersion: '2025-01', claimAmount: 1, policyEffectiveDate: '2026-01-01', accidentDate: '2026-01-02', materials: [] },
+const task = (): AnalysisTask => ({
+  schemaVersion: 2, id: 'analysis-a', caseId: 'case-a', conversationId: 'conversation-a', kind: 'initial', question: '核验', status: 'running',
+  caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'case-a', caseRevision: 1, preparedAt: '2026-01-01T00:00:00Z', payload: {}, scopeItems: [], knowledgeBindings: [] }, predecessorAnalysisId: null,
+  evidenceSupplements: [], reviewSupplementIds: [],
   revision: 0, lastEventSeq: 0, userMessageId: 'user-a', assistantMessageId: null,
-  context: { caseVersion: 'v1', generationId: 'g1', embeddingProfile: 'e1', messageIds: [], modelProfile: 'm1', promptVersion: 'p1' },
+  context: { inputVersion: 'v2', knowledgeBindings: [], messageIds: [], modelProfile: 'm1', promptVersion: 'p1' },
   facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null, execution: { nodes: [], tools: [], timeline: [] }, error: null,
 });
-const event = (seq: number): WorkspaceEvent => ({ schemaVersion: 1, analysisId: 'analysis-a', conversationId: 'conversation-a', seq, revision: seq, at: '2026-10-26T01:00:00Z', type: 'analysis.status', data: { status: 'running', revision: seq } });
-function apply(previous: V1AnalysisTask, value: WorkspaceEvent) {
+const event = (seq: number): WorkspaceEvent => ({ schemaVersion: 2, analysisId: 'analysis-a', conversationId: 'conversation-a', seq, revision: seq, at: '2026-10-26T01:00:00Z', type: 'analysis.status', data: { status: 'running', revision: seq } });
+function apply(previous: AnalysisTask, value: WorkspaceEvent) {
   const result = mergeAnalysisEvent(previous, value);
   assert.equal(result.kind, 'applied');
   if (result.kind !== 'applied') throw new Error('Expected applied event');

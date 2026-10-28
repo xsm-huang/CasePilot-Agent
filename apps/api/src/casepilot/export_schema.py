@@ -4,10 +4,10 @@ import json
 
 from pydantic.json_schema import models_json_schema
 
-from .schemas.analysis import V0AnalysisTask, V0ClaimCase, V0Clause, V0ReviewAccepted
 from .schemas.knowledge import V1KnowledgeGeneration, V1KnowledgeRetry
-from .schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse
+from .schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse, ReviewPreflight
 from .schemas.workspace import (
+    AnalysisTask,
     Citation,
     CitationContext,
     CommandAccepted,
@@ -17,8 +17,6 @@ from .schemas.workspace import (
     CreateConversation,
     RecoverRequest,
     ReviewRequest,
-    V1AnalysisTask,
-    WorkbenchTask,
     WorkspaceEvent,
 )
 
@@ -28,17 +26,13 @@ def main():
         [
             (m, "validation")
             for m in (
-                V0AnalysisTask,
-                V0ClaimCase,
-                V0Clause,
-                V0ReviewAccepted,
                 V1KnowledgeGeneration,
                 V1KnowledgeRetry,
                 ReviewCaseListResponse,
                 ReviewCaseDetail,
-                WorkbenchTask,
+                ReviewPreflight,
                 WorkspaceEvent,
-                V1AnalysisTask,
+                AnalysisTask,
                 Conversation,
                 ConversationSummary,
                 CommandAccepted,

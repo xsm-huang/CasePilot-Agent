@@ -1,4 +1,4 @@
-"""Additive V1 persistence; task, event, command and message commits stay atomic."""
+"""Review persistence; task, event, command and message commits stay atomic."""
 
 from psycopg.types.json import Jsonb
 
@@ -117,7 +117,7 @@ class WorkspaceRepository(PostgresAnalysisRepository):
             )
 
     async def save(self, task):
-        if task.get("schemaVersion") != 1:
+        if task.get("schemaVersion") != 2:
             return await super().save(task)
         async with self.pool.connection() as conn:
             async with conn.transaction():

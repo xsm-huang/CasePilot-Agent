@@ -4,6 +4,7 @@ import asyncio
 import json
 import threading
 import time
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -11,7 +12,6 @@ from casepilot.main import create_app
 from casepilot.model.config import read_model_config
 from casepilot.model.errors import ModelError
 from fastapi.testclient import TestClient
-from pdf_fixtures import text_pdf
 from test_knowledge_database import FakeEmbedding
 
 
@@ -40,7 +40,7 @@ class WorkspaceChat:
             citations = payload["analysis"]["citations"]
             output = {
                 "content": f"{section}：基于已核查的事实与条款，保留疑点并建议人工复核。",
-                "factRefs": ["case:accidentDate"],
+                "factRefs": ["case:accident"],
                 "citationRefs": [citations[0]["citationId"]] if citations else [],
             }
             if section == self.invalid_section:
@@ -75,13 +75,19 @@ def settle(client, task_id, expected=None):
     raise AssertionError(f"Task did not settle: {task_id}")
 
 
-def new_task(client, case_id="CASE-2026-002"):
+def new_task(client, case_id="C02"):
     response = client.post(f"/api/cases/{case_id}/conversations", json={"title": "验收会话"})
     assert response.status_code == 201, response.text
     conversation = response.json()
+    preflight = client.get(f"/api/review-cases/{case_id}/review-preflight")
+    assert preflight.status_code == 200, preflight.text
     response = client.post(
         "/api/analyses",
-        json={"conversationId": conversation["id"], "kind": "initial"},
+        json={
+            "conversationId": conversation["id"],
+            "kind": "initial",
+            "expectedInputVersion": preflight.json()["expectedInputVersion"],
+        },
         headers={"Idempotency-Key": str(uuid4())},
     )
     assert response.status_code == 202, response.text
@@ -89,33 +95,38 @@ def new_task(client, case_id="CASE-2026-002"):
 
 
 def seed_knowledge(client):
-    response = client.post(
-        "/api/knowledge/documents",
-        data={"productCode": "AUTO-COMPREHENSIVE", "clauseVersion": "2025-01"},
-        files={
-            "file": (
-                "验收条款.pdf",
-                text_pdf(["Repair invoice and accident evidence must be reviewed."]),
-                "application/pdf",
-            )
-        },
-    )
-    assert response.status_code == 202, response.text
-    generation_id = response.json()["generationId"]
-    deadline = time.monotonic() + 15
-    while time.monotonic() < deadline:
-        generation = client.get(f"/api/knowledge/generations/{generation_id}").json()
-        if generation["status"] == "ready":
-            return generation
-        assert generation["status"] != "failed", generation
-        time.sleep(0.03)
-    raise AssertionError("Test index did not finish")
+    root = Path(__file__).resolve().parents[2] / "test-data/claims-review/v1/shared/clauses/pingan"
+    sources = [
+        ("机动车商业保险条款_2020版.pdf", "PA-COMMERCIAL-MOTOR", "2020版"),
+        ("机动车交通事故责任强制保险条款_2020修订内容.pdf", "PA-CTPL", "2020修订内容"),
+    ]
+    generations = []
+    for file_name, product_code, version in sources:
+        response = client.post(
+            "/api/knowledge/documents",
+            data={"productCode": product_code, "clauseVersion": version},
+            files={"file": (file_name, (root / file_name).read_bytes(), "application/pdf")},
+        )
+        assert response.status_code == 202, response.text
+        generation_id = response.json()["generationId"]
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            generation = client.get(f"/api/knowledge/generations/{generation_id}").json()
+            if generation["status"] == "ready":
+                generations.append(generation)
+                break
+            assert generation["status"] != "failed", generation
+            time.sleep(0.03)
+        else:
+            raise AssertionError("Test index did not finish")
+    return generations
 
 
 @pytest.fixture
-def workspace(postgres_env, monkeypatch):
+def workspace(postgres_env, monkeypatch, tmp_path):
     for key, value in postgres_env.items():
         monkeypatch.setenv(key, value)
+    monkeypatch.setenv("CASEPILOT_REVIEW_SUPPLEMENTS_DIR", str(tmp_path / "supplements"))
     chat = WorkspaceChat()
     application = create_app(chat=chat, embedder=FakeEmbedding())
     options = (

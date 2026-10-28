@@ -1,28 +1,31 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { v0AnalysisTaskSchema, v0TimelineEventSchema, v0ReviewAcceptedSchema } from '../dist/index.js';
+import { analysisTaskSchema, commandAcceptedSchema, reviewPreflightSchema } from '../dist/index.js';
 
-const event = {
-  id: 1, type: 'node', at: '2026-10-23T01:00:00.000Z',
-  title: '读取案件', status: 'running',
+const binding = { documentId: 'terms', documentSha256: 'a'.repeat(64), version: '2020', sectionIds: [], status: 'unavailable', generationId: null, productCode: null, clauseVersion: null, embeddingProfile: null };
+const scope = { scopeItemId: 'archive', kind: 'archive_consistency', title: '案卷核验', status: 'executable', entityIds: ['claim'], reason: null, requiredMaterialTypes: [] };
+const task = {
+  schemaVersion: 2, id: 'a', caseId: 'C01', conversationId: 'c', kind: 'initial', question: '核验', status: 'queued',
+  caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'C01', caseRevision: 1, preparedAt: '2026-10-01T00:00:00Z', payload: {}, scopeItems: [scope], knowledgeBindings: [binding] },
+  predecessorAnalysisId: null, evidenceSupplements: [], reviewSupplementIds: [], revision: 0, lastEventSeq: 0, userMessageId: 'm', assistantMessageId: null,
+  context: { inputVersion: 'b'.repeat(64), knowledgeBindings: [binding], messageIds: [], modelProfile: 'model', promptVersion: 'prompt' },
+  facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null,
+  execution: { nodes: [], tools: [], timeline: [] }, error: null,
 };
 
-test('Python event contract rejects invalid sequence, status and datetime', () => {
-  assert.deepEqual(v0TimelineEventSchema.parse(event), event);
-  for (const patch of [{ id: 0 }, { id: 1.5 }, { id: Number.MAX_SAFE_INTEGER + 1 }, { status: 'finished' }, { at: 'yesterday' }]) {
-    assert.throws(() => v0TimelineEventSchema.parse({ ...event, ...patch }));
-  }
+test('closed-claim task contract accepts only the current fixed-input shape', () => {
+  assert.deepEqual(analysisTaskSchema.parse(task), task);
+  assert.throws(() => analysisTaskSchema.parse({ ...task, schemaVersion: 1 }));
+  assert.throws(() => analysisTaskSchema.parse({ ...task, caseSnapshot: { id: 'legacy' } }));
 });
 
-test('Python task contract validates nested findings rather than trusting TypeScript', () => {
-  const task = { id: 'a', caseId: 'c', status: 'running', events: [event], findings: [], citations: [] };
-  assert.deepEqual(v0AnalysisTaskSchema.array().parse([task]), [task]);
-  assert.throws(() => v0AnalysisTaskSchema.parse({ ...task, events: [{ ...event, id: '1' }] }));
-  assert.throws(() => v0AnalysisTaskSchema.parse({ ...task, findings: [{ source: 'rule' }] }));
+test('preflight separates partial execution from blocking', () => {
+  const value = { caseId: 'C03', expectedInputVersion: 'b'.repeat(64), status: 'partial', reviewObjects: { targetClaimIds: ['claim'], relatedClaimIds: [], vehicleIds: [], lossIds: [], scopeLimitations: [] }, applicablePolicies: [], scopeItems: [scope], knowledgeBindings: [binding], materialSummary: { available: 2, notObtained: 1, unavailable: 0 }, injuryStatus: 'unknown', injuredPersonIds: [], blockingReasons: [] };
+  assert.deepEqual(reviewPreflightSchema.parse(value), value);
+  assert.throws(() => reviewPreflightSchema.parse({ ...value, status: 'unknown' }));
 });
 
-test('review acceptance must identify the accepted task and literal true', () => {
-  assert.deepEqual(v0ReviewAcceptedSchema.parse({ accepted: true, taskId: 'a' }), { accepted: true, taskId: 'a' });
-  assert.throws(() => v0ReviewAcceptedSchema.parse({ accepted: false, taskId: 'a' }));
-  assert.throws(() => v0ReviewAcceptedSchema.parse({ accepted: true }));
+test('command acknowledgement requires literal true and task identity', () => {
+  assert.deepEqual(commandAcceptedSchema.parse({ accepted: true, taskId: 'a', revision: 1 }), { accepted: true, taskId: 'a', revision: 1 });
+  assert.throws(() => commandAcceptedSchema.parse({ accepted: false, taskId: 'a', revision: 1 }));
 });

@@ -4,11 +4,67 @@ from copy import deepcopy
 from uuid import uuid4
 
 import pytest
+from conftest import ROOT
 from psycopg.types.json import Jsonb
 from workspace_fixtures import new_task, settle
 from workspace_fixtures import workspace as workspace
 
 pytestmark = pytest.mark.database
+
+
+def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspace):
+    client, _, _ = workspace
+    _, created = new_task(client, "C03")
+    original = settle(client, created["id"], "waiting_review")
+    source = ROOT / "test-data/claims-review/v1/supplements/C03/补充计算书_第三方商业险_演示.pdf"
+    response = client.post(
+        f"/api/analyses/{original['id']}/supplements",
+        data={"title": "补充计算书", "materialType": "calculation", "entityIds": '["CLM-C03-COM-TP"]'},
+        files={"file": (source.name, source.read_bytes(), "application/pdf")},
+    )
+    assert response.status_code == 201, response.text
+    supplement = response.json()
+    updated = client.get(f"/api/analyses/{original['id']}").json()
+    assert updated["context"]["inputVersion"] == original["context"]["inputVersion"]
+    assert updated["caseSnapshot"] == original["caseSnapshot"]
+    assert updated["evidenceSupplements"] == [supplement]
+    assert client.get(
+        f"/api/analyses/{original['id']}/supplements/{supplement['supplementId']}/content"
+    ).content == source.read_bytes()
+    review = client.post(
+        f"/api/analyses/{original['id']}/review",
+        json={
+            "decision": "reject",
+            "comment": "结合补充计算书复核",
+            "interruptKey": updated["pendingReview"]["interruptKey"],
+            "expectedRevision": updated["revision"],
+            "supplementIds": [supplement["supplementId"]],
+        },
+        headers={"Idempotency-Key": str(uuid4())},
+    )
+    assert review.status_code == 202, review.text
+    assert client.get(f"/api/analyses/{original['id']}").json()["reviewSupplementIds"] == [
+        supplement["supplementId"]
+    ]
+
+    conversation = client.post("/api/cases/C03/conversations", json={"title": "补充资料重审"}).json()
+    preflight = client.get("/api/review-cases/C03/review-preflight").json()
+    body = {
+        "conversationId": conversation["id"],
+        "kind": "initial",
+        "expectedInputVersion": preflight["expectedInputVersion"],
+        "predecessorAnalysisId": original["id"],
+        "supplementIds": [supplement["supplementId"]],
+    }
+    reanalysis = client.post(
+        "/api/analyses", json=body, headers={"Idempotency-Key": str(uuid4())}
+    )
+    assert reanalysis.status_code == 202, reanalysis.text
+    new_task_snapshot = reanalysis.json()
+    assert new_task_snapshot["predecessorAnalysisId"] == original["id"]
+    assert new_task_snapshot["context"]["inputVersion"] != original["context"]["inputVersion"]
+    assert new_task_snapshot["caseSnapshot"]["payload"]["reviewSupplements"] == [supplement]
+    assert client.get(f"/api/analyses/{original['id']}").json()["caseSnapshot"] == original["caseSnapshot"]
 
 
 def test_citation_neighbours_are_bounded_and_keep_the_original_generation(workspace):
@@ -19,22 +75,6 @@ def test_citation_neighbours_are_bounded_and_keep_the_original_generation(worksp
 
     async def add_neighbours():
         repository = app.state.knowledge.repository
-        # Test-owned rows with distinct source pages; no fake production indexes.
-        async with repository.pool.connection() as conn:
-            for ordinal in (1, 2):
-                await conn.execute(
-                    repository.sql(
-                        "INSERT INTO {s}.knowledge_chunks(id,generation_id,page,ordinal,content,embedding) VALUES (%s,%s,%s,%s,%s,%s::vector)"
-                    ),
-                    (
-                        str(uuid4()),
-                        citation["generationId"],
-                        ordinal + 1,
-                        ordinal,
-                        f"Neighbour {ordinal}",
-                        str([0.25] * 1024),
-                    ),
-                )
         return await repository.citation_context(citation)
 
     context = client.portal.call(add_neighbours)
@@ -42,7 +82,7 @@ def test_citation_neighbours_are_bounded_and_keep_the_original_generation(worksp
     assert client.get(path).json() == context
     assert context["citation"] == citation
     assert context["previous"] is None
-    assert context["next"]["ordinal"] == 1 and context["next"]["page"] == 2
+    assert context["next"]["ordinal"] == citation["ordinal"] + 1
     assert client.get(path.replace(citation["citationId"], "another-task-chunk")).status_code == 404
 
     async def last_block():
@@ -51,7 +91,7 @@ def test_citation_neighbours_are_bounded_and_keep_the_original_generation(worksp
             row = await (
                 await conn.execute(
                     repository.sql(
-                        "SELECT id FROM {s}.knowledge_chunks WHERE generation_id=%s AND ordinal=2"
+                        "SELECT id FROM {s}.knowledge_chunks WHERE generation_id=%s ORDER BY ordinal DESC LIMIT 1"
                     ),
                     (citation["generationId"],),
                 )
@@ -59,7 +99,7 @@ def test_citation_neighbours_are_bounded_and_keep_the_original_generation(worksp
         return await repository.citation_context(citation | {"chunkId": row[0]})
 
     last = client.portal.call(last_block)
-    assert last["next"] is None and last["previous"]["ordinal"] == 1
+    assert last["next"] is None and last["previous"] is not None
     assert client.get(f"/api/analyses/{task['id']}").json() == task
 
 
@@ -67,7 +107,7 @@ def test_long_history_pagination_and_six_complete_turns_with_tied_timestamps(wor
     client, app, _ = workspace
     conversation, created = new_task(client)
     template = settle(client, created["id"], "completed")
-    other = client.post("/api/cases/CASE-2026-002/conversations", json={}).json()
+    other = client.post("/api/cases/C02/conversations", json={}).json()
     turn_ids = []
 
     async def populate():

@@ -72,7 +72,7 @@ class ApiProcess:
                     f"API subprocess exited {self.process.returncode}: {self.diagnostics()}"
                 )
             try:
-                if httpx.get(f"{self.base}/cases", timeout=0.5).status_code == 200:
+                if httpx.get(f"{self.base}/review-cases", timeout=0.5).status_code == 200:
                     return self
             except httpx.HTTPError:
                 pass

@@ -7,35 +7,34 @@ from .agent_errors import AgentError
 
 
 def case_facts(claim: dict) -> list[dict]:
-    """Stable references address the immutable snapshot, including missing required dates."""
-    facts = [
-        Fact(
-            factId="materials:types",
-            fieldPath="materials[*].type",
-            value=[material.get("type") for material in claim.get("materials", [])],
-            sourceType="case",
-        ).model_dump()
-    ]
-    for field in sorted(set(claim) - {"materials"} | {"accidentDate", "policyEffectiveDate"}):
-        facts.append(
-            Fact(
-                factId=f"case:{field}", fieldPath=field, value=claim.get(field), sourceType="case"
-            ).model_dump()
-        )
-    for index, material in enumerate(claim.get("materials", [])):
-        material_id = f"{claim['id']}:material:{index}"
-        fields = material.get("fields", {})
-        names = set(fields)
-        if material.get("type") in {"claim_form", "accident_certificate"}:
-            names.add("accidentDate")
-        for field in sorted(names):
+    """Create stable facts from the immutable closed-claim snapshot."""
+    payload = claim.get("payload", claim)
+    facts = []
+    for field in ("reviewScope", "accident", "injury"):
+        facts.append(Fact(factId=f"case:{field}", fieldPath=field, value=payload.get(field), sourceType="case").model_dump())
+    collections = (
+        ("claims", "claimId"), ("vehicles", "vehicleId"), ("policies", "policyId"),
+        ("losses", "lossId"), ("calculations", "calculationId"),
+        ("approvals", "approvalId"), ("payments", "paymentId"),
+    )
+    for collection, identifier in collections:
+        for item in payload.get(collection, []):
+            item_id = item.get(identifier)
+            facts.append(Fact(factId=f"{collection}:{item_id}", fieldPath=f"{collection}[{item_id}]", value=item, sourceType="case").model_dump())
+    for item in payload.get("documents", []):
+        item_id = item["documentId"]
+        facts.append(Fact(factId=f"documents:{item_id}", fieldPath=f"documents[{item_id}]", value=item, sourceType="material", materialId=item_id).model_dump())
+    for item in payload.get("dataGaps", []):
+        facts.append(Fact(factId=f"dataGaps:{item['gapId']}", fieldPath=f"dataGaps[{item['gapId']}]", value=item, sourceType="case").model_dump())
+    for item in payload.get("reviewSupplements", []):
+        for page in item.get("pages", []):
             facts.append(
                 Fact(
-                    factId=f"material:{index}:{field}",
-                    fieldPath=f"materials[{index}].fields.{field}",
-                    value=fields.get(field),
+                    factId=f"supplements:{item['supplementId']}:page:{page['page']}",
+                    fieldPath=f"reviewSupplements[{item['supplementId']}].pages[{page['page']}]",
+                    value=page["content"],
                     sourceType="material",
-                    materialId=material_id,
+                    materialId=item["supplementId"],
                 ).model_dump()
             )
     return facts
@@ -62,8 +61,12 @@ def merge_citations(previous, rows, context):
     """Never accept source metadata invented by the model or another knowledge generation."""
     merged = {row["chunkId"]: deepcopy(row) for row in previous}
     for row in rows:
-        if any(
-            row.get(key) != context[key] for key in ("productCode", "clauseVersion", "generationId")
+        bindings = [item for item in context["knowledgeBindings"] if item["status"] == "ready"]
+        if not any(
+            row.get("productCode") == item["productCode"]
+            and row.get("clauseVersion") == item["clauseVersion"]
+            and row.get("generationId") == item["generationId"]
+            for item in bindings
         ):
             raise AgentError("RETRIEVAL_SCOPE_INVALID")
         if (

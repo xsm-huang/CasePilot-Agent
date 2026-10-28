@@ -79,6 +79,7 @@ async def test_real_tool_and_json_requests_preserve_internal_reasoning():
     assert calls[1]["messages"][1]["reasoning_content"] == "not public"
     assert calls[1]["messages"][1]["tool_calls"][0]["id"] == "call-1"
     assert all(call["thinking"] == {"type": "enabled", "clear_thinking": False} for call in calls)
+    assert all(call["reasoning_effort"] == "low" for call in calls)
     assert all(call["max_tokens"] == 4096 for call in calls)
 
 

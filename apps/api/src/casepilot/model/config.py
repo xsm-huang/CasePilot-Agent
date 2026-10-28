@@ -16,7 +16,7 @@ class ModelConfig:
     chat_model: str = DEFAULT_CHAT_MODEL
     embedding_model: str = "embedding-3"
     embedding_dimensions: int = 1024
-    timeout_ms: int = 30000
+    timeout_ms: int = 60000
 
 
 def read_model_config(env=None):
@@ -45,5 +45,5 @@ def read_model_config(env=None):
     if dimensions != 1024:
         raise ModelError("EMBEDDING_DIMENSIONS")
     return ModelConfig(
-        key, base, chat, embedding, dimensions, positive("MODEL_TIMEOUT_MS", "30000", 120000)
+        key, base, chat, embedding, dimensions, positive("MODEL_TIMEOUT_MS", "60000", 120000)
     )

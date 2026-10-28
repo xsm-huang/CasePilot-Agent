@@ -1,4 +1,4 @@
-"""V1 analysis, side-effect-free approval interrupt and three section nodes."""
+"""Closed-claim analysis, approval interrupt and three section nodes."""
 
 from langgraph.types import interrupt
 
@@ -20,7 +20,6 @@ class WorkspaceNodes:
                 self.knowledge,
                 self.chat_factory(),
                 question=task["question"],
-                generation_id=task["context"]["generationId"],
             )
         await self.store.analysis_ready(task["id"], result)
         return {"analysis": result}

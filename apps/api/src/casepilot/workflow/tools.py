@@ -35,14 +35,17 @@ def build_analysis_tools(context, knowledge):
         return evaluate_evidence_rules(claim, case_facts(claim))
 
     async def search_clauses(query: str):
-        return await knowledge.search(
-            pinned["productCode"],
-            pinned["clauseVersion"],
-            pinned["generationId"],
-            query.strip(),
-            limit=4,
-            profile=pinned["embeddingProfile"],
-        )
+        rows = []
+        bindings = [item for item in pinned["knowledgeBindings"] if item["status"] == "ready"]
+        for binding in bindings:
+            rows.extend(
+                await knowledge.search(
+                    binding["productCode"], binding["clauseVersion"],
+                    binding["generationId"], query.strip(), limit=4,
+                    profile=binding["embeddingProfile"],
+                )
+            )
+        return sorted(rows, key=lambda item: item.get("distance", 1))[:12]
 
     return {
         "query_case": ScopedTool.from_function(
@@ -60,7 +63,7 @@ def build_analysis_tools(context, knowledge):
         "search_clauses": ScopedTool.from_function(
             coroutine=search_clauses,
             name="search_clauses",
-            description="在当前任务固定的险种、版本和 generation 中补充检索条款。仅提供需要核查的问题。",
+            description="在当前任务固定的知识版本中补充检索条款。仅提供需要核查的问题。",
             args_schema=SearchInput,
         ),
     }

@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
 from ..cases.review_repository import (
@@ -12,13 +12,14 @@ from ..cases.review_repository import (
     list_review_cases,
     review_document,
 )
-from ..schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse
+from ..schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse, ReviewPreflight
 
 router = APIRouter()
 
 
 @router.get("/api/review-cases", response_model=ReviewCaseListResponse)
 async def cases(
+    request: Request,
     query_type: Literal["claim_number", "report_number", "plate_number"] | None = Query(
         default=None, alias="queryType"
     ),
@@ -53,20 +54,29 @@ async def cases(
             closed_to=closed_to,
             injury_status=injury_status,
             review_status=review_status,
+            latest_statuses=request.app.state.analyses.latest_review_statuses(),
         )
     except ReviewCaseDataError as error:
         raise HTTPException(500, str(error)) from error
 
 
 @router.get("/api/review-cases/{case_id}", response_model=ReviewCaseDetail)
-async def case(case_id: str):
+async def case(case_id: str, request: Request):
     try:
         result = get_review_case(case_id)
     except ReviewCaseDataError as error:
         raise HTTPException(500, str(error)) from error
     if result is None:
         raise HTTPException(404, f"Case {case_id} not found")
+    result["latestReviewStatus"] = request.app.state.analyses.latest_review_statuses().get(
+        case_id, "not_started"
+    )
     return result
+
+
+@router.get("/api/review-cases/{case_id}/review-preflight", response_model=ReviewPreflight)
+async def review_preflight(case_id: str, request: Request):
+    return await request.app.state.analyses.preflight(case_id)
 
 
 @router.get("/api/review-cases/{case_id}/documents/{document_id}/content")

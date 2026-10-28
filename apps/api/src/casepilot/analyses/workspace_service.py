@@ -1,19 +1,27 @@
 """Workspace use cases and dependency preflight, without HTTP objects."""
 
+import hashlib
 import json
+import os
+from pathlib import Path
+from uuid import uuid4
 
-from ..cases.repository import get_case
-from ..knowledge.config import PROFILE
+from ..cases.review_repository import review_case_exists
+from ..config import PROJECT_ROOT
+from ..knowledge.errors import KnowledgeError
+from ..knowledge.pdf import parse_pages
 from ..model import ModelError, read_model_config
 from ..model.chat import ChatClient
 from ..workflow.prompts import PROMPT_VERSION
 from .errors import AnalysisError
-from .workspace_store import CONTEXT_FIELDS, fingerprint
+from .review_input import ReviewInputBuilder
+from .workspace_store import CONTEXT_FIELDS, fingerprint, now
 
 
 class WorkspaceService:
     def __init__(self, store, wakeup, knowledge, chat=None):
         self.store, self.wakeup, self.knowledge, self.chat_override = store, wakeup, knowledge, chat
+        self.review_inputs = ReviewInputBuilder(knowledge)
 
     def chat(self):
         if self.chat_override is not None:
@@ -37,18 +45,107 @@ class WorkspaceService:
             for c in sorted(
                 self.store.conversations.values(), key=lambda c: c["updatedAt"], reverse=True
             )
-            if case_id is None or c["caseId"] == case_id
+            if review_case_exists(c["caseId"])
+            and (case_id is None or c["caseId"] == case_id)
         ]
 
     async def create_conversation(self, case_id, title):
-        if get_case(case_id) is None:
+        if not review_case_exists(case_id):
             raise AnalysisError("NOT_FOUND", "案件不存在。")
         if not title.strip():
             raise AnalysisError("INVALID_INPUT", "会话标题不能为空。")
         return await self.store.create_conversation(case_id, title.strip())
 
+    async def preflight(self, case_id):
+        return await self.review_inputs.preflight(case_id)
+
+    @staticmethod
+    def supplement_root():
+        return Path(
+            os.getenv("CASEPILOT_REVIEW_SUPPLEMENTS_DIR", PROJECT_ROOT / "data/review-supplements")
+        ).resolve()
+
+    async def add_supplement(self, task_id, *, title, material_type, entity_ids, content):
+        task = self.store.writable(task_id)
+        if task["status"] != "waiting_review":
+            raise AnalysisError("REVIEW_CONFLICT", "仅等待人工审核的任务可以补充证据。")
+        if not title.strip() or not material_type.strip() or len(title) > 200 or len(material_type) > 100:
+            raise AnalysisError("INVALID_INPUT", "补充证据标题或材料类型无效。")
+        if not content.startswith(b"%PDF-") or len(content) > 10 * 1024 * 1024:
+            raise AnalysisError("INVALID_INPUT", "补充证据必须是小于 10 MiB 的 PDF。")
+        try:
+            pages = parse_pages(content)
+        except KnowledgeError as error:
+            raise AnalysisError("SUPPLEMENT_PARSE_FAILED", error.message) from error
+        digest = hashlib.sha256(content).hexdigest()
+        root = self.supplement_root()
+        root.mkdir(parents=True, exist_ok=True)
+        target = root / f"{digest}.pdf"
+        if not target.exists():
+            temporary = root / f".{uuid4().hex}.tmp"
+            temporary.write_bytes(content)
+            temporary.replace(target)
+        version = 1 + max(
+            (
+                item["version"]
+                for item in task["evidenceSupplements"]
+                if item["title"] == title.strip() and item["materialType"] == material_type.strip()
+            ),
+            default=0,
+        )
+        supplement = {
+            "supplementId": str(uuid4()),
+            "version": version,
+            "analysisId": task_id,
+            "title": title.strip(),
+            "materialType": material_type.strip(),
+            "entityIds": sorted(
+                set(
+                    entity_ids
+                    or task["caseSnapshot"]["payload"]["reviewScope"]["targetClaimIds"]
+                )
+            ),
+            "sha256": digest,
+            "addedAt": now(),
+            "addedBy": "unidentified_operator",
+            "pages": [{"page": page, "content": text} for page, text in pages],
+        }
+        await self.store.add_supplement(task_id, supplement)
+        return supplement
+
+    def supplement_content(self, task_id, supplement_id):
+        task = self.store.writable(task_id)
+        supplement = next(
+            (item for item in task["evidenceSupplements"] if item["supplementId"] == supplement_id),
+            None,
+        )
+        if supplement is None:
+            raise AnalysisError("NOT_FOUND", "补充证据不存在。")
+        path = self.supplement_root() / f"{supplement['sha256']}.pdf"
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != supplement["sha256"]:
+            raise AnalysisError("SUPPLEMENT_UNAVAILABLE", "补充证据文件不可用或校验失败。")
+        return path, supplement["title"]
+
+    def latest_review_statuses(self):
+        statuses = {}
+        mapping = {
+            "queued": "running",
+            "running": "running",
+            "resuming": "running",
+            "waiting_review": "pending_review",
+            "recoverable": "awaiting_recovery",
+            "completed": "vehicle_review_completed",
+            "failed": "failed",
+            "rejected": "pending_verification",
+        }
+        for task in self.store.list():
+            statuses.setdefault(task["caseId"], mapping[task["status"]])
+        return statuses
+
     async def conversation(self, conversation_id, before=None):
         conversation = self.store.conversation(conversation_id)
+        if not review_case_exists(conversation["caseId"]):
+            raise AnalysisError("NOT_FOUND", "会话不存在。")
         rows = await self.store.repository.messages(conversation_id, before=before)
         more = len(rows) > 50
         rows = rows[:50]
@@ -71,6 +168,8 @@ class WorkspaceService:
 
     async def create(self, body, key):
         self.store.require_database()
+        if len(body.get("supplementIds", [])) > 20:
+            raise AnalysisError("INVALID_INPUT", "一次最多选择 20 份补充证据。")
         digest = fingerprint(body)
         previous = await self.store.repository.request(
             f"create:{body['conversationId']}", key, digest
@@ -78,6 +177,8 @@ class WorkspaceService:
         if previous:
             return previous
         conversation = self.store.conversation(body["conversationId"])
+        if not review_case_exists(conversation["caseId"]):
+            raise AnalysisError("NOT_FOUND", "会话不存在。")
         question = body.get("question")
         if question is None and body["kind"] == "initial":
             question = "请核查案件事实、材料完整性及条款依据。"
@@ -88,44 +189,63 @@ class WorkspaceService:
             raise AnalysisError("DEPENDENCY_UNAVAILABLE", "知识库服务不可用。")
         context = conversation["context"]
         if context is None:
-            claim = get_case(conversation["caseId"])
-            generation_id = await self.knowledge.repository.active_generation(
-                claim["productCode"], claim["clauseVersion"]
+            expected_version = body.get("expectedInputVersion")
+            if not expected_version:
+                raise AnalysisError("INVALID_INPUT", "启动审查必须提交输入版本。")
+            preflight, snapshot = await self.review_inputs.require_startable(
+                conversation["caseId"], expected_version
             )
+            supplement_ids = body.get("supplementIds", [])
+            predecessor_id = body.get("predecessorAnalysisId")
+            if supplement_ids and not predecessor_id:
+                raise AnalysisError("INVALID_INPUT", "使用补充证据重新审查时必须指定前序任务。")
+            selected_supplements = []
+            if predecessor_id:
+                predecessor = self.store.writable(predecessor_id)
+                if predecessor["caseId"] != conversation["caseId"]:
+                    raise AnalysisError("INVALID_INPUT", "前序任务不属于当前案件。")
+                by_id = {item["supplementId"]: item for item in predecessor["evidenceSupplements"]}
+                if not set(supplement_ids) <= set(by_id):
+                    raise AnalysisError("INVALID_INPUT", "重新审查引用了无效的补充证据。")
+                selected_supplements = [by_id[item] for item in supplement_ids]
+            if selected_supplements:
+                snapshot["payload"]["reviewSupplements"] = selected_supplements
             context = {
-                "caseId": claim["id"],
-                "caseSnapshot": claim,
-                "caseVersion": fingerprint(claim),
-                "productCode": claim["productCode"],
-                "clauseVersion": claim["clauseVersion"],
-                "generationId": generation_id,
-                "embeddingProfile": PROFILE,
+                "caseId": conversation["caseId"],
+                "caseSnapshot": snapshot,
+                "inputVersion": fingerprint(
+                    {"baseInputVersion": preflight["expectedInputVersion"], "supplements": selected_supplements}
+                ) if selected_supplements else preflight["expectedInputVersion"],
+                "knowledgeBindings": preflight["knowledgeBindings"],
                 "modelProfile": chat.config.chat_model,
                 "promptVersion": PROMPT_VERSION,
             }
+        elif body.get("expectedInputVersion") and body["expectedInputVersion"] != context["inputVersion"]:
+            raise AnalysisError("INPUT_VERSION_CONFLICT", "当前会话已固定为另一输入版本。")
         if (
             context["modelProfile"] != chat.config.chat_model
             or context["promptVersion"] != PROMPT_VERSION
         ):
             raise AnalysisError("RECOVERY_CONFLICT", "该会话的模型或提示词版本已变化，请新建会话。")
-        generation = await self.knowledge.repository.get_generation(context["generationId"])
-        if (
-            context["embeddingProfile"] != PROFILE
-            or await self.knowledge.repository.generation_profile(context["generationId"])
-            != PROFILE
-        ):
-            raise AnalysisError("EMBEDDING_PROFILE_MISMATCH", "会话与知识索引的向量配置不一致。")
-        if generation["status"] != "ready" or any(
-            generation[k] != context[k] for k in ("productCode", "clauseVersion")
-        ):
-            raise AnalysisError("KNOWLEDGE_NOT_READY", "没有匹配险种和版本的可用索引。")
+        for binding in context["knowledgeBindings"]:
+            if binding["status"] != "ready":
+                continue
+            generation = await self.knowledge.repository.get_generation(binding["generationId"])
+            if generation["status"] != "ready" or generation["sha256"] != binding["documentSha256"]:
+                raise AnalysisError("KNOWLEDGE_NOT_READY", "固定的知识版本当前不可用。")
         history = list(
             reversed(await self.store.repository.messages(conversation["id"], completed_only=True))
         )
         if (
             len(
                 json.dumps(
-                    {"context": context, "history": history, "question": question},
+                    {
+                        "context": {
+                            key: value for key, value in context.items() if key != "caseSnapshot"
+                        },
+                        "history": history,
+                        "question": question,
+                    },
                     ensure_ascii=False,
                 )
             )

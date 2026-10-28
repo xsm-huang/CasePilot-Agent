@@ -64,7 +64,7 @@ def test_application_factories_have_independent_task_lifecycles(monkeypatch):
     monkeypatch.setenv("CASEPILOT_STORAGE", "memory")
     first_app, second_app = create_app(), create_app()
     with TestClient(first_app) as first, TestClient(second_app) as second:
-        response = first.post("/api/cases/CASE-2026-001/conversations", json={})
+        response = first.post("/api/cases/C01/conversations", json={})
         assert response.status_code == 503
         assert first.get("/api/analyses").json() == []
         assert second.get("/api/analyses").json() == []

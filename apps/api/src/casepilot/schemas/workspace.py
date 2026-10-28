@@ -1,12 +1,12 @@
-"""Versioned workspace transport models, including immutable legacy reads."""
+"""Closed-claim review workspace transport models."""
 
 from typing import Annotated, Literal
 
 from pydantic import Field, JsonValue, RootModel
 
 from .agent import Fact, ModelFinding, StrictModel
-from .analysis import V0AnalysisTask, V0ClaimCase
 from .knowledge import Timestamp
+from .review_cases import ClosedClaimReviewSnapshot, ReviewKnowledgeBinding
 
 AnalysisStatus = Literal[
     "queued",
@@ -91,9 +91,8 @@ class PendingReview(StrictModel):
 
 
 class AnalysisContext(StrictModel):
-    caseVersion: str
-    generationId: str
-    embeddingProfile: str
+    inputVersion: str
+    knowledgeBindings: list[ReviewKnowledgeBinding]
     messageIds: list[str]
     modelProfile: str
     promptVersion: str
@@ -144,8 +143,31 @@ class RejectedData(StrictModel):
     revision: int
 
 
+class SupplementPage(StrictModel):
+    page: int = Field(gt=0)
+    content: str
+
+
+class EvidenceSupplement(StrictModel):
+    supplementId: str
+    version: int = Field(gt=0)
+    analysisId: str
+    title: str
+    materialType: str
+    entityIds: list[str]
+    sha256: str = Field(pattern="^[a-f0-9]{64}$")
+    addedAt: Timestamp
+    addedBy: str
+    pages: list[SupplementPage]
+
+
+class SupplementedData(StrictModel):
+    supplement: EvidenceSupplement
+    revision: int
+
+
 class EventBase(StrictModel):
-    schemaVersion: Literal[1]
+    schemaVersion: Literal[2]
     analysisId: str
     conversationId: str
     seq: int = Field(gt=0, le=2**53 - 1)
@@ -205,6 +227,11 @@ class RejectedEvent(EventBase):
     data: RejectedData
 
 
+class SupplementedEvent(EventBase):
+    type: Literal["evidence.supplemented"]
+    data: SupplementedData
+
+
 EventEnvelope = Annotated[
     StatusEvent
     | ExecutionEvent
@@ -214,7 +241,8 @@ EventEnvelope = Annotated[
     | SectionEvent
     | CompletedEvent
     | FailureEvent
-    | RejectedEvent,
+    | RejectedEvent
+    | SupplementedEvent,
     Field(discriminator="type"),
 ]
 
@@ -229,15 +257,18 @@ class Execution(StrictModel):
     timeline: list[EventEnvelope]
 
 
-class V1AnalysisTask(StrictModel):
-    schemaVersion: Literal[1]
+class AnalysisTask(StrictModel):
+    schemaVersion: Literal[2]
     id: str
     caseId: str
     conversationId: str
     kind: Literal["initial", "followup"]
     question: str
     status: AnalysisStatus
-    caseSnapshot: V0ClaimCase
+    caseSnapshot: ClosedClaimReviewSnapshot
+    predecessorAnalysisId: str | None
+    evidenceSupplements: list[EvidenceSupplement]
+    reviewSupplementIds: list[str]
     revision: int = Field(ge=0)
     lastEventSeq: int = Field(ge=0)
     userMessageId: str
@@ -252,17 +283,6 @@ class V1AnalysisTask(StrictModel):
     pendingReview: PendingReview | None
     execution: Execution
     error: PublicError | None
-
-
-class LegacyAnalysisTask(V0AnalysisTask):
-    schemaVersion: Literal[0]
-    readOnly: Literal[True]
-
-
-class WorkbenchTask(
-    RootModel[Annotated[V1AnalysisTask | LegacyAnalysisTask, Field(discriminator="schemaVersion")]]
-):
-    pass
 
 
 class ConversationSummary(StrictModel):
@@ -297,6 +317,9 @@ class CreateAnalysis(StrictModel):
     conversationId: str = Field(min_length=1, max_length=200)
     kind: Literal["initial", "followup"]
     question: str | None = Field(default=None, max_length=2000)
+    expectedInputVersion: str | None = Field(default=None, min_length=64, max_length=64)
+    predecessorAnalysisId: str | None = Field(default=None, min_length=1, max_length=200)
+    supplementIds: list[str] = Field(default_factory=list)
 
 
 class ReviewRequest(StrictModel):
@@ -304,6 +327,7 @@ class ReviewRequest(StrictModel):
     comment: str = Field(default="", max_length=2000)
     interruptKey: str = Field(min_length=1, max_length=200)
     expectedRevision: int = Field(ge=0)
+    supplementIds: list[str] = Field(default_factory=list)
 
 
 class RecoverRequest(StrictModel):

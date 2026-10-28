@@ -2,7 +2,11 @@
 
 from typing import Literal
 
-from .analysis import DTO
+from pydantic import BaseModel, ConfigDict, JsonValue
+
+
+class DTO(BaseModel):
+    model_config = ConfigDict(strict=True)
 
 
 class ReviewMoney(DTO):
@@ -49,7 +53,10 @@ class ReviewCaseListItem(DTO):
     originalApprovedAmount: ReviewMoney
     effectivePaidAmount: ReviewMoney
     injuryStatus: str
-    latestReviewStatus: Literal["not_started"] = "not_started"
+    latestReviewStatus: Literal[
+        "not_started", "running", "pending_review", "pending_verification",
+        "vehicle_review_completed", "failed", "awaiting_recovery"
+    ] = "not_started"
 
 
 class ReviewCaseListResponse(DTO):
@@ -191,7 +198,10 @@ class ReviewCaseDetail(DTO):
     revision: int
     isSynthetic: bool
     preparedAt: str
-    latestReviewStatus: Literal["not_started"] = "not_started"
+    latestReviewStatus: Literal[
+        "not_started", "running", "pending_review", "pending_verification",
+        "vehicle_review_completed", "failed", "awaiting_recovery"
+    ] = "not_started"
     scope: ReviewScope
     accident: ReviewAccident
     injury: ReviewInjury
@@ -206,3 +216,64 @@ class ReviewCaseDetail(DTO):
     dataGaps: list[ReviewDataGap]
     originalApprovedAmount: ReviewMoney
     effectivePaidAmount: ReviewMoney
+
+
+class ReviewScopeItem(DTO):
+    scopeItemId: str
+    kind: str
+    title: str
+    status: Literal["executable", "limited", "blocked"]
+    entityIds: list[str]
+    reason: str | None = None
+    requiredMaterialTypes: list[str]
+
+
+class ReviewKnowledgeBinding(DTO):
+    documentId: str
+    documentSha256: str
+    version: str
+    sectionIds: list[str]
+    status: Literal["ready", "unavailable"]
+    generationId: str | None = None
+    productCode: str | None = None
+    clauseVersion: str | None = None
+    embeddingProfile: str | None = None
+
+
+class ReviewObjectSummary(DTO):
+    targetClaimIds: list[str]
+    relatedClaimIds: list[str]
+    vehicleIds: list[str]
+    lossIds: list[str]
+    scopeLimitations: list[str]
+
+
+class ReviewApplicablePolicy(DTO):
+    policyId: str
+    policyType: str
+    availability: str
+    coverageCodes: list[str]
+
+
+class ClosedClaimReviewSnapshot(DTO):
+    snapshotKind: Literal["closed_claim_review"]
+    caseId: str
+    caseRevision: int
+    preparedAt: str
+    payload: dict[str, JsonValue]
+    scopeItems: list[ReviewScopeItem]
+    knowledgeBindings: list[ReviewKnowledgeBinding]
+
+
+class ReviewPreflight(DTO):
+    caseId: str
+    expectedInputVersion: str
+    status: Literal["ready", "partial", "blocked"]
+    reviewObjects: ReviewObjectSummary
+    applicablePolicies: list[ReviewApplicablePolicy]
+    scopeItems: list[ReviewScopeItem]
+    knowledgeBindings: list[ReviewKnowledgeBinding]
+    materialSummary: dict[str, int]
+    injuryStatus: str
+    injuredPersonIds: list[str]
+    blockingReasons: list[str]

@@ -1,13 +1,13 @@
-import type { V1AnalysisTask, WorkspaceEvent } from '@casepilot/contracts';
-export type EventResult = { kind: 'duplicate' } | { kind: 'gap' } | { kind: 'applied'; task: V1AnalysisTask };
+import type { AnalysisTask, WorkspaceEvent } from '@casepilot/contracts';
+export type EventResult = { kind: 'duplicate' } | { kind: 'gap' } | { kind: 'applied'; task: AnalysisTask };
 function unreachable(value: never): never { throw new Error(`未处理的工作台事件：${String(value)}`); }
 /** Only apply events belonging to this exact task and a contiguous persisted cursor. */
-export function mergeAnalysisEvent(task: V1AnalysisTask, event: WorkspaceEvent): EventResult {
+export function mergeAnalysisEvent(task: AnalysisTask, event: WorkspaceEvent): EventResult {
   if (event.analysisId !== task.id || event.conversationId !== task.conversationId) return { kind: 'gap' };
   if (event.seq <= task.lastEventSeq) return { kind: 'duplicate' };
   if (event.seq !== task.lastEventSeq + 1 || event.revision <= task.revision) return { kind: 'gap' };
   const eventType = event.type;
-  const next: V1AnalysisTask = { ...task, lastEventSeq: event.seq, revision: event.revision,
+  const next: AnalysisTask = { ...task, lastEventSeq: event.seq, revision: event.revision,
     execution: { ...task.execution, timeline: [...task.execution.timeline, event] } };
   switch (eventType) {
     case 'analysis.status':
@@ -35,6 +35,9 @@ export function mergeAnalysisEvent(task: V1AnalysisTask, event: WorkspaceEvent):
       return { kind: 'applied', task: next };
     case 'analysis.rejected':
       next.status = 'rejected'; next.report = null; next.pendingReview = null;
+      return { kind: 'applied', task: next };
+    case 'evidence.supplemented':
+      next.evidenceSupplements = [...task.evidenceSupplements, event.data.supplement];
       return { kind: 'applied', task: next };
     case 'node.started':
     case 'node.completed':

@@ -5,7 +5,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -58,17 +58,16 @@ export const transportSchema = {
     "AnalysisContext": {
       "additionalProperties": false,
       "properties": {
-        "caseVersion": {
-          "title": "Caseversion",
+        "inputVersion": {
+          "title": "Inputversion",
           "type": "string"
         },
-        "generationId": {
-          "title": "Generationid",
-          "type": "string"
-        },
-        "embeddingProfile": {
-          "title": "Embeddingprofile",
-          "type": "string"
+        "knowledgeBindings": {
+          "items": {
+            "$ref": "#/$defs/ReviewKnowledgeBinding"
+          },
+          "title": "Knowledgebindings",
+          "type": "array"
         },
         "messageIds": {
           "items": {
@@ -87,9 +86,8 @@ export const transportSchema = {
         }
       },
       "required": [
-        "caseVersion",
-        "generationId",
-        "embeddingProfile",
+        "inputVersion",
+        "knowledgeBindings",
         "messageIds",
         "modelProfile",
         "promptVersion"
@@ -180,6 +178,207 @@ export const transportSchema = {
         "reviewerComment"
       ],
       "title": "AnalysisReport",
+      "type": "object"
+    },
+    "AnalysisTask": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 2,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "initial",
+            "followup"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting_review",
+            "resuming",
+            "recoverable",
+            "completed",
+            "rejected",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "caseSnapshot": {
+          "$ref": "#/$defs/ClosedClaimReviewSnapshot"
+        },
+        "predecessorAnalysisId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Predecessoranalysisid"
+        },
+        "evidenceSupplements": {
+          "items": {
+            "$ref": "#/$defs/EvidenceSupplement"
+          },
+          "title": "Evidencesupplements",
+          "type": "array"
+        },
+        "reviewSupplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reviewsupplementids",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "lastEventSeq": {
+          "minimum": 0,
+          "title": "Lasteventseq",
+          "type": "integer"
+        },
+        "userMessageId": {
+          "title": "Usermessageid",
+          "type": "string"
+        },
+        "assistantMessageId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Assistantmessageid"
+        },
+        "context": {
+          "$ref": "#/$defs/AnalysisContext"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts",
+          "type": "array"
+        },
+        "ruleFindings": {
+          "items": {
+            "$ref": "#/$defs/RuleFinding"
+          },
+          "title": "Rulefindings",
+          "type": "array"
+        },
+        "modelFindings": {
+          "items": {
+            "$ref": "#/$defs/ModelFinding"
+          },
+          "title": "Modelfindings",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/ReportSection"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalysisReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pendingReview": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PendingReview"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "execution": {
+          "$ref": "#/$defs/Execution"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PublicError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "caseId",
+        "conversationId",
+        "kind",
+        "question",
+        "status",
+        "caseSnapshot",
+        "predecessorAnalysisId",
+        "evidenceSupplements",
+        "reviewSupplementIds",
+        "revision",
+        "lastEventSeq",
+        "userMessageId",
+        "assistantMessageId",
+        "context",
+        "facts",
+        "ruleFindings",
+        "modelFindings",
+        "citations",
+        "sections",
+        "report",
+        "pendingReview",
+        "execution",
+        "error"
+      ],
+      "title": "AnalysisTask",
       "type": "object"
     },
     "Citation": {
@@ -309,6 +508,59 @@ export const transportSchema = {
       "title": "CitationContext",
       "type": "object"
     },
+    "ClosedClaimReviewSnapshot": {
+      "properties": {
+        "snapshotKind": {
+          "const": "closed_claim_review",
+          "title": "Snapshotkind",
+          "type": "string"
+        },
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "caseRevision": {
+          "title": "Caserevision",
+          "type": "integer"
+        },
+        "preparedAt": {
+          "title": "Preparedat",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Payload",
+          "type": "object"
+        },
+        "scopeItems": {
+          "items": {
+            "$ref": "#/$defs/ReviewScopeItem"
+          },
+          "title": "Scopeitems",
+          "type": "array"
+        },
+        "knowledgeBindings": {
+          "items": {
+            "$ref": "#/$defs/ReviewKnowledgeBinding"
+          },
+          "title": "Knowledgebindings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "snapshotKind",
+        "caseId",
+        "caseRevision",
+        "preparedAt",
+        "payload",
+        "scopeItems",
+        "knowledgeBindings"
+      ],
+      "title": "ClosedClaimReviewSnapshot",
+      "type": "object"
+    },
     "CommandAccepted": {
       "additionalProperties": false,
       "properties": {
@@ -338,7 +590,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -552,6 +804,41 @@ export const transportSchema = {
           ],
           "default": null,
           "title": "Question"
+        },
+        "expectedInputVersion": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expectedinputversion"
+        },
+        "predecessorAnalysisId": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Predecessoranalysisid"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supplementids",
+          "type": "array"
         }
       },
       "required": [
@@ -573,6 +860,74 @@ export const transportSchema = {
         }
       },
       "title": "CreateConversation",
+      "type": "object"
+    },
+    "EvidenceSupplement": {
+      "additionalProperties": false,
+      "properties": {
+        "supplementId": {
+          "title": "Supplementid",
+          "type": "string"
+        },
+        "version": {
+          "exclusiveMinimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "materialType": {
+          "title": "Materialtype",
+          "type": "string"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "addedAt": {
+          "format": "date-time",
+          "title": "Addedat",
+          "type": "string"
+        },
+        "addedBy": {
+          "title": "Addedby",
+          "type": "string"
+        },
+        "pages": {
+          "items": {
+            "$ref": "#/$defs/SupplementPage"
+          },
+          "title": "Pages",
+          "type": "array"
+        }
+      },
+      "required": [
+        "supplementId",
+        "version",
+        "analysisId",
+        "title",
+        "materialType",
+        "entityIds",
+        "sha256",
+        "addedAt",
+        "addedBy",
+        "pages"
+      ],
+      "title": "EvidenceSupplement",
       "type": "object"
     },
     "Execution": {
@@ -601,6 +956,7 @@ export const transportSchema = {
                 "analysis.recoverable": "#/$defs/FailureEvent",
                 "analysis.rejected": "#/$defs/RejectedEvent",
                 "analysis.status": "#/$defs/StatusEvent",
+                "evidence.supplemented": "#/$defs/SupplementedEvent",
                 "node.completed": "#/$defs/ExecutionEvent",
                 "node.failed": "#/$defs/ExecutionEvent",
                 "node.started": "#/$defs/ExecutionEvent",
@@ -641,6 +997,9 @@ export const transportSchema = {
               },
               {
                 "$ref": "#/$defs/RejectedEvent"
+              },
+              {
+                "$ref": "#/$defs/SupplementedEvent"
               }
             ]
           },
@@ -711,7 +1070,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -834,7 +1193,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -888,94 +1247,6 @@ export const transportSchema = {
       "type": "object"
     },
     "JsonValue": {},
-    "LegacyAnalysisTask": {
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "caseId": {
-          "title": "Caseid",
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "running",
-            "waiting_review",
-            "completed",
-            "rejected",
-            "failed"
-          ],
-          "title": "Status",
-          "type": "string"
-        },
-        "events": {
-          "items": {
-            "$ref": "#/$defs/V0TimelineEvent"
-          },
-          "title": "Events",
-          "type": "array"
-        },
-        "findings": {
-          "items": {
-            "$ref": "#/$defs/V0Finding"
-          },
-          "title": "Findings",
-          "type": "array"
-        },
-        "citations": {
-          "items": {
-            "$ref": "#/$defs/V0ClauseCitation"
-          },
-          "title": "Citations",
-          "type": "array"
-        },
-        "report": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/V0AnalysisReport"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "review": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/V0Review"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "schemaVersion": {
-          "const": 0,
-          "title": "Schemaversion",
-          "type": "integer"
-        },
-        "readOnly": {
-          "const": true,
-          "title": "Readonly",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "id",
-        "caseId",
-        "status",
-        "events",
-        "findings",
-        "citations",
-        "schemaVersion",
-        "readOnly"
-      ],
-      "title": "LegacyAnalysisTask",
-      "type": "object"
-    },
     "Message": {
       "additionalProperties": false,
       "properties": {
@@ -1132,7 +1403,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -1220,7 +1491,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -1410,6 +1681,37 @@ export const transportSchema = {
       "title": "ReviewAccident",
       "type": "object"
     },
+    "ReviewApplicablePolicy": {
+      "properties": {
+        "policyId": {
+          "title": "Policyid",
+          "type": "string"
+        },
+        "policyType": {
+          "title": "Policytype",
+          "type": "string"
+        },
+        "availability": {
+          "title": "Availability",
+          "type": "string"
+        },
+        "coverageCodes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coveragecodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "policyId",
+        "policyType",
+        "availability",
+        "coverageCodes"
+      ],
+      "title": "ReviewApplicablePolicy",
+      "type": "object"
+    },
     "ReviewCaseDetail": {
       "properties": {
         "id": {
@@ -1429,8 +1731,16 @@ export const transportSchema = {
           "type": "string"
         },
         "latestReviewStatus": {
-          "const": "not_started",
           "default": "not_started",
+          "enum": [
+            "not_started",
+            "running",
+            "pending_review",
+            "pending_verification",
+            "vehicle_review_completed",
+            "failed",
+            "awaiting_recovery"
+          ],
           "title": "Latestreviewstatus",
           "type": "string"
         },
@@ -1582,8 +1892,16 @@ export const transportSchema = {
           "type": "string"
         },
         "latestReviewStatus": {
-          "const": "not_started",
           "default": "not_started",
+          "enum": [
+            "not_started",
+            "running",
+            "pending_review",
+            "pending_verification",
+            "vehicle_review_completed",
+            "failed",
+            "awaiting_recovery"
+          ],
           "title": "Latestreviewstatus",
           "type": "string"
         }
@@ -1967,7 +2285,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -2134,6 +2452,94 @@ export const transportSchema = {
       "title": "ReviewInjury",
       "type": "object"
     },
+    "ReviewKnowledgeBinding": {
+      "properties": {
+        "documentId": {
+          "title": "Documentid",
+          "type": "string"
+        },
+        "documentSha256": {
+          "title": "Documentsha256",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "sectionIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sectionids",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "generationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generationid"
+        },
+        "productCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Productcode"
+        },
+        "clauseVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clauseversion"
+        },
+        "embeddingProfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Embeddingprofile"
+        }
+      },
+      "required": [
+        "documentId",
+        "documentSha256",
+        "version",
+        "sectionIds",
+        "status"
+      ],
+      "title": "ReviewKnowledgeBinding",
+      "type": "object"
+    },
     "ReviewLoss": {
       "properties": {
         "lossId": {
@@ -2253,6 +2659,54 @@ export const transportSchema = {
       "title": "ReviewMoney",
       "type": "object"
     },
+    "ReviewObjectSummary": {
+      "properties": {
+        "targetClaimIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Targetclaimids",
+          "type": "array"
+        },
+        "relatedClaimIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relatedclaimids",
+          "type": "array"
+        },
+        "vehicleIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Vehicleids",
+          "type": "array"
+        },
+        "lossIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Lossids",
+          "type": "array"
+        },
+        "scopeLimitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Scopelimitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "targetClaimIds",
+        "relatedClaimIds",
+        "vehicleIds",
+        "lossIds",
+        "scopeLimitations"
+      ],
+      "title": "ReviewObjectSummary",
+      "type": "object"
+    },
     "ReviewParty": {
       "properties": {
         "partyId": {
@@ -2363,6 +2817,91 @@ export const transportSchema = {
       "title": "ReviewPolicy",
       "type": "object"
     },
+    "ReviewPreflight": {
+      "properties": {
+        "caseId": {
+          "title": "Caseid",
+          "type": "string"
+        },
+        "expectedInputVersion": {
+          "title": "Expectedinputversion",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "partial",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reviewObjects": {
+          "$ref": "#/$defs/ReviewObjectSummary"
+        },
+        "applicablePolicies": {
+          "items": {
+            "$ref": "#/$defs/ReviewApplicablePolicy"
+          },
+          "title": "Applicablepolicies",
+          "type": "array"
+        },
+        "scopeItems": {
+          "items": {
+            "$ref": "#/$defs/ReviewScopeItem"
+          },
+          "title": "Scopeitems",
+          "type": "array"
+        },
+        "knowledgeBindings": {
+          "items": {
+            "$ref": "#/$defs/ReviewKnowledgeBinding"
+          },
+          "title": "Knowledgebindings",
+          "type": "array"
+        },
+        "materialSummary": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Materialsummary",
+          "type": "object"
+        },
+        "injuryStatus": {
+          "title": "Injurystatus",
+          "type": "string"
+        },
+        "injuredPersonIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Injuredpersonids",
+          "type": "array"
+        },
+        "blockingReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Blockingreasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "caseId",
+        "expectedInputVersion",
+        "status",
+        "reviewObjects",
+        "applicablePolicies",
+        "scopeItems",
+        "knowledgeBindings",
+        "materialSummary",
+        "injuryStatus",
+        "injuredPersonIds",
+        "blockingReasons"
+      ],
+      "title": "ReviewPreflight",
+      "type": "object"
+    },
     "ReviewProcessingRecord": {
       "properties": {
         "recordId": {
@@ -2471,6 +3010,13 @@ export const transportSchema = {
           "minimum": 0,
           "title": "Expectedrevision",
           "type": "integer"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supplementids",
+          "type": "array"
         }
       },
       "required": [
@@ -2503,6 +3049,67 @@ export const transportSchema = {
         "scopeLimitations"
       ],
       "title": "ReviewScope",
+      "type": "object"
+    },
+    "ReviewScopeItem": {
+      "properties": {
+        "scopeItemId": {
+          "title": "Scopeitemid",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "executable",
+            "limited",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "requiredMaterialTypes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requiredmaterialtypes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scopeItemId",
+        "kind",
+        "title",
+        "status",
+        "entityIds",
+        "requiredMaterialTypes"
+      ],
+      "title": "ReviewScopeItem",
       "type": "object"
     },
     "ReviewTermRef": {
@@ -2741,7 +3348,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -2842,7 +3449,7 @@ export const transportSchema = {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
@@ -2892,632 +3499,96 @@ export const transportSchema = {
       "title": "StatusEvent",
       "type": "object"
     },
-    "V0AnalysisReport": {
+    "SupplementPage": {
+      "additionalProperties": false,
       "properties": {
-        "caseId": {
-          "title": "Caseid",
-          "type": "string"
-        },
-        "summary": {
-          "title": "Summary",
-          "type": "string"
-        },
-        "findings": {
-          "items": {
-            "$ref": "#/$defs/V0Finding"
-          },
-          "title": "Findings",
-          "type": "array"
-        },
-        "recommendation": {
-          "title": "Recommendation",
-          "type": "string"
-        },
-        "citations": {
-          "items": {
-            "$ref": "#/$defs/V0ClauseCitation"
-          },
-          "title": "Citations",
-          "type": "array"
-        },
-        "reviewerComment": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Reviewercomment"
-        }
-      },
-      "required": [
-        "caseId",
-        "summary",
-        "findings",
-        "recommendation",
-        "citations"
-      ],
-      "title": "V0AnalysisReport",
-      "type": "object"
-    },
-    "V0AnalysisTask": {
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "caseId": {
-          "title": "Caseid",
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "running",
-            "waiting_review",
-            "completed",
-            "rejected",
-            "failed"
-          ],
-          "title": "Status",
-          "type": "string"
-        },
-        "events": {
-          "items": {
-            "$ref": "#/$defs/V0TimelineEvent"
-          },
-          "title": "Events",
-          "type": "array"
-        },
-        "findings": {
-          "items": {
-            "$ref": "#/$defs/V0Finding"
-          },
-          "title": "Findings",
-          "type": "array"
-        },
-        "citations": {
-          "items": {
-            "$ref": "#/$defs/V0ClauseCitation"
-          },
-          "title": "Citations",
-          "type": "array"
-        },
-        "report": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/V0AnalysisReport"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "review": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/V0Review"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        }
-      },
-      "required": [
-        "id",
-        "caseId",
-        "status",
-        "events",
-        "findings",
-        "citations"
-      ],
-      "title": "V0AnalysisTask",
-      "type": "object"
-    },
-    "V0ClaimCase": {
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "claimant": {
-          "title": "Claimant",
-          "type": "string"
-        },
-        "productCode": {
-          "title": "Productcode",
-          "type": "string"
-        },
-        "clauseVersion": {
-          "title": "Clauseversion",
-          "type": "string"
-        },
-        "policyEffectiveDate": {
-          "title": "Policyeffectivedate",
-          "type": "string"
-        },
-        "accidentDate": {
-          "title": "Accidentdate",
-          "type": "string"
-        },
-        "claimAmount": {
-          "title": "Claimamount",
-          "type": "number"
-        },
-        "materials": {
-          "items": {
-            "$ref": "#/$defs/V0Material"
-          },
-          "title": "Materials",
-          "type": "array"
-        }
-      },
-      "required": [
-        "id",
-        "claimant",
-        "productCode",
-        "clauseVersion",
-        "policyEffectiveDate",
-        "accidentDate",
-        "claimAmount",
-        "materials"
-      ],
-      "title": "V0ClaimCase",
-      "type": "object"
-    },
-    "V0Clause": {
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "productCode": {
-          "title": "Productcode",
-          "type": "string"
-        },
-        "version": {
-          "title": "Version",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "keywords": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Keywords",
-          "type": "array"
-        }
-      },
-      "required": [
-        "id",
-        "productCode",
-        "version",
-        "title",
-        "content",
-        "keywords"
-      ],
-      "title": "V0Clause",
-      "type": "object"
-    },
-    "V0ClauseCitation": {
-      "properties": {
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "score": {
-          "title": "Score",
-          "type": "number"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "content",
-        "score"
-      ],
-      "title": "V0ClauseCitation",
-      "type": "object"
-    },
-    "V0Finding": {
-      "properties": {
-        "code": {
-          "title": "Code",
-          "type": "string"
-        },
-        "source": {
-          "enum": [
-            "rule",
-            "ai"
-          ],
-          "title": "Source",
-          "type": "string"
-        },
-        "severity": {
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ],
-          "title": "Severity",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "detail": {
-          "title": "Detail",
-          "type": "string"
-        }
-      },
-      "required": [
-        "code",
-        "source",
-        "severity",
-        "title",
-        "detail"
-      ],
-      "title": "V0Finding",
-      "type": "object"
-    },
-    "V0Material": {
-      "properties": {
-        "type": {
-          "title": "Type",
-          "type": "string"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "fields": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          },
-          "title": "Fields",
-          "type": "object"
-        }
-      },
-      "required": [
-        "type",
-        "name",
-        "fields"
-      ],
-      "title": "V0Material",
-      "type": "object"
-    },
-    "V0Review": {
-      "properties": {
-        "decision": {
-          "enum": [
-            "approve",
-            "reject"
-          ],
-          "title": "Decision",
-          "type": "string"
-        },
-        "comment": {
-          "default": "",
-          "maxLength": 2000,
-          "title": "Comment",
-          "type": "string"
-        }
-      },
-      "required": [
-        "decision"
-      ],
-      "title": "V0Review",
-      "type": "object"
-    },
-    "V0ReviewAccepted": {
-      "properties": {
-        "accepted": {
-          "const": true,
-          "title": "Accepted",
-          "type": "boolean"
-        },
-        "taskId": {
-          "title": "Taskid",
-          "type": "string"
-        }
-      },
-      "required": [
-        "accepted",
-        "taskId"
-      ],
-      "title": "V0ReviewAccepted",
-      "type": "object"
-    },
-    "V0TimelineEvent": {
-      "properties": {
-        "id": {
+        "page": {
           "exclusiveMinimum": 0,
-          "maximum": 9007199254740991,
-          "title": "Id",
+          "title": "Page",
           "type": "integer"
         },
-        "type": {
-          "enum": [
-            "status",
-            "node",
-            "tool",
-            "review_required",
-            "report",
-            "error"
-          ],
-          "title": "Type",
-          "type": "string"
-        },
-        "at": {
-          "format": "date-time",
-          "title": "At",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "detail": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Detail"
-        },
-        "data": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/V0Finding"
-              },
-              "type": "array"
-            },
-            {
-              "items": {
-                "$ref": "#/$defs/V0ClauseCitation"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/V0AnalysisReport"
-            },
-            {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Data"
-        },
-        "status": {
-          "enum": [
-            "running",
-            "waiting_review",
-            "completed",
-            "rejected",
-            "failed"
-          ],
-          "title": "Status",
+        "content": {
+          "title": "Content",
           "type": "string"
         }
       },
       "required": [
-        "id",
-        "type",
-        "at",
-        "title",
-        "status"
+        "page",
+        "content"
       ],
-      "title": "V0TimelineEvent",
+      "title": "SupplementPage",
       "type": "object"
     },
-    "V1AnalysisTask": {
+    "SupplementedData": {
+      "additionalProperties": false,
+      "properties": {
+        "supplement": {
+          "$ref": "#/$defs/EvidenceSupplement"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "supplement",
+        "revision"
+      ],
+      "title": "SupplementedData",
+      "type": "object"
+    },
+    "SupplementedEvent": {
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1,
+          "const": 2,
           "title": "Schemaversion",
           "type": "integer"
         },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "caseId": {
-          "title": "Caseid",
+        "analysisId": {
+          "title": "Analysisid",
           "type": "string"
         },
         "conversationId": {
           "title": "Conversationid",
           "type": "string"
         },
-        "kind": {
-          "enum": [
-            "initial",
-            "followup"
-          ],
-          "title": "Kind",
-          "type": "string"
-        },
-        "question": {
-          "title": "Question",
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "queued",
-            "running",
-            "waiting_review",
-            "resuming",
-            "recoverable",
-            "completed",
-            "rejected",
-            "failed"
-          ],
-          "title": "Status",
-          "type": "string"
-        },
-        "caseSnapshot": {
-          "$ref": "#/$defs/V0ClaimCase"
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
         },
         "revision": {
           "minimum": 0,
           "title": "Revision",
           "type": "integer"
         },
-        "lastEventSeq": {
-          "minimum": 0,
-          "title": "Lasteventseq",
-          "type": "integer"
-        },
-        "userMessageId": {
-          "title": "Usermessageid",
+        "at": {
+          "format": "date-time",
+          "title": "At",
           "type": "string"
         },
-        "assistantMessageId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Assistantmessageid"
+        "type": {
+          "const": "evidence.supplemented",
+          "title": "Type",
+          "type": "string"
         },
-        "context": {
-          "$ref": "#/$defs/AnalysisContext"
-        },
-        "facts": {
-          "items": {
-            "$ref": "#/$defs/Fact"
-          },
-          "title": "Facts",
-          "type": "array"
-        },
-        "ruleFindings": {
-          "items": {
-            "$ref": "#/$defs/RuleFinding"
-          },
-          "title": "Rulefindings",
-          "type": "array"
-        },
-        "modelFindings": {
-          "items": {
-            "$ref": "#/$defs/ModelFinding"
-          },
-          "title": "Modelfindings",
-          "type": "array"
-        },
-        "citations": {
-          "items": {
-            "$ref": "#/$defs/Citation"
-          },
-          "title": "Citations",
-          "type": "array"
-        },
-        "sections": {
-          "items": {
-            "$ref": "#/$defs/ReportSection"
-          },
-          "title": "Sections",
-          "type": "array"
-        },
-        "report": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AnalysisReport"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pendingReview": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/PendingReview"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "execution": {
-          "$ref": "#/$defs/Execution"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/PublicError"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "data": {
+          "$ref": "#/$defs/SupplementedData"
         }
       },
       "required": [
         "schemaVersion",
-        "id",
-        "caseId",
+        "analysisId",
         "conversationId",
-        "kind",
-        "question",
-        "status",
-        "caseSnapshot",
+        "seq",
         "revision",
-        "lastEventSeq",
-        "userMessageId",
-        "assistantMessageId",
-        "context",
-        "facts",
-        "ruleFindings",
-        "modelFindings",
-        "citations",
-        "sections",
-        "report",
-        "pendingReview",
-        "execution",
-        "error"
+        "at",
+        "type",
+        "data"
       ],
-      "title": "V1AnalysisTask",
+      "title": "SupplementedEvent",
       "type": "object"
     },
     "V1KnowledgeAttempt": {
@@ -3794,24 +3865,6 @@ export const transportSchema = {
       "title": "V1KnowledgeRetry",
       "type": "object"
     },
-    "WorkbenchTask": {
-      "discriminator": {
-        "mapping": {
-          "0": "#/$defs/LegacyAnalysisTask",
-          "1": "#/$defs/V1AnalysisTask"
-        },
-        "propertyName": "schemaVersion"
-      },
-      "oneOf": [
-        {
-          "$ref": "#/$defs/V1AnalysisTask"
-        },
-        {
-          "$ref": "#/$defs/LegacyAnalysisTask"
-        }
-      ],
-      "title": "WorkbenchTask"
-    },
     "WorkspaceEvent": {
       "discriminator": {
         "mapping": {
@@ -3820,6 +3873,7 @@ export const transportSchema = {
           "analysis.recoverable": "#/$defs/FailureEvent",
           "analysis.rejected": "#/$defs/RejectedEvent",
           "analysis.status": "#/$defs/StatusEvent",
+          "evidence.supplemented": "#/$defs/SupplementedEvent",
           "node.completed": "#/$defs/ExecutionEvent",
           "node.failed": "#/$defs/ExecutionEvent",
           "node.started": "#/$defs/ExecutionEvent",
@@ -3860,6 +3914,9 @@ export const transportSchema = {
         },
         {
           "$ref": "#/$defs/RejectedEvent"
+        },
+        {
+          "$ref": "#/$defs/SupplementedEvent"
         }
       ],
       "title": "WorkspaceEvent"

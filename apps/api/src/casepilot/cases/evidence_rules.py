@@ -1,4 +1,4 @@
-"""V1 rules validate dates and retain precise fact/source references."""
+"""Deterministic review rules retain precise fact and source references."""
 
 from datetime import date
 
@@ -19,6 +19,18 @@ def evaluate_evidence_rules(claim, facts):
                 "sourceValues": [{"factId": ref, "value": by_id[ref]["value"]} for ref in refs],
             }
         )
+
+    if claim.get("snapshotKind") == "closed_claim_review":
+        for item in claim.get("payload", {}).get("dataGaps", []):
+            ref = f"dataGaps:{item['gapId']}"
+            add(
+                f"DATA_GAP_{item['gapId']}",
+                "medium",
+                "资料不足，相关项目无法确认",
+                item["description"],
+                [ref],
+            )
+        return findings
 
     if not any(material.get("type") == "repair_invoice" for material in claim.get("materials", [])):
         add(

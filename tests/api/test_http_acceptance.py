@@ -37,11 +37,11 @@ def decision(api, task, value="approve"):
 
 def test_cases_and_error_boundaries(tcp_workspace):
     api, _ = tcp_workspace
-    cases = api.get("/api/cases").json()
-    assert len(cases) == 2
-    assert api.get("/api/cases/missing").status_code == 404
+    cases = api.get("/api/review-cases").json()["items"]
+    assert len(cases) == 3
+    assert api.get("/api/review-cases/missing").status_code == 404
     assert api.get("/api/analyses/missing").status_code == 404
-    for body in ({}, {"caseId": "CASE-2026-001"}, [], "case"):
+    for body in ({}, {"caseId": "C01"}, [], "case"):
         response = api.post("/api/analyses", json=body)
         assert response.status_code == 400
         assert response.json()["requestId"]
@@ -55,7 +55,7 @@ def test_cases_and_error_boundaries(tcp_workspace):
 
 def test_sse_live_before_completion_and_cursor_replay(tcp_workspace):
     api, _ = tcp_workspace
-    _, created = new_task(api, "CASE-2026-001")
+    _, created = new_task(api, "C03")
     paused = settle(api, created["id"], "waiting_review")
     assert paused["report"] is None
     cursor = paused["lastEventSeq"]
@@ -91,7 +91,7 @@ def test_reject_has_no_report_and_other_conversation_is_independent(tcp_workspac
             return settle(client, created["id"])
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
-        risky, normal = list(pool.map(run, ["CASE-2026-001", "CASE-2026-002"]))
+        risky, normal = list(pool.map(run, ["C03", "C02"]))
     assert normal["status"] == "completed"
     assert risky["status"] == "waiting_review"
     assert decision(api, risky, "reject").status_code == 202

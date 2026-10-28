@@ -1,4 +1,4 @@
-"""Consume V1 commands without replaying ambiguous external effects automatically."""
+"""Consume review commands without replaying ambiguous external effects automatically."""
 
 from langgraph.types import Command
 from psycopg import Error as DatabaseError
@@ -17,7 +17,7 @@ class WorkspaceExecutor:
 
     @staticmethod
     def config(task_id):
-        return {"configurable": {"thread_id": f"v1:{task_id}"}}
+        return {"configurable": {"thread_id": f"v2:{task_id}"}}
 
     async def execute(self, command):
         task_id = command["taskId"]
@@ -66,7 +66,7 @@ class WorkspaceExecutor:
 
 async def reconcile_workspace(store):
     for task in store.list():
-        if task.get("schemaVersion") != 1 or task["status"] not in {
+        if task.get("schemaVersion") != 2 or task["status"] not in {
             "queued",
             "running",
             "resuming",

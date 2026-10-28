@@ -1,4 +1,4 @@
-"""Bounded G3 graph state, independent of the V0 checkpoint protocol."""
+"""Bounded graph state, independent of the workspace checkpoint protocol."""
 
 from typing import TypedDict
 

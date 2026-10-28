@@ -1,8 +1,7 @@
 import { transportValidator } from './transport.js';
-import type { WorkbenchTask, V1AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, CitationContext } from './generated/types.js';
-export type { WorkbenchTask, V1AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, ReportSection, CreateAnalysis, CreateConversation, ReviewRequest, RecoverRequest } from './generated/types.js';
-export const workbenchTaskSchema = transportValidator<WorkbenchTask>('WorkbenchTask');
-export const v1AnalysisTaskSchema = transportValidator<V1AnalysisTask>('V1AnalysisTask');
+import type { AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, CitationContext, EvidenceSupplement } from './generated/types.js';
+export type { AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, ReportSection, CreateAnalysis, CreateConversation, ReviewRequest, RecoverRequest, EvidenceSupplement } from './generated/types.js';
+export const analysisTaskSchema = transportValidator<AnalysisTask>('AnalysisTask');
 export const workspaceEventSchema = transportValidator<WorkspaceEvent>('WorkspaceEvent');
 export const conversationSchema = transportValidator<Conversation>('Conversation');
 export const conversationSummarySchema = transportValidator<ConversationSummary>('ConversationSummary');
@@ -10,3 +9,4 @@ export const commandAcceptedSchema = transportValidator<CommandAccepted>('Comman
 export const citationSchema = transportValidator<Citation>('Citation');
 export type { CitationContext } from './generated/types.js';
 export const citationContextSchema = transportValidator<CitationContext>('CitationContext');
+export const evidenceSupplementSchema = transportValidator<EvidenceSupplement>('EvidenceSupplement');

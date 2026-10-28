@@ -10,6 +10,7 @@ class ChatProfile:
     name: str
     thinking: bool
     preserve_thinking: bool
+    reasoning_effort: str
     max_tokens: int
     probe_max_tokens: int
     manual_max_tokens: int
@@ -23,7 +24,11 @@ class ChatProfile:
         thinking = {"type": "enabled" if self.thinking else "disabled"}
         if self.preserve_thinking:
             thinking["clear_thinking"] = False
-        return {"max_tokens": limits[purpose], "thinking": thinking}
+        return {
+            "max_tokens": limits[purpose],
+            "thinking": thinking,
+            "reasoning_effort": self.reasoning_effort,
+        }
 
     def response_metadata(self, message):
         reasoning = message.get("reasoning_content")
@@ -41,6 +46,7 @@ CHAT_PROFILES = {
         name=DEFAULT_CHAT_MODEL,
         thinking=True,
         preserve_thinking=True,
+        reasoning_effort="low",
         max_tokens=4096,
         probe_max_tokens=2048,
         manual_max_tokens=1024,

@@ -1,4 +1,4 @@
-"""V1 orchestration with official persistent approval checkpoints."""
+"""Closed-claim orchestration with persistent approval checkpoints."""
 
 from typing import TypedDict
 

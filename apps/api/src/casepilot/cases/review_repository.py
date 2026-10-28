@@ -40,6 +40,100 @@ def _load_all() -> list[tuple[Path, dict[str, Any]]]:
     return loaded
 
 
+def get_review_case_input(case_id: str) -> dict[str, Any] | None:
+    """Return the normalized source record without filesystem-only material paths."""
+    for case_dir, value in _load_all():
+        if value["datasetCaseId"] != case_id:
+            continue
+        result = deepcopy(value)
+        claim_ids = {item["claimId"] for item in result.get("claims", [])}
+        scoped_ids = set(result.get("reviewScope", {}).get("targetClaimIds", [])) | set(
+            result.get("reviewScope", {}).get("relatedClaimIds", [])
+        )
+        if not scoped_ids <= claim_ids:
+            raise ReviewCaseDataError("审查范围引用了不存在的赔案。")
+        document_ids = {item["documentId"] for item in result.get("documents", [])}
+        for evidence in result.get("evidence", []):
+            if evidence.get("documentId") and evidence["documentId"] not in document_ids:
+                raise ReviewCaseDataError("证据引用了不存在的材料。")
+        for document in result.get("documents", []):
+            if document.get("status") == "available":
+                relative = document.get("relativePath")
+                if not relative:
+                    raise ReviewCaseDataError(f"已取得材料缺少受控路径：{document['documentId']}")
+                path = (case_dir / relative).resolve()
+                if not path.is_relative_to(case_dir) or not path.is_file():
+                    raise ReviewCaseDataError(f"案件材料路径无效：{document['documentId']}")
+                if hashlib.sha256(path.read_bytes()).hexdigest() != document.get("sha256"):
+                    raise ReviewCaseDataError(f"案件材料校验值不一致：{document['documentId']}")
+            document.pop("relativePath", None)
+        return result
+    return None
+
+
+def review_case_exists(case_id: str) -> bool:
+    return any(value["datasetCaseId"] == case_id for _, value in _load_all())
+
+
+def review_scope_items(case: dict[str, Any]) -> list[dict[str, Any]]:
+    target_ids = case.get("reviewScope", {}).get("targetClaimIds", [])
+    items = [
+        {
+            "scopeItemId": "archive_consistency",
+            "kind": "archive_consistency",
+            "title": "案卷事实与材料一致性",
+            "status": "executable" if target_ids else "blocked",
+            "entityIds": target_ids,
+            "reason": None if target_ids else "未识别到审查目标赔案",
+            "requiredMaterialTypes": [],
+        },
+        {
+            "scopeItemId": "policy_coverage",
+            "kind": "policy_coverage",
+            "title": "保单与承保范围核验",
+            "status": "executable" if case.get("policies") else "limited",
+            "entityIds": [item["policyId"] for item in case.get("policies", [])],
+            "reason": None if case.get("policies") else "未取得可识别的保单记录",
+            "requiredMaterialTypes": ["policy"],
+        },
+        {
+            "scopeItemId": "settlement_payment",
+            "kind": "settlement_payment",
+            "title": "核赔、结案与支付记录核验",
+            "status": "executable" if case.get("approvals") or case.get("payments") else "limited",
+            "entityIds": target_ids,
+            "reason": None if case.get("approvals") or case.get("payments") else "未取得核赔或支付记录",
+            "requiredMaterialTypes": ["approval_record", "payment_record"],
+        },
+    ]
+    documents = case.get("documents", [])
+    for gap in case.get("dataGaps", []):
+        related = [
+            item["materialType"]
+            for item in documents
+            if item.get("status") != "available"
+            and set(item.get("entityIds", [])) & set(gap.get("entityIds", []))
+        ]
+        items.append(
+            {
+                "scopeItemId": f"data_gap:{gap['gapId']}",
+                "kind": "data_gap",
+                "title": "资料缺口",
+                "status": "limited",
+                "entityIds": gap.get("entityIds", []),
+                "reason": gap["description"],
+                "requiredMaterialTypes": sorted(set(related)),
+            }
+        )
+    return items
+
+
+def review_input_version(case: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(case, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def _money(value: dict[str, Any] | None, *, reason: str = "当前记录未提供该金额") -> dict:
     if not value:
         return {"status": "unknown", "amountFen": None, "currency": "CNY", "reason": reason}
@@ -149,6 +243,7 @@ def list_review_cases(
     closed_to: date | None = None,
     injury_status: str | None = None,
     review_status: str | None = None,
+    latest_statuses: dict[str, str] | None = None,
 ) -> dict:
     loaded = _load_all()
     if not loaded:
@@ -157,6 +252,7 @@ def list_review_cases(
     items = []
     for _, case in loaded:
         summary = _summary(case)
+        summary["latestReviewStatus"] = (latest_statuses or {}).get(summary["id"], "not_started")
         all_claims = summary["targetClaims"] + summary["relatedClaims"]
         if needle:
             candidates = {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { V1AnalysisTask } from '@casepilot/contracts';
+import type { AnalysisTask } from '@casepilot/contracts';
 
-type RuleFinding = V1AnalysisTask['ruleFindings'][number];
+type RuleFinding = AnalysisTask['ruleFindings'][number];
 
 defineProps<{ finding: RuleFinding }>();
 

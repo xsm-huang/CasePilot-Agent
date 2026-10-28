@@ -44,7 +44,7 @@ def mock_client(monkeypatch, responses):
 
     def factory(**kwargs):
         assert kwargs["follow_redirects"] is False
-        assert kwargs["timeout"] == 30
+        assert kwargs["timeout"] == 60
         return original(transport=httpx.MockTransport(handle), **kwargs)
 
     monkeypatch.setattr(model.httpx, "AsyncClient", factory)
@@ -98,7 +98,9 @@ async def test_three_mock_requests_and_fixed_profile(monkeypatch):
     assert all(str(call.url).startswith("https://open.bigmodel.cn/api/paas/v4/") for call in calls)
     bodies = [json.loads(call.content) for call in calls]
     assert bodies[0]["model"] == "glm-5.3-flash"
+    assert bodies[0]["reasoning_effort"] == "low"
     assert bodies[1]["response_format"] == {"type": "json_object"}
+    assert bodies[1]["reasoning_effort"] == "low"
     assert bodies[2]["model"] == "embedding-3"
     assert bodies[2]["dimensions"] == 1024
 

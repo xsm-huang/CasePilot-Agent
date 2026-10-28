@@ -18,7 +18,7 @@ async def main():
         await pool.wait()
         store = Store(pool, os.environ["CASEPILOT_DB_SCHEMA"])
         await store.setup()
-        task_id = (await store.create("CASE-2026-002"))["id"] if mode == "seed" else sys.argv[2]
+        task_id = (await store.create("C02"))["id"] if mode == "seed" else sys.argv[2]
         ledger = TaskLedger(store, task_id)
         await ledger.initialize({"generationId": "fixed-generation"})
 

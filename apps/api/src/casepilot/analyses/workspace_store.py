@@ -1,4 +1,4 @@
-"""V1 task projections and atomic business updates; legacy tasks are read-only."""
+"""Closed-claim review task projections and atomic business updates."""
 
 import hashlib
 import json
@@ -13,9 +13,8 @@ from .store import Store
 ACTIVE = {"queued", "running", "waiting_review", "resuming", "recoverable"}
 TERMINAL = {"completed", "rejected", "failed"}
 CONTEXT_FIELDS = (
-    "caseVersion",
-    "generationId",
-    "embeddingProfile",
+    "inputVersion",
+    "knowledgeBindings",
     "messageIds",
     "modelProfile",
     "promptVersion",
@@ -44,12 +43,12 @@ class WorkspaceStore(Store):
 
     async def setup(self):
         await super().setup()
-        if any(
-            t.get("schemaVersion") != 1 and t["status"] not in TERMINAL for t in self.tasks.values()
-        ):
-            raise RuntimeError(
-                "Active legacy tasks prevent V1 cutover; finish or explicitly migrate them first"
-            )
+        self.tasks = {
+            key: value for key, value in self.tasks.items() if value.get("schemaVersion") == 2
+        }
+        self.commands = {
+            key: value for key, value in self.commands.items() if value.get("taskId") in self.tasks
+        }
         if self.repository:
             self.conversations = await self.repository.conversations()
 
@@ -84,16 +83,13 @@ class WorkspaceStore(Store):
     @staticmethod
     def public(task):
         result = {key: deepcopy(value) for key, value in task.items() if not key.startswith("_")}
-        if task.get("schemaVersion") == 1:
-            result.pop("events", None)
-        else:
-            result.update(schemaVersion=0, readOnly=True)
+        result.pop("events", None)
         return result
 
     def writable(self, task_id):
         task = self.get(task_id)
-        if task.get("schemaVersion") != 1:
-            raise AnalysisError("LEGACY_READ_ONLY", "旧版模板报告只读，不能审核或继续执行。")
+        if task.get("schemaVersion") != 2:
+            raise AnalysisError("ANALYSIS_NOT_FOUND", "分析任务不存在。")
         return task
 
     def append(self, task, event_type, data, key):
@@ -104,7 +100,7 @@ class WorkspaceStore(Store):
         if "revision" in payload:
             payload["revision"] = task["revision"]
         event = {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "analysisId": task["id"],
             "conversationId": task["conversationId"],
             "seq": task["lastEventSeq"] + 1,
@@ -222,6 +218,11 @@ class WorkspaceStore(Store):
                 raise AnalysisError("INVALID_INPUT", "完成首轮分析后才能继续追问。")
             if body["kind"] == "initial" and completed:
                 raise AnalysisError("INVALID_INPUT", "已有完成回合，请使用追问或新建会话。")
+            predecessor_id = body.get("predecessorAnalysisId")
+            if predecessor_id:
+                predecessor = self.get(predecessor_id)
+                if predecessor["caseId"] != conversation["caseId"]:
+                    raise AnalysisError("INVALID_INPUT", "前序任务不属于当前案件。")
             task_id, message_id = str(uuid4()), str(uuid4())
             question = body["question"]
             agent_context = context | {
@@ -230,7 +231,7 @@ class WorkspaceStore(Store):
                 "messageIds": [m["id"] for m in history],
             }
             task = {
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "id": task_id,
                 "caseId": conversation["caseId"],
                 "conversationId": conversation_id,
@@ -238,6 +239,9 @@ class WorkspaceStore(Store):
                 "question": question,
                 "status": "queued",
                 "caseSnapshot": context["caseSnapshot"],
+                "predecessorAnalysisId": body.get("predecessorAnalysisId"),
+                "evidenceSupplements": [],
+                "reviewSupplementIds": [],
                 "revision": 0,
                 "lastEventSeq": 0,
                 "userMessageId": message_id,
@@ -351,6 +355,8 @@ class WorkspaceStore(Store):
 
     async def accept(self, task_id, body, key, *, recover=False):
         self.require_database()
+        if len(body.get("supplementIds", [])) > 20:
+            raise AnalysisError("INVALID_INPUT", "一次最多引用 20 份补充证据。")
         scope = f"{'recover' if recover else 'review'}:{task_id}"
         digest = fingerprint(body)
         async with self.lock:
@@ -385,8 +391,28 @@ class WorkspaceStore(Store):
                     or pending["interruptKey"] != body["interruptKey"]
                 ):
                     raise AnalysisError("REVIEW_CONFLICT", "审核点已失效，请刷新后重新确认。")
+                available = {item["supplementId"] for item in task["evidenceSupplements"]}
+                if not set(body.get("supplementIds", [])) <= available:
+                    raise AnalysisError("INVALID_INPUT", "审核引用了不属于当前任务的补充证据。")
+                selected = [
+                    item
+                    for item in task["evidenceSupplements"]
+                    if item["supplementId"] in body.get("supplementIds", [])
+                ]
+                if body["decision"] == "approve" and any(
+                    item["addedBy"] == "unidentified_operator" for item in selected
+                ):
+                    raise AnalysisError(
+                        "OPERATOR_IDENTITY_REQUIRED",
+                        "补充证据的操作者身份未识别，不能据此通过正式审核。",
+                    )
                 review = deepcopy(body)
-                task.update(status="resuming", pendingReview=None, _review=review)
+                task.update(
+                    status="resuming",
+                    pendingReview=None,
+                    reviewSupplementIds=body.get("supplementIds", []),
+                    _review=review,
+                )
                 self.append(
                     task,
                     "review.accepted",
@@ -406,6 +432,20 @@ class WorkspaceStore(Store):
             self.tasks[task_id] = task
             self.commands[command["id"]] = command
             return response
+
+    async def add_supplement(self, task_id, supplement):
+        def update(task):
+            if task["status"] != "waiting_review":
+                raise AnalysisError("REVIEW_CONFLICT", "仅等待人工审核的任务可以补充证据。")
+            task["evidenceSupplements"].append(deepcopy(supplement))
+            self.append(
+                task,
+                "evidence.supplemented",
+                {"supplement": supplement, "revision": 0},
+                f"supplement:{supplement['supplementId']}",
+            )
+
+        return await self.edit(task_id, update)
 
     async def section(self, task_id, key, output):
         def update(task):

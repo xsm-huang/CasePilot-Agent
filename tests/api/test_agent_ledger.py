@@ -11,7 +11,7 @@ from casepilot.model.errors import ModelError
 
 async def prepared():
     store = Store()
-    task = await store.create("CASE-2026-002")
+    task = await store.create("C02")
     ledger = TaskLedger(store, task["id"])
     await ledger.initialize({"generationId": "pinned"})
     return store, task["id"], ledger

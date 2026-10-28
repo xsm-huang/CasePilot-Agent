@@ -17,7 +17,7 @@ const result = spawnSync(python, ['-m', 'casepilot.export_schema'], {
 if (result.error) throw result.error;
 if (result.status !== 0) throw new Error(result.stderr || 'Python schema export failed');
 const schema = JSON.parse(result.stdout);
-if (!schema.$defs?.V0AnalysisTask || !schema.$defs?.V0TimelineEvent) throw new Error('Missing Python transport models');
+if (!schema.$defs?.AnalysisTask || !schema.$defs?.ReviewPreflight) throw new Error('Missing Python transport models');
 const banner = '// Generated from Python Pydantic models by pnpm --filter @casepilot/contracts generate. Do not edit.\n';
 const types = await compile(schema, 'TransportContract', { bannerComment: banner, additionalProperties: false, unreachableDefinitions: true });
 const outputs = [

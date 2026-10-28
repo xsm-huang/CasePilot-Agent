@@ -1,4 +1,4 @@
-import { reviewCaseDetailSchema, reviewCaseListResponseSchema } from '@casepilot/contracts';
+import { reviewCaseDetailSchema, reviewCaseListResponseSchema, reviewPreflightSchema } from '@casepilot/contracts';
 import { request } from './http';
 
 export interface ReviewCaseFilters {
@@ -28,5 +28,8 @@ export const reviewCasesApi = {
   },
   detail(id: string, signal: AbortSignal) {
     return request(`/review-cases/${enc(id)}`, reviewCaseDetailSchema, { signal });
+  },
+  preflight(id: string, signal: AbortSignal) {
+    return request(`/review-cases/${enc(id)}/review-preflight`, reviewPreflightSchema, { signal });
   },
 };

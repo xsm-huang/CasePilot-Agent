@@ -12,20 +12,49 @@ from agent_fixtures import (
 from casepilot.analyses.agent import run_agent_analysis
 from casepilot.analyses.agent_errors import AgentError
 from casepilot.analyses.store import Store
+from casepilot.cases.review_repository import get_review_case_input, review_scope_items
+from casepilot.knowledge.config import PROFILE
+from casepilot.model.config import read_model_config
+from casepilot.workflow.prompts import PROMPT_VERSION
 from casepilot.workflow.tools import build_analysis_tools
 from pydantic import ValidationError
 
+DEFAULT_QUESTION = "请核查案件事实、材料完整性及条款依据。"
 
-async def prepared():
+
+async def prepared(question=DEFAULT_QUESTION):
     store = Store()
-    task = await store.create("CASE-2026-002")
+    task = await store.create("C02")
     store.repository = RecordingRepository()
+    case = get_review_case_input("C02")
+    snapshot = {
+        "snapshotKind": "closed_claim_review",
+        "caseId": "C02",
+        "caseRevision": case["caseRevision"],
+        "preparedAt": case["preparedAt"],
+        "payload": case,
+        "scopeItems": review_scope_items(case),
+        "knowledgeBindings": [{
+            **case["knowledgeRefs"][0], "status": "ready", "generationId": "generation-1",
+            "productCode": "AUTO-COMPREHENSIVE", "clauseVersion": "2025-01",
+            "embeddingProfile": PROFILE,
+        }],
+    }
+    store.tasks[task["id"]]["_agent"] = {
+        "context": {
+            "caseId": "C02", "caseSnapshot": snapshot, "inputVersion": "test-input",
+            "knowledgeBindings": snapshot["knowledgeBindings"],
+            "modelProfile": read_model_config({"ZHIPU_API_KEY": "test-no-network"}).chat_model,
+            "promptVersion": PROMPT_VERSION, "question": question,
+        },
+        "calls": {}, "counts": {"model": 0, "retrieval": 0, "repair": 0},
+    }
     return store, task["id"]
 
 
 async def test_agent_entry_rejects_ephemeral_storage_before_any_external_request():
     store = Store()
-    task = await store.create("CASE-2026-002")
+    task = await store.create("C02")
     knowledge, chat = FakeKnowledge(), ScriptedChat()
     with pytest.raises(AgentError, match="PERSISTENT_STORAGE_REQUIRED"):
         await run_agent_analysis(store, task["id"], knowledge, chat)
@@ -87,8 +116,8 @@ async def test_supplement_limit_is_enforced_even_when_model_keeps_requesting():
 
 @pytest.mark.parametrize("mode", ["duplicate", "no-new"])
 async def test_repeated_queries_or_no_new_evidence_stop_the_loop(mode):
-    store, task_id = await prepared()
     question = "current question"
+    store, task_id = await prepared(question)
     query = question if mode == "duplicate" else "different query"
     result = await run_agent_analysis(
         store, task_id, FakeKnowledge(), ScriptedChat([tool_turn(query)]), question=question
@@ -121,14 +150,9 @@ async def test_invalid_reference_is_repaired_once_and_invalid_second_output_fail
     assert len(chat.calls) == 3
 
 
-async def test_unready_index_fails_before_model_or_embedding_and_tools_bind_no_scope_inputs():
+async def test_tools_bind_no_scope_inputs():
     store, task_id = await prepared()
     knowledge, chat = FakeKnowledge(), ScriptedChat()
-    knowledge.status = "embedding"
-    with pytest.raises(AgentError, match="KNOWLEDGE_NOT_READY"):
-        await run_agent_analysis(store, task_id, knowledge, chat)
-    assert not chat.calls and not knowledge.calls
-    knowledge.status = "ready"
     result = await run_agent_analysis(store, task_id, knowledge, chat)
     tools = build_analysis_tools(result["context"], knowledge)
     with pytest.raises(ValidationError):

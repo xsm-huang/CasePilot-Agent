@@ -10,7 +10,10 @@ import pytest
 from agent_fixtures import ScriptedChat, assessment
 from casepilot.analyses.agent import run_agent_analysis
 from casepilot.analyses.store import Store
+from casepilot.cases.review_repository import get_review_case_input, review_scope_items
+from casepilot.knowledge.config import PROFILE
 from casepilot.knowledge.service import KnowledgeService
+from casepilot.workflow.prompts import PROMPT_VERSION
 from conftest import ROOT
 from test_knowledge_database import FakeEmbedding, publish, run_database
 
@@ -27,10 +30,46 @@ def test_g3_graph_consumes_real_pdf_pgvector_and_keeps_original_generation(postg
         )
         store = Store(repository.pool, repository.schema)
         await store.setup()
-        task = await store.create("CASE-2026-002")
+        task = await store.create("C02")
         chat = ScriptedChat(assessments=[assessment(citation=rows[0]["chunkId"])])
+        case = get_review_case_input("C02")
+        binding = {
+            "documentId": generation["documentId"],
+            "documentSha256": generation["sha256"],
+            "version": generation["clauseVersion"],
+            "sectionIds": [],
+            "status": "ready",
+            "generationId": generation["generationId"],
+            "productCode": generation["productCode"],
+            "clauseVersion": generation["clauseVersion"],
+            "embeddingProfile": PROFILE,
+        }
+        snapshot = {
+            "snapshotKind": "closed_claim_review",
+            "caseId": "C02",
+            "caseRevision": case["caseRevision"],
+            "preparedAt": case["preparedAt"],
+            "payload": case,
+            "scopeItems": review_scope_items(case),
+            "knowledgeBindings": [binding],
+        }
+        saved = store.tasks[task["id"]]
+        saved["_agent"] = {
+            "context": {
+                "caseId": "C02",
+                "caseSnapshot": snapshot,
+                "inputVersion": "test-input",
+                "knowledgeBindings": [binding],
+                "modelProfile": chat.config.chat_model,
+                "promptVersion": PROMPT_VERSION,
+                "question": "请核查案件事实、材料完整性及条款依据。",
+            },
+            "calls": {},
+            "counts": {"model": 0, "retrieval": 0, "repair": 0},
+        }
+        await store.repository.save(saved)
         result = await run_agent_analysis(store, task["id"], knowledge, chat)
-        assert result["context"]["generationId"] == generation["generationId"]
+        assert result["context"]["knowledgeBindings"][0]["generationId"] == generation["generationId"]
         assert result["citations"][0]["documentId"] == generation["documentId"]
         assert result["citations"][0]["page"] == 1
         assert result["citations"][0]["fileName"] == "self-authored.pdf"

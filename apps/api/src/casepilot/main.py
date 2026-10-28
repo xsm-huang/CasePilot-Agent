@@ -8,7 +8,6 @@ from psycopg_pool import PoolTimeout
 
 from .analyses.errors import AnalysisError
 from .api.analyses import router as analyses_router
-from .api.cases import router as cases_router
 from .api.errors import (
     analysis_error,
     database_error,
@@ -37,7 +36,6 @@ def create_app(*, chat=None, embedder=None):
     application.add_exception_handler(PoolTimeout, database_error)
     application.include_router(knowledge_router)
     application.include_router(system_router)
-    application.include_router(cases_router)
     application.include_router(review_cases_router)
     application.include_router(analyses_router)
     application.add_middleware(

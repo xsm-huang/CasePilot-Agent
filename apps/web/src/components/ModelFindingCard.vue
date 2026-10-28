@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { V1AnalysisTask } from '@casepilot/contracts';
+import type { AnalysisTask } from '@casepilot/contracts';
 
-type ModelFinding = V1AnalysisTask['modelFindings'][number];
+type ModelFinding = AnalysisTask['modelFindings'][number];
 
 defineProps<{ finding: ModelFinding }>();
 defineEmits<{ citation: [citationId: string] }>();
