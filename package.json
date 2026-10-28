@@ -4,7 +4,9 @@
   "type": "module",
   "packageManager": "pnpm@12.4.2",
   "scripts": {
-    "dev": "pnpm --filter @casepilot/web dev",
+    "dev": "node scripts/run_uv.mjs run --package casepilot-api python scripts/dev.py",
+    "dev:api": "node scripts/run_uv.mjs run --package casepilot-api python -m casepilot",
+    "dev:web": "pnpm --filter @casepilot/web dev",
     "build": "pnpm -r build",
     "test": "pnpm test:api && pnpm test:web",
     "test:api": "uv run --package casepilot-api --extra dev python scripts/test.py",
