@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from conftest import ROOT
 from psycopg.types.json import Jsonb
+from test_http_acceptance import decision
 from workspace_fixtures import new_task, settle
 from workspace_fixtures import workspace as workspace
 
@@ -19,8 +20,14 @@ def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspa
     source = ROOT / "test-data/claims-review/v1/supplements/C03/补充计算书_第三方商业险_演示.pdf"
     response = client.post(
         f"/api/analyses/{original['id']}/supplements",
-        data={"title": "补充计算书", "materialType": "calculation", "entityIds": '["CLM-C03-COM-TP"]'},
+        data={
+            "title": "补充计算书",
+            "expectedRevision": original["revision"],
+            "materialType": "calculation",
+            "entityIds": '["CLM-C03-COM-TP"]',
+        },
         files={"file": (source.name, source.read_bytes(), "application/pdf")},
+        headers={"Idempotency-Key": str(uuid4())},
     )
     assert response.status_code == 201, response.text
     supplement = response.json()
@@ -28,9 +35,12 @@ def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspa
     assert updated["context"]["inputVersion"] == original["context"]["inputVersion"]
     assert updated["caseSnapshot"] == original["caseSnapshot"]
     assert updated["evidenceSupplements"] == [supplement]
-    assert client.get(
-        f"/api/analyses/{original['id']}/supplements/{supplement['supplementId']}/content"
-    ).content == source.read_bytes()
+    assert (
+        client.get(
+            f"/api/analyses/{original['id']}/supplements/{supplement['supplementId']}/content"
+        ).content
+        == source.read_bytes()
+    )
     review = client.post(
         f"/api/analyses/{original['id']}/review",
         json={
@@ -38,6 +48,9 @@ def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspa
             "comment": "结合补充计算书复核",
             "interruptKey": updated["pendingReview"]["interruptKey"],
             "expectedRevision": updated["revision"],
+            "reviewCycleId": updated["reviewState"]["reviewCycleId"],
+            "reportVersion": updated["report"]["version"],
+            "basisHash": updated["finalizationEligibility"]["basisHash"],
             "supplementIds": [supplement["supplementId"]],
         },
         headers={"Idempotency-Key": str(uuid4())},
@@ -47,7 +60,9 @@ def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspa
         supplement["supplementId"]
     ]
 
-    conversation = client.post("/api/cases/C03/conversations", json={"title": "补充资料重审"}).json()
+    conversation = client.post(
+        "/api/cases/C03/conversations", json={"title": "补充资料重审"}
+    ).json()
     preflight = client.get("/api/review-cases/C03/review-preflight").json()
     body = {
         "conversationId": conversation["id"],
@@ -56,20 +71,23 @@ def test_supplement_is_appended_and_reanalysis_creates_a_new_fixed_input(workspa
         "predecessorAnalysisId": original["id"],
         "supplementIds": [supplement["supplementId"]],
     }
-    reanalysis = client.post(
-        "/api/analyses", json=body, headers={"Idempotency-Key": str(uuid4())}
-    )
+    reanalysis = client.post("/api/analyses", json=body, headers={"Idempotency-Key": str(uuid4())})
     assert reanalysis.status_code == 202, reanalysis.text
     new_task_snapshot = reanalysis.json()
     assert new_task_snapshot["predecessorAnalysisId"] == original["id"]
     assert new_task_snapshot["context"]["inputVersion"] != original["context"]["inputVersion"]
     assert new_task_snapshot["caseSnapshot"]["payload"]["reviewSupplements"] == [supplement]
-    assert client.get(f"/api/analyses/{original['id']}").json()["caseSnapshot"] == original["caseSnapshot"]
+    assert (
+        client.get(f"/api/analyses/{original['id']}").json()["caseSnapshot"]
+        == original["caseSnapshot"]
+    )
 
 
 def test_citation_neighbours_are_bounded_and_keep_the_original_generation(workspace):
     client, app, _ = workspace
     _, created = new_task(client)
+    paused = settle(client, created["id"], "waiting_review")
+    assert decision(client, paused).status_code == 202
     task = settle(client, created["id"], "completed")
     citation = task["citations"][0]
 
@@ -106,6 +124,8 @@ def test_citation_neighbours_are_bounded_and_keep_the_original_generation(worksp
 def test_long_history_pagination_and_six_complete_turns_with_tied_timestamps(workspace):
     client, app, _ = workspace
     conversation, created = new_task(client)
+    paused = settle(client, created["id"], "waiting_review")
+    assert decision(client, paused).status_code == 202
     template = settle(client, created["id"], "completed")
     other = client.post("/api/cases/C02/conversations", json={}).json()
     turn_ids = []

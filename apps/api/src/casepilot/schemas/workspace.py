@@ -4,9 +4,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field, JsonValue, RootModel
 
-from .agent import Fact, ModelFinding, StrictModel
+from .agent import Fact, FindingReview, ModelFinding, ReviewCheck, StrictModel
 from .knowledge import Timestamp
-from .review_cases import ClosedClaimReviewSnapshot, ReviewKnowledgeBinding
+from .review import BusinessNode, Eligibility, ReviewState
+from .review_cases import ClosedClaimReviewSnapshot, ReviewCaseListItem, ReviewKnowledgeBinding
 
 AnalysisStatus = Literal[
     "queued",
@@ -18,7 +19,7 @@ AnalysisStatus = Literal[
     "rejected",
     "failed",
 ]
-SectionKey = Literal["summary", "findings", "recommendations"]
+SectionKey = Literal["summary", "coverage", "findings", "limitations", "reviews", "recommendations"]
 
 
 class PublicError(StrictModel):
@@ -77,10 +78,22 @@ class ReportSection(StrictModel):
 
 
 class AnalysisReport(StrictModel):
+    kind: Literal["pending_review", "stage", "final"] = "stage"
+    version: int
+    analysisId: str = ""
+    inputVersion: str = ""
+    generatedAt: str = ""
+    operatorId: str | None = None
+    conclusion: str = "历史报告，业务完成条件需核对"
     caseId: str
     sections: list[ReportSection]
     insufficientEvidence: bool
     reviewerComment: str | None
+    basisHash: str
+    snapshot: dict[str, JsonValue]
+    statistics: dict[str, int]
+    revisionReason: str
+    replacesVersion: int | None
 
 
 class PendingReview(StrictModel):
@@ -104,6 +117,7 @@ class StatusData(StrictModel):
 
 
 class ExecutionData(StrictModel):
+    nodeKey: Literal["archive", "coverage", "consistency", "clauses", "amount", "report"] = "report"
     executionId: str
     key: str
     name: str
@@ -111,9 +125,12 @@ class ExecutionData(StrictModel):
     status: Literal["running", "completed", "failed"]
     summary: str
     durationMs: int = Field(ge=0)
+    kind: Literal["local", "retrieval", "model"]
+    parentNodeRunId: str
 
 
 class AnalysisReadyData(StrictModel):
+    checks: list[ReviewCheck] = Field(default_factory=list)
     facts: list[Fact]
     ruleFindings: list[RuleFinding]
     modelFindings: list[ModelFinding]
@@ -125,6 +142,9 @@ class ReviewAcceptedData(StrictModel):
     interruptKey: str
     decision: Literal["approve", "reject"]
     revision: int
+    comment: str = ""
+    operatorId: str = "unidentified_operator"
+    nodeKey: str = "report"
 
 
 class ReportCompletedData(StrictModel):
@@ -149,6 +169,7 @@ class SupplementPage(StrictModel):
 
 
 class EvidenceSupplement(StrictModel):
+    nodeKey: Literal["archive", "coverage", "consistency", "clauses", "amount", "report"] = "amount"
     supplementId: str
     version: int = Field(gt=0)
     analysisId: str
@@ -163,6 +184,12 @@ class EvidenceSupplement(StrictModel):
 
 class SupplementedData(StrictModel):
     supplement: EvidenceSupplement
+    revision: int
+
+
+class FindingReviewedData(StrictModel):
+    review: FindingReview
+    report: AnalysisReport
     revision: int
 
 
@@ -182,9 +209,6 @@ class StatusEvent(EventBase):
 
 class ExecutionEvent(EventBase):
     type: Literal[
-        "node.started",
-        "node.completed",
-        "node.failed",
         "tool.started",
         "tool.completed",
         "tool.failed",
@@ -232,6 +256,32 @@ class SupplementedEvent(EventBase):
     data: SupplementedData
 
 
+class FindingReviewedEvent(EventBase):
+    type: Literal["finding.reviewed"]
+    data: FindingReviewedData
+
+
+class ReportSavedEvent(EventBase):
+    type: Literal["report.saved"]
+    data: AnalysisReport
+
+
+class BusinessNodeEvent(EventBase):
+    type: Literal[
+        "business_node.started",
+        "business_node.completed",
+        "business_node.failed",
+        "business_node.unable",
+        "business_node.not_applicable",
+    ]
+    data: BusinessNode
+
+
+class ReviewUpdatedEvent(EventBase):
+    type: Literal["review.updated"]
+    data: ReviewState
+
+
 EventEnvelope = Annotated[
     StatusEvent
     | ExecutionEvent
@@ -242,7 +292,11 @@ EventEnvelope = Annotated[
     | CompletedEvent
     | FailureEvent
     | RejectedEvent
-    | SupplementedEvent,
+    | SupplementedEvent
+    | FindingReviewedEvent
+    | ReportSavedEvent
+    | BusinessNodeEvent
+    | ReviewUpdatedEvent,
     Field(discriminator="type"),
 ]
 
@@ -252,12 +306,19 @@ class WorkspaceEvent(RootModel[EventEnvelope]):
 
 
 class Execution(StrictModel):
-    nodes: list[ExecutionData]
     tools: list[ExecutionData]
     timeline: list[EventEnvelope]
 
 
 class AnalysisTask(StrictModel):
+    reviewState: ReviewState
+    finalizationEligibility: Eligibility
+    reviewStatus: Literal["pending_review", "reviewing", "pending_verification", "completed"]
+    caseSummary: ReviewCaseListItem | None = None
+    checks: list[ReviewCheck] = Field(default_factory=list)
+    reviewHistory: list[FindingReview] = Field(default_factory=list)
+    reports: list[AnalysisReport] = Field(default_factory=list)
+    operatorId: str = "unidentified_operator"
     schemaVersion: Literal[2]
     id: str
     caseId: str
@@ -328,6 +389,26 @@ class ReviewRequest(StrictModel):
     interruptKey: str = Field(min_length=1, max_length=200)
     expectedRevision: int = Field(ge=0)
     supplementIds: list[str] = Field(default_factory=list)
+    coverageConfirmed: bool = False
+    reviewCycleId: int = Field(gt=0)
+    reportVersion: int = Field(gt=0)
+    basisHash: str = Field(min_length=64, max_length=64)
+
+
+class FindingReviewRequest(StrictModel):
+    decision: Literal["confirmed", "excluded", "pending", "referred"]
+    comment: str = Field(min_length=2, max_length=2000)
+    expectedRevision: int = Field(ge=0)
+    factRefs: list[str] = Field(default_factory=list, max_length=30)
+    citationRefs: list[str] = Field(default_factory=list, max_length=12)
+    supplementIds: list[str] = Field(default_factory=list, max_length=20)
+    followup: str = Field(default="", max_length=1000)
+    changeReason: str = Field(default="", max_length=1000)
+    findingVersion: int = Field(gt=0)
+    previousReviewId: str = ""
+    recipient: str = Field(default="", max_length=200)
+    missingItems: str = Field(default="", max_length=1000)
+    evidenceViewed: bool = False
 
 
 class RecoverRequest(StrictModel):

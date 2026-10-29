@@ -2,12 +2,19 @@
 
 import hashlib
 import json
+import os
 from copy import deepcopy
 from datetime import datetime, timezone
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
+from ..cases.review_repository import _summary
 from ..persistence.workspace_repository import WorkspaceRepository
+from ..schemas.workspace import WorkspaceEvent
+from .checks import NODE_NAMES
 from .errors import AnalysisError
+from .reports import build_report
+from .review import commit_checks, eligibility, new_review, review_status
+from .review_actions import ReviewActions, validate_refs
 from .store import Store
 
 ACTIVE = {"queued", "running", "waiting_review", "resuming", "recoverable"}
@@ -35,16 +42,28 @@ def stable_id(task_id, key):
     return str(uuid5(NAMESPACE_URL, f"casepilot:{task_id}:{key}"))
 
 
-class WorkspaceStore(Store):
+def operator_id():
+    return os.getenv("CASEPILOT_OPERATOR_ID", "").strip() or "unidentified_operator"
+
+
+class WorkspaceStore(ReviewActions, Store):
     def __init__(self, pool=None, schema="casepilot_python"):
         super().__init__(pool, schema)
         self.repository = WorkspaceRepository(pool, self.schema) if pool else None
         self.conversations = {}
 
+    def get(self, task_id):
+        task = super().get(task_id)
+        task["_expectedDbRevision"] = task["revision"]
+        return task
+
     async def setup(self):
         await super().setup()
         self.tasks = {
-            key: value for key, value in self.tasks.items() if value.get("schemaVersion") == 2
+            key: value
+            for key, value in self.tasks.items()
+            if value.get("schemaVersion") == 2
+            and value.get("reviewState", {}).get("reviewModelVersion") == 1
         }
         self.commands = {
             key: value for key, value in self.commands.items() if value.get("taskId") in self.tasks
@@ -84,6 +103,10 @@ class WorkspaceStore(Store):
     def public(task):
         result = {key: deepcopy(value) for key, value in task.items() if not key.startswith("_")}
         result.pop("events", None)
+        result["operatorId"] = operator_id()
+        result["caseSummary"] = _summary(task["caseSnapshot"]["payload"])
+        result["finalizationEligibility"] = eligibility(task)
+        result["reviewStatus"] = review_status(task)
         return result
 
     def writable(self, task_id):
@@ -109,11 +132,12 @@ class WorkspaceStore(Store):
             "type": event_type,
             "data": payload,
         }
+        event = WorkspaceEvent.model_validate(event).model_dump(mode="json")
         task["events"].append(event)
         task["lastEventSeq"] = event["seq"]
         task["_effects"].append(key)
-        if event_type.startswith(("node.", "tool.")):
-            collection = task["execution"]["tools" if event_type.startswith("tool.") else "nodes"]
+        if event_type.startswith("tool."):
+            collection = task["execution"]["tools"]
             previous = next(
                 (
                     i
@@ -131,7 +155,6 @@ class WorkspaceStore(Store):
 
     def project_agent_call(self, task, call_key, call):
         status = call["status"]
-        tool = call["kind"] in {"local", "retrieval"}
         phase = (
             "started" if status == "reserved" else "failed" if status == "failed" else "completed"
         )
@@ -145,6 +168,7 @@ class WorkspaceStore(Store):
             ),
         )
         payload = {
+            "nodeKey": call["nodeKey"],
             "executionId": stable_id(task["id"], call_key),
             "key": call_key,
             "name": self.call_name(call_key.rsplit(":", 1)[0]),
@@ -156,13 +180,15 @@ class WorkspaceStore(Store):
             if status == "completed"
             else "执行失败",
             "durationMs": elapsed,
+            "kind": call["kind"],
+            "parentNodeRunId": call["parentNodeRunId"],
         }
-        self.append(
-            task, f"{'tool' if tool else 'node'}.{phase}", payload, f"call:{call_key}:{status}"
-        )
+        self.append(task, f"tool.{phase}", payload, f"call:{call_key}:{status}")
 
     @staticmethod
     def call_name(key):
+        if key.startswith("check:"):
+            return NODE_NAMES[key.split(":")[1]]
         labels = {
             "tool:query_case": "查询案件",
             "tool:validate_materials": "核验事实与材料",
@@ -174,6 +200,8 @@ class WorkspaceStore(Store):
         }
         if key.endswith(":repair"):
             return WorkspaceStore.call_name(key.removesuffix(":repair")) + "（结构修复）"
+        if key.startswith("model:assessment:"):
+            return NODE_NAMES[key.split(":")[2]] + " · AI 核对"
         if key.startswith("model:decision:"):
             return "判断是否需要补充检索"
         if key.startswith("retrieval:") and key != "retrieval:initial":
@@ -232,6 +260,7 @@ class WorkspaceStore(Store):
             }
             task = {
                 "schemaVersion": 2,
+                "reviewState": new_review(context["caseSnapshot"], task_id),
                 "id": task_id,
                 "caseId": conversation["caseId"],
                 "conversationId": conversation_id,
@@ -253,13 +282,16 @@ class WorkspaceStore(Store):
                     for field in CONTEXT_FIELDS
                 },
                 "facts": [],
+                "checks": [],
+                "reviewHistory": [],
+                "reports": [],
                 "ruleFindings": [],
                 "modelFindings": [],
                 "citations": [],
                 "sections": [],
                 "report": None,
                 "pendingReview": None,
-                "execution": {"nodes": [], "tools": [], "timeline": []},
+                "execution": {"tools": [], "timeline": []},
                 "error": None,
                 "events": [],
                 "_effects": [],
@@ -296,7 +328,10 @@ class WorkspaceStore(Store):
     async def edit(self, task_id, update):
         async with self.lock:
             task = self.writable(task_id)
+            revision = task["revision"]
             update(task)
+            if task["revision"] == revision:
+                return self.get(task_id)
             await self.repository.save(task)
             self.tasks[task_id] = task
             return self.get(task_id)
@@ -322,6 +357,7 @@ class WorkspaceStore(Store):
                 modelFindings=result["modelAnalysis"]["findings"],
                 citations=result["citations"],
             )
+            commit_checks(task, result.get("checks", []))
             self.append(
                 task,
                 "analysis.ready",
@@ -331,25 +367,51 @@ class WorkspaceStore(Store):
                     "modelFindings": task["modelFindings"],
                     "citations": task["citations"],
                     "insufficientEvidence": result["modelAnalysis"]["insufficientEvidence"],
+                    "checks": task["checks"],
                 },
                 "analysis-ready",
             )
+            self.review_changed(task)
 
         return await self.edit(task_id, update)
 
     async def waiting_review(self, task_id, checkpoint_id):
         def update(task):
-            if "review-required" in task["_effects"]:
+            cycle = task["reviewState"]["reviewCycleId"]
+            if f"review-required:{cycle}" in task["_effects"]:
                 return
             task["status"] = "waiting_review"
             pending = {
-                "interruptKey": stable_id(task_id, "review:1"),
+                "interruptKey": stable_id(task_id, f"review:{cycle}"),
                 "checkpointId": checkpoint_id,
                 "revision": 0,
-                "reason": "请核查规则疑点、模型推断或不足的依据。",
+                "reason": "请在各发现节点逐条复核；最终确认检查覆盖和报告内容。",
             }
-            self.append(task, "review.required", pending, "review-required")
+            self.append(task, "review.required", pending, f"review-required:{cycle}")
             task["pendingReview"] = task["events"][-1]["data"]
+            node = next(n for n in task["reviewState"]["businessNodes"] if n["nodeKey"] == "report")
+            if node["status"] == "running":
+                at = now()
+                node.update(
+                    status="completed",
+                    endedAt=at,
+                    durationMs=max(
+                        0,
+                        int(
+                            (
+                                datetime.fromisoformat(at)
+                                - datetime.fromisoformat(node["startedAt"])
+                            ).total_seconds()
+                            * 1000
+                        ),
+                    ),
+                    summary=f"汇总 {len(task['checks'])} 项检查及 {sum(f['active'] for f in task['reviewState']['findings'])} 条发现",
+                    reason="",
+                )
+                self.append(
+                    task, "business_node.completed", node, f"business:{node['nodeRunId']}:completed"
+                )
+            self._save_report(task)
 
         return await self.edit(task_id, update)
 
@@ -367,7 +429,9 @@ class WorkspaceStore(Store):
             if task["revision"] != body["expectedRevision"]:
                 raise AnalysisError("REVIEW_CONFLICT", "任务版本已变化，请刷新后重新确认。")
             if recover:
-                if task["status"] != "recoverable":
+                if task["status"] not in {"recoverable", "waiting_review", "failed"} or not any(
+                    n["status"] == "failed" for n in task["reviewState"]["businessNodes"]
+                ):
                     raise AnalysisError("RECOVERY_CONFLICT", "该任务不处于可恢复状态。")
                 attempts = task["_agent"].setdefault("attempts", {})
                 for call_key, call in task["_agent"]["calls"].items():
@@ -375,6 +439,10 @@ class WorkspaceStore(Store):
                         logical, attempt = call_key.rsplit(":", 1)
                         attempts[logical] = max(attempts.get(logical, 1), int(attempt) + 1)
                 task.update(status="queued", error=None)
+                task["_artifacts"].pop("analysis", None)
+                task.pop("_review", None)
+                task["pendingReview"] = None
+                task["reviewState"]["reviewCycleId"] += 1
                 task["_run"] = task.get("_run", 0) + 1
                 self.append(
                     task,
@@ -384,9 +452,12 @@ class WorkspaceStore(Store):
                 )
                 payload, review = {"kind": "recover"}, None
             else:
+                active = self.active_task(task["conversationId"])
+                if active and active["id"] != task_id:
+                    raise AnalysisError("REVIEW_CONFLICT", "同一会话已有其他活动任务，请先处理。")
                 pending = task["pendingReview"]
                 if (
-                    task["status"] != "waiting_review"
+                    task["status"] not in {"waiting_review", "failed", "recoverable"}
                     or not pending
                     or pending["interruptKey"] != body["interruptKey"]
                 ):
@@ -406,7 +477,35 @@ class WorkspaceStore(Store):
                         "OPERATOR_IDENTITY_REQUIRED",
                         "补充证据的操作者身份未识别，不能据此通过正式审核。",
                     )
+                if body["decision"] == "approve":
+                    if operator_id() == "unidentified_operator":
+                        raise AnalysisError(
+                            "OPERATOR_IDENTITY_REQUIRED", "尚未配置当前操作者，不能完成正式审查。"
+                        )
+                    if (
+                        not body.get("coverageConfirmed")
+                        or len(body.get("comment", "").strip()) < 5
+                    ):
+                        raise AnalysisError(
+                            "INVALID_INPUT", "请确认检查覆盖及报告内容，并填写具体复核意见。"
+                        )
+                    if not eligibility(task)["allowed"]:
+                        raise AnalysisError(
+                            "REVIEW_CONFLICT",
+                            "仍有范围内未决或无法完成的检查，请在对应节点处理后再确认。",
+                        )
+                    if (
+                        body["reviewCycleId"] != task["reviewState"]["reviewCycleId"]
+                        or body["basisHash"] != eligibility(task)["basisHash"]
+                        or not task["report"]
+                        or body["reportVersion"] != task["report"]["version"]
+                        or body["basisHash"] != task["report"]["basisHash"]
+                    ):
+                        raise AnalysisError(
+                            "REVIEW_CONFLICT", "报告依据已变化，请查看最新报告重新确认。"
+                        )
                 review = deepcopy(body)
+                review.update(operatorId=operator_id(), at=now())
                 task.update(
                     status="resuming",
                     pendingReview=None,
@@ -420,8 +519,11 @@ class WorkspaceStore(Store):
                         "interruptKey": body["interruptKey"],
                         "decision": body["decision"],
                         "revision": 0,
+                        "comment": review["comment"],
+                        "operatorId": review["operatorId"],
+                        "nodeKey": "report",
                     },
-                    "review-accepted",
+                    f"review-accepted:{task['reviewState']['reviewCycleId']}",
                 )
                 payload = {"kind": "review", "review": review}
             command = {"id": str(uuid4()), "taskId": task_id, **payload, "status": "pending"}
@@ -433,10 +535,20 @@ class WorkspaceStore(Store):
             self.commands[command["id"]] = command
             return response
 
-    async def add_supplement(self, task_id, supplement):
-        def update(task):
-            if task["status"] != "waiting_review":
-                raise AnalysisError("REVIEW_CONFLICT", "仅等待人工审核的任务可以补充证据。")
+    async def add_supplement(self, task_id, supplement, key, digest, expected_revision):
+        async with self.lock:
+            scope = f"supplement:{task_id}"
+            cached = await self.repository.request(scope, key, digest)
+            if cached:
+                return cached
+            task = self.writable(task_id)
+            if (
+                task["status"] not in {"waiting_review", "failed", "recoverable"}
+                or task["revision"] != expected_revision
+            ):
+                raise AnalysisError("REVIEW_CONFLICT", "任务版本或状态已变化，请查看最新记录。")
+            if operator_id() == "unidentified_operator":
+                raise AnalysisError("OPERATOR_IDENTITY_REQUIRED", "补充证据需要已识别的操作者。")
             task["evidenceSupplements"].append(deepcopy(supplement))
             self.append(
                 task,
@@ -444,22 +556,159 @@ class WorkspaceStore(Store):
                 {"supplement": supplement, "revision": 0},
                 f"supplement:{supplement['supplementId']}",
             )
+            self._save_report(task)
+            await self.repository.commit(task, request=(scope, key, digest, supplement))
+            self.tasks[task_id] = task
+            return supplement
 
-        return await self.edit(task_id, update)
+    def _save_report(self, task, *, final=False):
+        report = build_report(task, now(), final=final)
+        if (
+            task.get("report")
+            and task["report"]["basisHash"] == report["basisHash"]
+            and task["report"]["kind"] == report["kind"]
+        ):
+            return task["report"]
+        task.setdefault("reports", []).append(deepcopy(report))
+        task["report"] = report
+        task["sections"] = report["sections"]
+        self.append(task, "report.saved", report, f"report:{report['version']}")
+        return report
 
-    async def section(self, task_id, key, output):
+    async def save_report(self, task_id, *, final=False):
         def update(task):
-            if f"section:{key}" in task["_effects"]:
+            if final and (
+                not eligibility(task)["allowed"]
+                or not task.get("_review", {}).get("coverageConfirmed")
+            ):
+                raise AnalysisError("REVIEW_CONFLICT", "未满足最终审查完成条件。")
+            if final and task.get("report", {}).get("kind") == "final":
                 return
-            section = {"sectionKey": key, **output, "committedAt": now()}
-            task["sections"].append(section)
-            self.append(task, "report.section", section, f"section:{key}")
+            self._save_report(task, final=final)
 
         return await self.edit(task_id, update)
+
+    async def review_finding(self, task_id, finding_id, body, key):
+        self.require_database()
+        scope, digest = f"finding:{task_id}:{finding_id}", fingerprint(body)
+        async with self.lock:
+            cached = await self.repository.request(scope, key, digest)
+            if cached:
+                return cached
+            task = self.writable(task_id)
+            if (
+                task["status"] not in {"waiting_review", "failed", "recoverable"}
+                or task["revision"] != body["expectedRevision"]
+            ):
+                raise AnalysisError("REVIEW_CONFLICT", "任务状态或版本已变化，请先查看最新记录。")
+            item = next(
+                (r for r in task["reviewState"]["findings"] if r["findingId"] == finding_id), None
+            )
+            if not item or body["findingVersion"] != item["version"]:
+                raise AnalysisError("INVALID_INPUT", "该事项不是当前任务的待复核发现。")
+            if operator_id() == "unidentified_operator":
+                raise AnalysisError(
+                    "OPERATOR_IDENTITY_REQUIRED", "尚未配置当前操作者，不能保存正式复核意见。"
+                )
+            if len(body["comment"].strip()) < 5 or body["comment"].strip() in {
+                "同意",
+                "无问题",
+                "确认无问题",
+            }:
+                raise AnalysisError("INVALID_INPUT", "请填写具体事实、判断理由及依据。")
+            for field, allowed in (
+                ("factRefs", {f["factId"] for f in task["facts"]}),
+                ("citationRefs", {c["citationId"] for c in task["citations"]}),
+                ("supplementIds", {s["supplementId"] for s in task["evidenceSupplements"]}),
+            ):
+                if not set(body.get(field, [])) <= allowed:
+                    raise AnalysisError("INVALID_INPUT", "复核引用了不属于当前任务的依据。")
+            if body["decision"] in {"confirmed", "excluded"} and not any(
+                body.get(f) for f in ("factRefs", "citationRefs", "supplementIds")
+            ):
+                raise AnalysisError(
+                    "INVALID_INPUT", "确认或排除须关联已查看的事实、条款或补充证据。"
+                )
+            if body["decision"] in {"confirmed", "excluded"}:
+                if not body["evidenceViewed"]:
+                    raise AnalysisError("EVIDENCE_NOT_VIEWED", "请确认已查看所选依据。")
+                validate_refs(task, body, viewed=True)
+            if body["decision"] in {"pending", "referred"} and not body["recipient"].strip():
+                raise AnalysisError("INVALID_INPUT", "请填写跟进对象或专业接收岗位。")
+            if body["decision"] == "pending" and not body["missingItems"].strip():
+                raise AnalysisError("INVALID_INPUT", "请填写待补充资料和核实内容。")
+            if body["decision"] in {"confirmed", "excluded"} and any(
+                s["supplementId"] in body.get("supplementIds", [])
+                and s["addedBy"] == "unidentified_operator"
+                for s in task["evidenceSupplements"]
+            ):
+                raise AnalysisError(
+                    "OPERATOR_IDENTITY_REQUIRED", "补充材料提交人未识别，不能据此完成正式复核。"
+                )
+            if (
+                body["decision"] in {"confirmed", "pending", "referred"}
+                and not body.get("followup", "").strip()
+            ):
+                raise AnalysisError(
+                    "INVALID_INPUT", "请填写后续建议、缺少资料及跟进对象或专业接收岗位。"
+                )
+            previous = [r for r in task.get("reviewHistory", []) if r["findingId"] == finding_id]
+            if body["previousReviewId"] != (previous[-1]["reviewId"] if previous else ""):
+                raise AnalysisError("REVIEW_CONFLICT", "本项已有新的人工决定，请查看后再修改。")
+            if (
+                previous
+                and previous[-1]["decision"] == "referred"
+                and body["decision"] in {"confirmed", "excluded"}
+                and not any(
+                    r["kind"] == "professional"
+                    and r["targetId"] == finding_id
+                    and r["state"] == "opinion_received"
+                    for r in task["reviewState"]["records"]
+                )
+            ):
+                raise AnalysisError("INVALID_INPUT", "请先记录专业意见及其来源。")
+            if previous and not body.get("changeReason", "").strip():
+                raise AnalysisError("INVALID_INPUT", "修改复核结论须填写变更原因。")
+            review = {
+                k: body.get(k, [] if k.endswith("Refs") or k == "supplementIds" else "")
+                for k in (
+                    "decision",
+                    "comment",
+                    "factRefs",
+                    "citationRefs",
+                    "supplementIds",
+                    "followup",
+                    "changeReason",
+                    "recipient",
+                    "missingItems",
+                    "findingVersion",
+                    "previousReviewId",
+                    "evidenceViewed",
+                )
+            }
+            review.update(
+                reviewId=str(uuid4()),
+                findingId=finding_id,
+                nodeKey=item["nodeKey"],
+                operatorId=operator_id(),
+                at=now(),
+            )
+            task.setdefault("reviewHistory", []).append(review)
+            report = self._save_report(task)
+            self.append(
+                task,
+                "finding.reviewed",
+                {"review": review, "report": report, "revision": 0},
+                f"review:{review['reviewId']}",
+            )
+            response = {"accepted": True, "taskId": task_id, "revision": task["revision"]}
+            await self.repository.commit(task, request=(scope, key, digest, response))
+            self.tasks[task_id] = task
+            return response
 
     async def reject(self, task_id):
         def update(task):
-            task.update(status="rejected", report=None)
+            task.update(status="rejected")
             self.append(
                 task,
                 "analysis.rejected",
@@ -474,31 +723,23 @@ class WorkspaceStore(Store):
             task = self.writable(task_id)
             if task["status"] == "completed":
                 return task
-            if [s["sectionKey"] for s in task["sections"]] != [
-                "summary",
-                "findings",
-                "recommendations",
-            ]:
-                raise AnalysisError("OUTPUT_VALIDATION_FAILED", "报告章节尚未完整验证。")
+            if (
+                not task.get("report")
+                or task["report"].get("kind") != "final"
+                or not eligibility(task)["allowed"]
+            ):
+                raise AnalysisError("OUTPUT_VALIDATION_FAILED", "最终报告及必要人工复核尚未完成。")
             message_id = stable_id(task_id, "assistant-message")
             task.update(
                 status="completed",
                 assistantMessageId=message_id,
                 error=None,
-                report={
-                    "caseId": task["caseId"],
-                    "sections": task["sections"],
-                    "insufficientEvidence": task["_artifacts"]["analysis"]["modelAnalysis"][
-                        "insufficientEvidence"
-                    ],
-                    "reviewerComment": task.get("_review", {}).get("comment"),
-                },
             )
             self.append(
                 task,
                 "report.completed",
                 {"report": task["report"], "assistantMessageId": message_id, "revision": 0},
-                "completed",
+                f"completed:{task['reviewState']['reviewCycleId']}",
             )
             message = {
                 "id": message_id,
@@ -509,7 +750,10 @@ class WorkspaceStore(Store):
             }
             conversation = self.conversation(task["conversationId"])
             conversation["updatedAt"] = now()
-            await self.repository.commit(task, message=message, conversation=conversation)
+            existing = await self.repository.has_assistant_message(task_id)
+            await self.repository.commit(
+                task, message=None if existing else message, conversation=conversation
+            )
             self.tasks[task_id] = task
             self.conversations[conversation["id"]] = conversation
             return task
@@ -527,8 +771,26 @@ class WorkspaceStore(Store):
                     else "执行失败，请核查输入、额度或输出验证结果。",
                     "requestId": str(uuid4()),
                 },
-                report=None,
-                assistantMessageId=None,
+            )
+            for node in task["reviewState"]["businessNodes"]:
+                if node["status"] == "running":
+                    node.update(
+                        status="failed",
+                        endedAt=now(),
+                        reason=code,
+                        summary="执行中断，保留已提交结果；中断耗时无法完整确认",
+                    )
+                    self.append(
+                        task,
+                        "business_node.failed",
+                        node,
+                        f"interrupted:{node['nodeRunId']}:{task.get('_run', 0)}",
+                    )
+            task["pendingReview"] = dict(
+                interruptKey=stable_id(task_id, f"review:{task['reviewState']['reviewCycleId']}"),
+                checkpointId="manual",
+                revision=task["revision"],
+                reason="自动执行中断，可复核已保存结果。",
             )
             self.append(
                 task,
@@ -536,5 +798,6 @@ class WorkspaceStore(Store):
                 {"error": task["error"], "revision": 0},
                 f"failure:{task.get('_run', 0)}",
             )
+            self._save_report(task)
 
         return await self.edit(task_id, update)

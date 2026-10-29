@@ -44,12 +44,23 @@ class WorkspaceRepository(PostgresAnalysisRepository):
                     self.sql("SELECT version FROM {s}.workspace_migrations")
                 )
                 versions = {row[0] for row in await cursor.fetchall()}
-                if versions - {1}:
+                if versions - {1, 2}:
                     raise RuntimeError("Unsupported workspace schema version")
                 if 1 not in versions:
                     for statement in statements:
                         await conn.execute(self.sql(statement))
                     await conn.execute(self.sql("INSERT INTO {s}.workspace_migrations VALUES (1)"))
+                if 2 not in versions:
+                    for statement in (
+                        "ALTER TABLE {s}.analysis_reviews ADD COLUMN review_cycle_id integer NOT NULL DEFAULT 1",
+                        "ALTER TABLE {s}.analysis_reviews ADD COLUMN review_id text",
+                        "UPDATE {s}.analysis_reviews SET review_id=task_id || ':1'",
+                        "ALTER TABLE {s}.analysis_reviews DROP CONSTRAINT analysis_reviews_pkey",
+                        "ALTER TABLE {s}.analysis_reviews ADD PRIMARY KEY(review_id)",
+                        "ALTER TABLE {s}.analysis_reviews ADD UNIQUE(task_id,review_cycle_id)",
+                    ):
+                        await conn.execute(self.sql(statement))
+                    await conn.execute(self.sql("INSERT INTO {s}.workspace_migrations VALUES (2)"))
 
     async def conversations(self):
         async with self.pool.connection() as conn:
@@ -90,7 +101,9 @@ class WorkspaceRepository(PostgresAnalysisRepository):
         )
         previous = await cursor.fetchone()
         previous_seq = previous[1] if previous else 0
-        if previous and (previous[0] > task["revision"] or previous_seq > task["lastEventSeq"]):
+        if previous and (
+            previous[0] != task["_expectedDbRevision"] or previous_seq > task["lastEventSeq"]
+        ):
             raise AnalysisError("RECOVERY_CONFLICT", "任务版本或事件游标无法安全对账。")
         events = task["events"]
         if len(events) != task["lastEventSeq"] or any(
@@ -152,8 +165,17 @@ class WorkspaceRepository(PostgresAnalysisRepository):
                     )
                 if review:
                     await conn.execute(
-                        self.sql("INSERT INTO {s}.analysis_reviews VALUES (%s,%s,%s,%s)"),
-                        (task["id"], review["interruptKey"], review["decision"], Jsonb(review)),
+                        self.sql(
+                            "INSERT INTO {s}.analysis_reviews(task_id,interrupt_key,decision,data,review_cycle_id,review_id) VALUES (%s,%s,%s,%s,%s,%s)"
+                        ),
+                        (
+                            task["id"],
+                            review["interruptKey"],
+                            review["decision"],
+                            Jsonb(review),
+                            task["reviewState"]["reviewCycleId"],
+                            review["interruptKey"],
+                        ),
                     )
 
     async def messages(self, conversation_id, *, before=None, completed_only=False):
@@ -197,6 +219,14 @@ class WorkspaceRepository(PostgresAnalysisRepository):
                 (*parameters, limit),
             )
             return [row[0] for row in await cursor.fetchall()]
+
+    async def has_assistant_message(self, task_id):
+        async with self.pool.connection() as conn:
+            cursor = await conn.execute(
+                self.sql("SELECT EXISTS(SELECT 1 FROM {s}.messages WHERE analysis_id=%s AND role='assistant')"),
+                (task_id,),
+            )
+            return (await cursor.fetchone())[0]
 
     async def events_after(self, task_id, cursor):
         async with self.pool.connection() as conn:

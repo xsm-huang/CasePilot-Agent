@@ -9,7 +9,7 @@ import time
 import pytest
 from agent_fixtures import ScriptedChat, assessment
 from casepilot.analyses.agent import run_agent_analysis
-from casepilot.analyses.store import Store
+from casepilot.analyses.workspace_store import WorkspaceStore, fingerprint
 from casepilot.cases.review_repository import get_review_case_input, review_scope_items
 from casepilot.knowledge.config import PROFILE
 from casepilot.knowledge.service import KnowledgeService
@@ -28,9 +28,8 @@ def test_g3_graph_consumes_real_pdf_pgvector_and_keeps_original_generation(postg
         rows = await repository.search(
             "AUTO-COMPREHENSIVE", "2025-01", generation["generationId"], [0.25] * 1024
         )
-        store = Store(repository.pool, repository.schema)
+        store = WorkspaceStore(repository.pool, repository.schema)
         await store.setup()
-        task = await store.create("C02")
         chat = ScriptedChat(assessments=[assessment(citation=rows[0]["chunkId"])])
         case = get_review_case_input("C02")
         binding = {
@@ -53,23 +52,25 @@ def test_g3_graph_consumes_real_pdf_pgvector_and_keeps_original_generation(postg
             "scopeItems": review_scope_items(case),
             "knowledgeBindings": [binding],
         }
-        saved = store.tasks[task["id"]]
-        saved["_agent"] = {
-            "context": {
-                "caseId": "C02",
-                "caseSnapshot": snapshot,
-                "inputVersion": "test-input",
-                "knowledgeBindings": [binding],
-                "modelProfile": chat.config.chat_model,
-                "promptVersion": PROMPT_VERSION,
-                "question": "请核查案件事实、材料完整性及条款依据。",
-            },
-            "calls": {},
-            "counts": {"model": 0, "retrieval": 0, "repair": 0},
+        context = {
+            "caseId": "C02",
+            "caseSnapshot": snapshot,
+            "inputVersion": "test-input",
+            "knowledgeBindings": [binding],
+            "modelProfile": chat.config.chat_model,
+            "promptVersion": PROMPT_VERSION,
         }
-        await store.repository.save(saved)
+        conversation = await store.create_conversation("C02", "固定版本执行验收")
+        body = dict(
+            conversationId=conversation["id"],
+            kind="initial",
+            question="请核查案件事实、材料完整性及条款依据。",
+        )
+        task = await store.create_analysis(body, context, [], "create", fingerprint(body))
         result = await run_agent_analysis(store, task["id"], knowledge, chat)
-        assert result["context"]["knowledgeBindings"][0]["generationId"] == generation["generationId"]
+        assert (
+            result["context"]["knowledgeBindings"][0]["generationId"] == generation["generationId"]
+        )
         assert result["citations"][0]["documentId"] == generation["documentId"]
         assert result["citations"][0]["page"] == 1
         assert result["citations"][0]["fileName"] == "self-authored.pdf"
@@ -79,7 +80,7 @@ def test_g3_graph_consumes_real_pdf_pgvector_and_keeps_original_generation(postg
             product="AUTO-COMPREHENSIVE",
             expected=generation["generationId"],
         )
-        reloaded = Store(repository.pool, repository.schema)
+        reloaded = WorkspaceStore(repository.pool, repository.schema)
         await reloaded.setup()
         before = len(embedder.calls), len(chat.calls)
         assert await run_agent_analysis(reloaded, task["id"], knowledge, chat) == result

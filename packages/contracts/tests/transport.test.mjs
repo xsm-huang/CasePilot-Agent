@@ -5,12 +5,12 @@ import { analysisTaskSchema, commandAcceptedSchema, reviewPreflightSchema } from
 const binding = { documentId: 'terms', documentSha256: 'a'.repeat(64), version: '2020', sectionIds: [], status: 'unavailable', generationId: null, productCode: null, clauseVersion: null, embeddingProfile: null };
 const scope = { scopeItemId: 'archive', kind: 'archive_consistency', title: '案卷核验', status: 'executable', entityIds: ['claim'], reason: null, requiredMaterialTypes: [] };
 const task = {
-  schemaVersion: 2, id: 'a', caseId: 'C01', conversationId: 'c', kind: 'initial', question: '核验', status: 'queued',
+  reviewState: { reviewModelVersion: 1, checkPlan: [], checks: [], findings: [], findingHistory: [], records: [], businessNodes: [], nodeHistory: [], reviewCycleId: 1 }, finalizationEligibility: { allowed: false, blockers: ['尚未完成'], basisHash: 'a'.repeat(64) }, reviewStatus: 'pending_review', schemaVersion: 2, id: 'a', caseId: 'C01', conversationId: 'c', kind: 'initial', question: '核验', status: 'queued',
   caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'C01', caseRevision: 1, preparedAt: '2026-10-01T00:00:00Z', payload: {}, scopeItems: [scope], knowledgeBindings: [binding] },
   predecessorAnalysisId: null, evidenceSupplements: [], reviewSupplementIds: [], revision: 0, lastEventSeq: 0, userMessageId: 'm', assistantMessageId: null,
   context: { inputVersion: 'b'.repeat(64), knowledgeBindings: [binding], messageIds: [], modelProfile: 'model', promptVersion: 'prompt' },
   facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null,
-  execution: { nodes: [], tools: [], timeline: [] }, error: null,
+  execution: { tools: [], timeline: [] }, error: null,
 };
 
 test('closed-claim task contract accepts only the current fixed-input shape', () => {

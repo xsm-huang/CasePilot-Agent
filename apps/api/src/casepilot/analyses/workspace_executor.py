@@ -1,6 +1,5 @@
 """Consume review commands without replaying ambiguous external effects automatically."""
 
-from langgraph.types import Command
 from psycopg import Error as DatabaseError
 from psycopg_pool import PoolTimeout
 
@@ -21,32 +20,39 @@ class WorkspaceExecutor:
 
     async def execute(self, command):
         task_id = command["taskId"]
+        if command["kind"] == "review":
+            if (
+                command["review"]["reviewCycleId"]
+                != self.store.get(task_id)["reviewState"]["reviewCycleId"]
+            ):
+                await self.store.finish_command(command)
+                return
+            try:
+                if command["review"]["decision"] == "reject":
+                    await self.store.reject(task_id)
+                else:
+                    await self.store.save_report(task_id, final=True)
+                    await self.store.finalize(task_id)
+                await self.store.finish_command(command)
+            except AnalysisError as exc:
+                await self.store.fail(task_id, exc.code, recoverable=True)
+                await self.store.finish_command(command, exc.code)
+            return
         if self.store.get(task_id)["status"] in TERMINAL | {"recoverable"}:
             await self.store.finish_command(command)
             return
         try:
             config = self.config(task_id)
+            if run := self.store.get(task_id).get("_run", 0):
+                config = {"configurable": {"thread_id": f"v2:{task_id}:run:{run}"}}
             snapshot = await self.graph.aget_state(config)
-            review = command.get("review") or self.store.get(task_id).get("_review")
-            if "human_review" in snapshot.next and not review:
-                await self.store.waiting_review(
-                    task_id, snapshot.config["configurable"]["checkpoint_id"]
-                )
-            else:
+            if not snapshot.values.get("analysis"):
                 await self.store.start(task_id, command["kind"])
-                value = (
-                    Command(resume=review)
-                    if review and "human_review" in snapshot.next
-                    else None
-                    if snapshot.values
-                    else {"taskId": task_id}
-                )
-                await self.graph.ainvoke(value, config)
+                await self.graph.ainvoke({"taskId": task_id}, config)
                 snapshot = await self.graph.aget_state(config)
-                if "human_review" in snapshot.next:
-                    await self.store.waiting_review(
-                        task_id, snapshot.config["configurable"]["checkpoint_id"]
-                    )
+            await self.store.waiting_review(
+                task_id, snapshot.config["configurable"]["checkpoint_id"]
+            )
             await self.store.finish_command(command)
         except (AgentError, ModelError, AnalysisError, KnowledgeOperationError) as exc:
             recoverable = exc.code in {

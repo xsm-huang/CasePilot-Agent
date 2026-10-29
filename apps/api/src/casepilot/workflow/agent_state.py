@@ -6,6 +6,7 @@ from typing import TypedDict
 class AgentState(TypedDict, total=False):
     facts: list[dict]
     ruleFindings: list[dict]
+    checks: list[dict]
     citations: list[dict]
     queries: list[str]
     messages: list[dict]

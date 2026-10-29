@@ -27,9 +27,13 @@ def decision(api, task, value="approve"):
         f"/api/analyses/{task['id']}/review",
         json={
             "decision": value,
-            "comment": "核验意见",
+            "comment": "已核对本次车损检查覆盖、依据及报告内容。",
+            "coverageConfirmed": True,
             "interruptKey": task["pendingReview"]["interruptKey"],
             "expectedRevision": task["revision"],
+            "reviewCycleId": task["reviewState"]["reviewCycleId"],
+            "reportVersion": task["report"]["version"],
+            "basisHash": task["finalizationEligibility"]["basisHash"],
         },
         headers={"Idempotency-Key": str(uuid4())},
     )
@@ -55,9 +59,9 @@ def test_cases_and_error_boundaries(tcp_workspace):
 
 def test_sse_live_before_completion_and_cursor_replay(tcp_workspace):
     api, _ = tcp_workspace
-    _, created = new_task(api, "C03")
+    _, created = new_task(api, "C02")
     paused = settle(api, created["id"], "waiting_review")
-    assert paused["report"] is None
+    assert paused["report"]["kind"] == "pending_review"
     cursor = paused["lastEventSeq"]
     with api.stream(
         "GET",
@@ -82,7 +86,7 @@ def test_sse_live_before_completion_and_cursor_replay(tcp_workspace):
         assert list(sse_events(response)) == []
 
 
-def test_reject_has_no_report_and_other_conversation_is_independent(tcp_workspace):
+def test_reject_preserves_report_and_other_conversation_is_independent(tcp_workspace):
     api, server = tcp_workspace
 
     def run(case_id):
@@ -92,12 +96,14 @@ def test_reject_has_no_report_and_other_conversation_is_independent(tcp_workspac
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
         risky, normal = list(pool.map(run, ["C03", "C02"]))
-    assert normal["status"] == "completed"
+    assert normal["status"] == "waiting_review"
+    assert decision(api, normal).status_code == 202
+    normal = settle(api, normal["id"], "completed")
     assert risky["status"] == "waiting_review"
     assert decision(api, risky, "reject").status_code == 202
     rejected = settle(api, risky["id"], "rejected")
-    assert rejected["report"] is None and rejected["assistantMessageId"] is None
-    assert not rejected["sections"]
+    assert rejected["report"] == risky["report"] and rejected["assistantMessageId"] is None
+    assert rejected["reports"] and rejected["sections"]
     assert api.get(f"/api/analyses/{normal['id']}").json() == normal
 
 

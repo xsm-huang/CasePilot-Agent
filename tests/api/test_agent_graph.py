@@ -1,5 +1,7 @@
 """Actual LangGraph and LangChain tools, using deterministic external adapters."""
 
+from uuid import uuid4
+
 import pytest
 from agent_fixtures import (
     FakeKnowledge,
@@ -11,7 +13,9 @@ from agent_fixtures import (
 )
 from casepilot.analyses.agent import run_agent_analysis
 from casepilot.analyses.agent_errors import AgentError
+from casepilot.analyses.review import new_review
 from casepilot.analyses.store import Store
+from casepilot.analyses.workspace_store import WorkspaceStore
 from casepilot.cases.review_repository import get_review_case_input, review_scope_items
 from casepilot.knowledge.config import PROFILE
 from casepilot.model.config import read_model_config
@@ -23,8 +27,9 @@ DEFAULT_QUESTION = "请核查案件事实、材料完整性及条款依据。"
 
 
 async def prepared(question=DEFAULT_QUESTION):
-    store = Store()
-    task = await store.create("C02")
+    store = WorkspaceStore()
+    task = {"id": str(uuid4()), "caseId": "C02", "status": "running"}
+    store.tasks[task["id"]] = task
     store.repository = RecordingRepository()
     case = get_review_case_input("C02")
     snapshot = {
@@ -34,21 +39,49 @@ async def prepared(question=DEFAULT_QUESTION):
         "preparedAt": case["preparedAt"],
         "payload": case,
         "scopeItems": review_scope_items(case),
-        "knowledgeBindings": [{
-            **case["knowledgeRefs"][0], "status": "ready", "generationId": "generation-1",
-            "productCode": "AUTO-COMPREHENSIVE", "clauseVersion": "2025-01",
-            "embeddingProfile": PROFILE,
-        }],
+        "knowledgeBindings": [
+            {
+                **case["knowledgeRefs"][0],
+                "status": "ready",
+                "generationId": "generation-1",
+                "productCode": "AUTO-COMPREHENSIVE",
+                "clauseVersion": "2025-01",
+                "embeddingProfile": PROFILE,
+            }
+        ],
     }
     store.tasks[task["id"]]["_agent"] = {
         "context": {
-            "caseId": "C02", "caseSnapshot": snapshot, "inputVersion": "test-input",
+            "caseId": "C02",
+            "caseSnapshot": snapshot,
+            "inputVersion": "test-input",
             "knowledgeBindings": snapshot["knowledgeBindings"],
             "modelProfile": read_model_config({"ZHIPU_API_KEY": "test-no-network"}).chat_model,
-            "promptVersion": PROMPT_VERSION, "question": question,
+            "promptVersion": PROMPT_VERSION,
+            "question": question,
         },
-        "calls": {}, "counts": {"model": 0, "retrieval": 0, "repair": 0},
+        "calls": {},
+        "counts": {"model": 0, "retrieval": 0, "repair": 0},
     }
+    saved = store.tasks[task["id"]]
+    saved.update(
+        schemaVersion=2,
+        conversationId="test-conversation",
+        revision=0,
+        lastEventSeq=0,
+        events=[],
+        _effects=[],
+        execution=dict(tools=[], timeline=[]),
+        reviewState=new_review(snapshot, task["id"]),
+        caseSnapshot=snapshot,
+        context=dict(inputVersion="test-input", knowledgeBindings=snapshot["knowledgeBindings"]),
+        facts=[],
+        checks=[],
+        citations=[],
+        reviewHistory=[],
+        evidenceSupplements=[],
+    )
+    store.append(saved, "analysis.status", dict(status="running", revision=0), "created")
     return store, task["id"]
 
 
@@ -68,14 +101,17 @@ async def test_real_tools_and_structured_model_analysis_use_pinned_knowledge():
     assert result["ruleFindings"] == []
     assert result["citations"][0]["page"] == 1
     assert result["modelAnalysis"]["findings"][0]["citationRefs"] == ["chunk-1"]
-    assert len(chat.calls) == 2
-    assert chat.calls[0]["tools"][0]["function"]["name"] == "search_clauses"
-    assert chat.calls[1]["json"] is True
+    assert len(chat.calls) == 4
+    assert chat.calls[0]["json"] is True
+    assert chat.calls[1]["tools"][0]["function"]["name"] == "search_clauses"
+    assert chat.calls[2]["json"] is True
     assert knowledge.calls[0][0:3] == ("AUTO-COMPREHENSIVE", "2025-01", "generation-1")
     before = len(chat.calls), len(knowledge.calls)
+    completed_nodes = store.get(task_id)["reviewState"]["businessNodes"]
     knowledge.active = "generation-2"
     assert await run_agent_analysis(store, task_id, knowledge, chat) == result
     assert (len(chat.calls), len(knowledge.calls)) == before
+    assert store.get(task_id)["reviewState"]["businessNodes"] == completed_nodes
     assert "_agent" not in store.public(store.get(task_id))
 
 
@@ -87,7 +123,7 @@ async def test_actual_tool_call_protocol_performs_supplement_then_returns_result
     result = await run_agent_analysis(store, task_id, knowledge, chat)
     assert len(knowledge.calls) == 2
     assert len(result["citations"]) == 2
-    messages = chat.calls[1]["messages"]
+    messages = chat.calls[2]["messages"]
     assert messages[-2]["role"] == "assistant"
     assert messages[-2]["reasoning_content"] == reasoning
     assert messages[-1]["role"] == "tool"
@@ -111,7 +147,7 @@ async def test_supplement_limit_is_enforced_even_when_model_keeps_requesting():
     assert result["stopReason"] == "retrieval_budget_exhausted"
     assert result["modelAnalysis"]["insufficientEvidence"] is True
     assert result["needsReview"] is True
-    assert store.get(task_id)["_agent"]["counts"]["model"] == 4
+    assert store.get(task_id)["_agent"]["counts"]["model"] == 6
 
 
 @pytest.mark.parametrize("mode", ["duplicate", "no-new"])
@@ -132,8 +168,16 @@ async def test_repeated_queries_or_no_new_evidence_stop_the_loop(mode):
 async def test_model_cannot_change_scope_or_select_unknown_tools(turn):
     store, task_id = await prepared()
     knowledge = FakeKnowledge()
-    with pytest.raises(AgentError):
-        await run_agent_analysis(store, task_id, knowledge, ScriptedChat([turn]))
+    result = await run_agent_analysis(store, task_id, knowledge, ScriptedChat([turn]))
+    assert (
+        next(
+            n
+            for n in store.get(task_id)["reviewState"]["businessNodes"]
+            if n["nodeKey"] == "clauses"
+        )["status"]
+        == "failed"
+    )
+    assert any(r["nodeKey"] == "amount" for r in result["checks"])
     assert len(knowledge.calls) == 1
 
 
@@ -145,9 +189,16 @@ async def test_invalid_reference_is_repaired_once_and_invalid_second_output_fail
     assert store.get(task_id)["_agent"]["counts"]["repair"] == 1
     other, other_id = await prepared()
     chat = ScriptedChat(assessments=["not JSON", assessment(fact="invented")])
-    with pytest.raises(AgentError, match="ANALYSIS_OUTPUT_INVALID"):
-        await run_agent_analysis(other, other_id, FakeKnowledge(), chat)
-    assert len(chat.calls) == 3
+    await run_agent_analysis(other, other_id, FakeKnowledge(), chat)
+    assert (
+        next(
+            n
+            for n in other.get(other_id)["reviewState"]["businessNodes"]
+            if n["nodeKey"] == "clauses"
+        )["reason"]
+        == "ANALYSIS_OUTPUT_INVALID"
+    )
+    assert len(chat.calls) == 5
 
 
 async def test_tools_bind_no_scope_inputs():
@@ -159,3 +210,16 @@ async def test_tools_bind_no_scope_inputs():
         await tools["query_case"].ainvoke({"caseId": "another"})
     with pytest.raises(ValidationError):
         await tools["search_clauses"].ainvoke({"query": "evidence", "generationId": "another"})
+
+
+async def test_quote_repair_identifies_the_actual_source_without_accepting_wrong_page():
+    store, task_id = await prepared()
+    knowledge = FakeKnowledge(
+        [[clause(), clause(2) | {"content": "Unrelated contract provision."}]]
+    )
+    chat = ScriptedChat(assessments=[assessment(citation="chunk-2"), assessment()])
+    result = await run_agent_analysis(store, task_id, knowledge, chat)
+    repair = next(call for call in chat.calls if "matchingCitationIds" in str(call["messages"][-1]))
+    assert '"matchingCitationIds": ["chunk-1"]' in repair["messages"][-1]["content"]
+    assert result["modelAnalysis"]["findings"][0]["citationRefs"] == ["chunk-1"]
+    assert store.get(task_id)["_agent"]["counts"]["repair"] == 1

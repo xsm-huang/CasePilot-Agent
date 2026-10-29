@@ -1,6 +1,8 @@
 import { transportValidator } from './transport.js';
 import type { AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, CitationContext, EvidenceSupplement } from './generated/types.js';
 export type { AnalysisTask, WorkspaceEvent, Conversation, ConversationSummary, CommandAccepted, Citation, ReportSection, CreateAnalysis, CreateConversation, ReviewRequest, RecoverRequest, EvidenceSupplement } from './generated/types.js';
+export type { ReviewCheck, FindingReview, FindingReviewRequest, AnalysisReport } from './generated/types.js';
+export type { ReviewState, Finding, BusinessNode, ReviewRecordRequest, ReviewRecord, ManualFindingRequest } from './generated/types.js';
 export const analysisTaskSchema = transportValidator<AnalysisTask>('AnalysisTask');
 export const workspaceEventSchema = transportValidator<WorkspaceEvent>('WorkspaceEvent');
 export const conversationSchema = transportValidator<Conversation>('Conversation');

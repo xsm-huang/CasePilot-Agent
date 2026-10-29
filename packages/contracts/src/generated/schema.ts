@@ -98,6 +98,13 @@ export const transportSchema = {
     "AnalysisReadyData": {
       "additionalProperties": false,
       "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/ReviewCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
         "facts": {
           "items": {
             "$ref": "#/$defs/Fact"
@@ -144,6 +151,52 @@ export const transportSchema = {
     "AnalysisReport": {
       "additionalProperties": false,
       "properties": {
+        "kind": {
+          "default": "stage",
+          "enum": [
+            "pending_review",
+            "stage",
+            "final"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "analysisId": {
+          "default": "",
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "inputVersion": {
+          "default": "",
+          "title": "Inputversion",
+          "type": "string"
+        },
+        "generatedAt": {
+          "default": "",
+          "title": "Generatedat",
+          "type": "string"
+        },
+        "operatorId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operatorid"
+        },
+        "conclusion": {
+          "default": "历史报告，业务完成条件需核对",
+          "title": "Conclusion",
+          "type": "string"
+        },
         "caseId": {
           "title": "Caseid",
           "type": "string"
@@ -169,13 +222,52 @@ export const transportSchema = {
             }
           ],
           "title": "Reviewercomment"
+        },
+        "basisHash": {
+          "title": "Basishash",
+          "type": "string"
+        },
+        "snapshot": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Snapshot",
+          "type": "object"
+        },
+        "statistics": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Statistics",
+          "type": "object"
+        },
+        "revisionReason": {
+          "title": "Revisionreason",
+          "type": "string"
+        },
+        "replacesVersion": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Replacesversion"
         }
       },
       "required": [
+        "version",
         "caseId",
         "sections",
         "insufficientEvidence",
-        "reviewerComment"
+        "reviewerComment",
+        "basisHash",
+        "snapshot",
+        "statistics",
+        "revisionReason",
+        "replacesVersion"
       ],
       "title": "AnalysisReport",
       "type": "object"
@@ -183,6 +275,59 @@ export const transportSchema = {
     "AnalysisTask": {
       "additionalProperties": false,
       "properties": {
+        "reviewState": {
+          "$ref": "#/$defs/ReviewState"
+        },
+        "finalizationEligibility": {
+          "$ref": "#/$defs/Eligibility"
+        },
+        "reviewStatus": {
+          "enum": [
+            "pending_review",
+            "reviewing",
+            "pending_verification",
+            "completed"
+          ],
+          "title": "Reviewstatus",
+          "type": "string"
+        },
+        "caseSummary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewCaseListItem"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/ReviewCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "reviewHistory": {
+          "items": {
+            "$ref": "#/$defs/FindingReview"
+          },
+          "title": "Reviewhistory",
+          "type": "array"
+        },
+        "reports": {
+          "items": {
+            "$ref": "#/$defs/AnalysisReport"
+          },
+          "title": "Reports",
+          "type": "array"
+        },
+        "operatorId": {
+          "default": "unidentified_operator",
+          "title": "Operatorid",
+          "type": "string"
+        },
         "schemaVersion": {
           "const": 2,
           "title": "Schemaversion",
@@ -352,6 +497,9 @@ export const transportSchema = {
         }
       },
       "required": [
+        "reviewState",
+        "finalizationEligibility",
+        "reviewStatus",
         "schemaVersion",
         "id",
         "caseId",
@@ -379,6 +527,195 @@ export const transportSchema = {
         "error"
       ],
       "title": "AnalysisTask",
+      "type": "object"
+    },
+    "BusinessNode": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeRunId": {
+          "title": "Noderunid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "attempt": {
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "not_started",
+            "running",
+            "completed",
+            "failed",
+            "unable",
+            "not_applicable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startedat"
+        },
+        "endedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endedat"
+        },
+        "durationMs": {
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeRunId",
+        "nodeKey",
+        "attempt",
+        "status",
+        "startedAt",
+        "endedAt",
+        "durationMs",
+        "summary",
+        "reason"
+      ],
+      "title": "BusinessNode",
+      "type": "object"
+    },
+    "BusinessNodeEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 2,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "business_node.started",
+            "business_node.completed",
+            "business_node.failed",
+            "business_node.unable",
+            "business_node.not_applicable"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/BusinessNode"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "BusinessNodeEvent",
+      "type": "object"
+    },
+    "CheckPlanItem": {
+      "additionalProperties": false,
+      "properties": {
+        "checkId": {
+          "title": "Checkid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "checkId",
+        "nodeKey",
+        "title",
+        "required",
+        "entityIds"
+      ],
+      "title": "CheckPlanItem",
       "type": "object"
     },
     "Citation": {
@@ -862,9 +1199,49 @@ export const transportSchema = {
       "title": "CreateConversation",
       "type": "object"
     },
+    "Eligibility": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "title": "Allowed",
+          "type": "boolean"
+        },
+        "blockers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Blockers",
+          "type": "array"
+        },
+        "basisHash": {
+          "title": "Basishash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed",
+        "blockers",
+        "basisHash"
+      ],
+      "title": "Eligibility",
+      "type": "object"
+    },
     "EvidenceSupplement": {
       "additionalProperties": false,
       "properties": {
+        "nodeKey": {
+          "default": "amount",
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
         "supplementId": {
           "title": "Supplementid",
           "type": "string"
@@ -933,13 +1310,6 @@ export const transportSchema = {
     "Execution": {
       "additionalProperties": false,
       "properties": {
-        "nodes": {
-          "items": {
-            "$ref": "#/$defs/ExecutionData"
-          },
-          "title": "Nodes",
-          "type": "array"
-        },
         "tools": {
           "items": {
             "$ref": "#/$defs/ExecutionData"
@@ -956,14 +1326,19 @@ export const transportSchema = {
                 "analysis.recoverable": "#/$defs/FailureEvent",
                 "analysis.rejected": "#/$defs/RejectedEvent",
                 "analysis.status": "#/$defs/StatusEvent",
+                "business_node.completed": "#/$defs/BusinessNodeEvent",
+                "business_node.failed": "#/$defs/BusinessNodeEvent",
+                "business_node.not_applicable": "#/$defs/BusinessNodeEvent",
+                "business_node.started": "#/$defs/BusinessNodeEvent",
+                "business_node.unable": "#/$defs/BusinessNodeEvent",
                 "evidence.supplemented": "#/$defs/SupplementedEvent",
-                "node.completed": "#/$defs/ExecutionEvent",
-                "node.failed": "#/$defs/ExecutionEvent",
-                "node.started": "#/$defs/ExecutionEvent",
+                "finding.reviewed": "#/$defs/FindingReviewedEvent",
                 "report.completed": "#/$defs/CompletedEvent",
+                "report.saved": "#/$defs/ReportSavedEvent",
                 "report.section": "#/$defs/SectionEvent",
                 "review.accepted": "#/$defs/AcceptedEvent",
                 "review.required": "#/$defs/ReviewEvent",
+                "review.updated": "#/$defs/ReviewUpdatedEvent",
                 "tool.completed": "#/$defs/ExecutionEvent",
                 "tool.failed": "#/$defs/ExecutionEvent",
                 "tool.started": "#/$defs/ExecutionEvent"
@@ -1000,6 +1375,18 @@ export const transportSchema = {
               },
               {
                 "$ref": "#/$defs/SupplementedEvent"
+              },
+              {
+                "$ref": "#/$defs/FindingReviewedEvent"
+              },
+              {
+                "$ref": "#/$defs/ReportSavedEvent"
+              },
+              {
+                "$ref": "#/$defs/BusinessNodeEvent"
+              },
+              {
+                "$ref": "#/$defs/ReviewUpdatedEvent"
               }
             ]
           },
@@ -1008,7 +1395,6 @@ export const transportSchema = {
         }
       },
       "required": [
-        "nodes",
         "tools",
         "timeline"
       ],
@@ -1018,6 +1404,19 @@ export const transportSchema = {
     "ExecutionData": {
       "additionalProperties": false,
       "properties": {
+        "nodeKey": {
+          "default": "report",
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
         "executionId": {
           "title": "Executionid",
           "type": "string"
@@ -1052,6 +1451,19 @@ export const transportSchema = {
           "minimum": 0,
           "title": "Durationms",
           "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "local",
+            "retrieval",
+            "model"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "parentNodeRunId": {
+          "title": "Parentnoderunid",
+          "type": "string"
         }
       },
       "required": [
@@ -1061,7 +1473,9 @@ export const transportSchema = {
         "attempt",
         "status",
         "summary",
-        "durationMs"
+        "durationMs",
+        "kind",
+        "parentNodeRunId"
       ],
       "title": "ExecutionData",
       "type": "object"
@@ -1100,9 +1514,6 @@ export const transportSchema = {
         },
         "type": {
           "enum": [
-            "node.started",
-            "node.completed",
-            "node.failed",
             "tool.started",
             "tool.completed",
             "tool.failed"
@@ -1144,7 +1555,8 @@ export const transportSchema = {
         "sourceType": {
           "enum": [
             "case",
-            "material"
+            "material",
+            "business"
           ],
           "title": "Sourcetype",
           "type": "string"
@@ -1246,7 +1658,537 @@ export const transportSchema = {
       "title": "FailureEvent",
       "type": "object"
     },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "checkId": {
+          "title": "Checkid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "issue",
+            "limited",
+            "not_applicable",
+            "out_of_scope"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "rule",
+            "ai",
+            "human"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "enum": [
+              "rule",
+              "ai",
+              "human"
+            ],
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "policyIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Policyids",
+          "type": "array"
+        },
+        "coverageIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coverageids",
+          "type": "array"
+        },
+        "originalValues": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Originalvalues",
+          "type": "object"
+        },
+        "uncertainty": {
+          "default": "",
+          "title": "Uncertainty",
+          "type": "string"
+        },
+        "recommendation": {
+          "default": "",
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "statements": {
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "type": "object"
+          },
+          "title": "Statements",
+          "type": "array"
+        },
+        "findingId": {
+          "title": "Findingid",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "issue",
+            "limitation",
+            "out_of_scope"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "active": {
+          "default": true,
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "checkId",
+        "nodeKey",
+        "status",
+        "source",
+        "title",
+        "detail",
+        "findingId",
+        "version",
+        "kind"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingReview": {
+      "additionalProperties": false,
+      "properties": {
+        "reviewId": {
+          "title": "Reviewid",
+          "type": "string"
+        },
+        "findingId": {
+          "title": "Findingid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "confirmed",
+            "excluded",
+            "pending",
+            "referred"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "comment": {
+          "title": "Comment",
+          "type": "string"
+        },
+        "operatorId": {
+          "title": "Operatorid",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supplementids",
+          "type": "array"
+        },
+        "followup": {
+          "title": "Followup",
+          "type": "string"
+        },
+        "changeReason": {
+          "title": "Changereason",
+          "type": "string"
+        },
+        "findingVersion": {
+          "title": "Findingversion",
+          "type": "integer"
+        },
+        "previousReviewId": {
+          "title": "Previousreviewid",
+          "type": "string"
+        },
+        "recipient": {
+          "title": "Recipient",
+          "type": "string"
+        },
+        "missingItems": {
+          "title": "Missingitems",
+          "type": "string"
+        },
+        "evidenceViewed": {
+          "title": "Evidenceviewed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "reviewId",
+        "findingId",
+        "nodeKey",
+        "decision",
+        "comment",
+        "operatorId",
+        "at",
+        "factRefs",
+        "citationRefs",
+        "supplementIds",
+        "followup",
+        "changeReason",
+        "findingVersion",
+        "previousReviewId",
+        "recipient",
+        "missingItems",
+        "evidenceViewed"
+      ],
+      "title": "FindingReview",
+      "type": "object"
+    },
+    "FindingReviewRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "confirmed",
+            "excluded",
+            "pending",
+            "referred"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "comment": {
+          "maxLength": 2000,
+          "minLength": 2,
+          "title": "Comment",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Supplementids",
+          "type": "array"
+        },
+        "followup": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Followup",
+          "type": "string"
+        },
+        "changeReason": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Changereason",
+          "type": "string"
+        },
+        "findingVersion": {
+          "exclusiveMinimum": 0,
+          "title": "Findingversion",
+          "type": "integer"
+        },
+        "previousReviewId": {
+          "default": "",
+          "title": "Previousreviewid",
+          "type": "string"
+        },
+        "recipient": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Recipient",
+          "type": "string"
+        },
+        "missingItems": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Missingitems",
+          "type": "string"
+        },
+        "evidenceViewed": {
+          "default": false,
+          "title": "Evidenceviewed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "decision",
+        "comment",
+        "expectedRevision",
+        "findingVersion"
+      ],
+      "title": "FindingReviewRequest",
+      "type": "object"
+    },
+    "FindingReviewedData": {
+      "additionalProperties": false,
+      "properties": {
+        "review": {
+          "$ref": "#/$defs/FindingReview"
+        },
+        "report": {
+          "$ref": "#/$defs/AnalysisReport"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "review",
+        "report",
+        "revision"
+      ],
+      "title": "FindingReviewedData",
+      "type": "object"
+    },
+    "FindingReviewedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 2,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "finding.reviewed",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/FindingReviewedData"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "FindingReviewedEvent",
+      "type": "object"
+    },
     "JsonValue": {},
+    "ManualFindingRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 2,
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 2000,
+          "minLength": 5,
+          "title": "Detail",
+          "type": "string"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "minItems": 1,
+          "title": "Entityids",
+          "type": "array"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Supplementids",
+          "type": "array"
+        },
+        "originalValues": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Originalvalues",
+          "type": "object"
+        },
+        "recommendation": {
+          "maxLength": 1000,
+          "minLength": 2,
+          "title": "Recommendation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "nodeKey",
+        "title",
+        "detail",
+        "entityIds",
+        "recommendation"
+      ],
+      "title": "ManualFindingRequest",
+      "type": "object"
+    },
     "Message": {
       "additionalProperties": false,
       "properties": {
@@ -1289,6 +2231,53 @@ export const transportSchema = {
     "ModelFinding": {
       "additionalProperties": false,
       "properties": {
+        "relatedCheckId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Relatedcheckid"
+        },
+        "issueCode": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Issuecode",
+          "type": "string"
+        },
+        "supportQuote": {
+          "maxLength": 500,
+          "title": "Supportquote",
+          "type": "string"
+        },
+        "category": {
+          "default": "issue",
+          "enum": [
+            "issue",
+            "limitation",
+            "out_of_scope",
+            "passed"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "nodeKey": {
+          "default": "clauses",
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
         "title": {
           "maxLength": 200,
           "minLength": 1,
@@ -1335,6 +2324,8 @@ export const transportSchema = {
         }
       },
       "required": [
+        "issueCode",
+        "supportQuote",
         "title",
         "inference",
         "evidenceStatus",
@@ -1564,13 +2555,70 @@ export const transportSchema = {
       "title": "ReportCompletedData",
       "type": "object"
     },
+    "ReportSavedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 2,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "report.saved",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/AnalysisReport"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "ReportSavedEvent",
+      "type": "object"
+    },
     "ReportSection": {
       "additionalProperties": false,
       "properties": {
         "sectionKey": {
           "enum": [
             "summary",
+            "coverage",
             "findings",
+            "limitations",
+            "reviews",
             "recommendations"
           ],
           "title": "Sectionkey",
@@ -1630,6 +2678,21 @@ export const transportSchema = {
         "revision": {
           "title": "Revision",
           "type": "integer"
+        },
+        "comment": {
+          "default": "",
+          "title": "Comment",
+          "type": "string"
+        },
+        "operatorId": {
+          "default": "unidentified_operator",
+          "title": "Operatorid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "default": "report",
+          "title": "Nodekey",
+          "type": "string"
         }
       },
       "required": [
@@ -1943,6 +3006,139 @@ export const transportSchema = {
         "items"
       ],
       "title": "ReviewCaseListResponse",
+      "type": "object"
+    },
+    "ReviewCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "checkId": {
+          "title": "Checkid",
+          "type": "string"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "issue",
+            "limited",
+            "not_applicable",
+            "out_of_scope"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "rule",
+            "ai",
+            "human"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "enum": [
+              "rule",
+              "ai",
+              "human"
+            ],
+            "type": "string"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "entityIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entityids",
+          "type": "array"
+        },
+        "policyIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Policyids",
+          "type": "array"
+        },
+        "coverageIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coverageids",
+          "type": "array"
+        },
+        "originalValues": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Originalvalues",
+          "type": "object"
+        },
+        "uncertainty": {
+          "default": "",
+          "title": "Uncertainty",
+          "type": "string"
+        },
+        "recommendation": {
+          "default": "",
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "statements": {
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "type": "object"
+          },
+          "title": "Statements",
+          "type": "array"
+        }
+      },
+      "required": [
+        "checkId",
+        "nodeKey",
+        "status",
+        "source",
+        "title",
+        "detail"
+      ],
+      "title": "ReviewCheck",
       "type": "object"
     },
     "ReviewClaimDetail": {
@@ -2983,6 +4179,308 @@ export const transportSchema = {
       "title": "ReviewProcessingRecord",
       "type": "object"
     },
+    "ReviewRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "recordId": {
+          "title": "Recordid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "evidence_view",
+            "human_completion",
+            "scope_adjustment",
+            "professional",
+            "followup",
+            "business_record",
+            "reopen"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "targetId": {
+          "title": "Targetid",
+          "type": "string"
+        },
+        "comment": {
+          "title": "Comment",
+          "type": "string"
+        },
+        "operatorId": {
+          "title": "Operatorid",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supplementids",
+          "type": "array"
+        },
+        "checkIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Checkids",
+          "type": "array"
+        },
+        "steps": {
+          "title": "Steps",
+          "type": "string"
+        },
+        "result": {
+          "title": "Result",
+          "type": "string"
+        },
+        "recipient": {
+          "title": "Recipient",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "previousRecordId": {
+          "title": "Previousrecordid",
+          "type": "string"
+        },
+        "inputsFen": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Inputsfen",
+          "type": "array"
+        },
+        "operation": {
+          "anyOf": [
+            {
+              "enum": [
+                "sum",
+                "difference"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation"
+        },
+        "resultFen": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resultfen"
+        }
+      },
+      "required": [
+        "recordId",
+        "kind",
+        "nodeKey",
+        "targetId",
+        "comment",
+        "operatorId",
+        "at",
+        "factRefs",
+        "citationRefs",
+        "supplementIds",
+        "checkIds",
+        "steps",
+        "result",
+        "recipient",
+        "state",
+        "source",
+        "previousRecordId",
+        "inputsFen",
+        "operation",
+        "resultFen"
+      ],
+      "title": "ReviewRecord",
+      "type": "object"
+    },
+    "ReviewRecordRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        },
+        "nodeKey": {
+          "enum": [
+            "archive",
+            "coverage",
+            "consistency",
+            "clauses",
+            "amount",
+            "report"
+          ],
+          "title": "Nodekey",
+          "type": "string"
+        },
+        "targetId": {
+          "default": "",
+          "title": "Targetid",
+          "type": "string"
+        },
+        "comment": {
+          "maxLength": 2000,
+          "minLength": 5,
+          "title": "Comment",
+          "type": "string"
+        },
+        "factRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Factrefs",
+          "type": "array"
+        },
+        "citationRefs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Citationrefs",
+          "type": "array"
+        },
+        "supplementIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Supplementids",
+          "type": "array"
+        },
+        "checkIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Checkids",
+          "type": "array"
+        },
+        "steps": {
+          "default": "",
+          "maxLength": 3000,
+          "title": "Steps",
+          "type": "string"
+        },
+        "result": {
+          "default": "",
+          "maxLength": 3000,
+          "title": "Result",
+          "type": "string"
+        },
+        "recipient": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Recipient",
+          "type": "string"
+        },
+        "state": {
+          "default": "",
+          "maxLength": 50,
+          "title": "State",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Source",
+          "type": "string"
+        },
+        "previousRecordId": {
+          "default": "",
+          "title": "Previousrecordid",
+          "type": "string"
+        },
+        "inputsFen": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 30,
+          "title": "Inputsfen",
+          "type": "array"
+        },
+        "operation": {
+          "anyOf": [
+            {
+              "enum": [
+                "sum",
+                "difference"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation"
+        },
+        "resultFen": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resultfen"
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "nodeKey",
+        "comment"
+      ],
+      "title": "ReviewRecordRequest",
+      "type": "object"
+    },
     "ReviewRequest": {
       "additionalProperties": false,
       "properties": {
@@ -3017,12 +4515,36 @@ export const transportSchema = {
           },
           "title": "Supplementids",
           "type": "array"
+        },
+        "coverageConfirmed": {
+          "default": false,
+          "title": "Coverageconfirmed",
+          "type": "boolean"
+        },
+        "reviewCycleId": {
+          "exclusiveMinimum": 0,
+          "title": "Reviewcycleid",
+          "type": "integer"
+        },
+        "reportVersion": {
+          "exclusiveMinimum": 0,
+          "title": "Reportversion",
+          "type": "integer"
+        },
+        "basisHash": {
+          "maxLength": 64,
+          "minLength": 64,
+          "title": "Basishash",
+          "type": "string"
         }
       },
       "required": [
         "decision",
         "interruptKey",
-        "expectedRevision"
+        "expectedRevision",
+        "reviewCycleId",
+        "reportVersion",
+        "basisHash"
       ],
       "title": "ReviewRequest",
       "type": "object"
@@ -3112,6 +4634,82 @@ export const transportSchema = {
       "title": "ReviewScopeItem",
       "type": "object"
     },
+    "ReviewState": {
+      "additionalProperties": false,
+      "properties": {
+        "reviewModelVersion": {
+          "const": 1,
+          "title": "Reviewmodelversion",
+          "type": "integer"
+        },
+        "checkPlan": {
+          "items": {
+            "$ref": "#/$defs/CheckPlanItem"
+          },
+          "title": "Checkplan",
+          "type": "array"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/ReviewCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "findingHistory": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "title": "Findinghistory",
+          "type": "array"
+        },
+        "records": {
+          "items": {
+            "$ref": "#/$defs/ReviewRecord"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "businessNodes": {
+          "items": {
+            "$ref": "#/$defs/BusinessNode"
+          },
+          "title": "Businessnodes",
+          "type": "array"
+        },
+        "nodeHistory": {
+          "items": {
+            "$ref": "#/$defs/BusinessNode"
+          },
+          "title": "Nodehistory",
+          "type": "array"
+        },
+        "reviewCycleId": {
+          "title": "Reviewcycleid",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "reviewModelVersion",
+        "checkPlan",
+        "checks",
+        "findings",
+        "findingHistory",
+        "records",
+        "businessNodes",
+        "nodeHistory",
+        "reviewCycleId"
+      ],
+      "title": "ReviewState",
+      "type": "object"
+    },
     "ReviewTermRef": {
       "properties": {
         "documentId": {
@@ -3184,6 +4782,60 @@ export const transportSchema = {
         "sources"
       ],
       "title": "ReviewTimelineEntry",
+      "type": "object"
+    },
+    "ReviewUpdatedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 2,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "analysisId": {
+          "title": "Analysisid",
+          "type": "string"
+        },
+        "conversationId": {
+          "title": "Conversationid",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "type": {
+          "const": "review.updated",
+          "title": "Type",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ReviewState"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "analysisId",
+        "conversationId",
+        "seq",
+        "revision",
+        "at",
+        "type",
+        "data"
+      ],
+      "title": "ReviewUpdatedEvent",
       "type": "object"
     },
     "ReviewVehicleDetail": {
@@ -3873,14 +5525,19 @@ export const transportSchema = {
           "analysis.recoverable": "#/$defs/FailureEvent",
           "analysis.rejected": "#/$defs/RejectedEvent",
           "analysis.status": "#/$defs/StatusEvent",
+          "business_node.completed": "#/$defs/BusinessNodeEvent",
+          "business_node.failed": "#/$defs/BusinessNodeEvent",
+          "business_node.not_applicable": "#/$defs/BusinessNodeEvent",
+          "business_node.started": "#/$defs/BusinessNodeEvent",
+          "business_node.unable": "#/$defs/BusinessNodeEvent",
           "evidence.supplemented": "#/$defs/SupplementedEvent",
-          "node.completed": "#/$defs/ExecutionEvent",
-          "node.failed": "#/$defs/ExecutionEvent",
-          "node.started": "#/$defs/ExecutionEvent",
+          "finding.reviewed": "#/$defs/FindingReviewedEvent",
           "report.completed": "#/$defs/CompletedEvent",
+          "report.saved": "#/$defs/ReportSavedEvent",
           "report.section": "#/$defs/SectionEvent",
           "review.accepted": "#/$defs/AcceptedEvent",
           "review.required": "#/$defs/ReviewEvent",
+          "review.updated": "#/$defs/ReviewUpdatedEvent",
           "tool.completed": "#/$defs/ExecutionEvent",
           "tool.failed": "#/$defs/ExecutionEvent",
           "tool.started": "#/$defs/ExecutionEvent"
@@ -3917,6 +5574,18 @@ export const transportSchema = {
         },
         {
           "$ref": "#/$defs/SupplementedEvent"
+        },
+        {
+          "$ref": "#/$defs/FindingReviewedEvent"
+        },
+        {
+          "$ref": "#/$defs/ReportSavedEvent"
+        },
+        {
+          "$ref": "#/$defs/BusinessNodeEvent"
+        },
+        {
+          "$ref": "#/$defs/ReviewUpdatedEvent"
         }
       ],
       "title": "WorkspaceEvent"

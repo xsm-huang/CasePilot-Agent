@@ -39,6 +39,10 @@ async def analysis_error(request, exc):
     statuses = {
         **ANALYSIS_ERROR_STATUSES,
         "INVALID_INPUT": 400,
+        "OPERATOR_IDENTITY_REQUIRED": 400,
+        "EVIDENCE_NOT_VIEWED": 400,
+        "REVIEW_BLOCKED": 422,
+        "INPUT_VERSION_CONFLICT": 409,
         "NOT_FOUND": 404,
         "IDEMPOTENCY_CONFLICT": 409,
         "ACTIVE_ANALYSIS_EXISTS": 409,

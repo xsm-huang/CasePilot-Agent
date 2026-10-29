@@ -24,9 +24,17 @@ class WorkspaceChat:
         self.block_section = None
         self.invalid_section = None
         self.release = threading.Event()
+        self.fail_phase = None
 
     async def complete(self, messages, *, tools=None, json_mode=False):
         payload = json.loads(messages[1]["content"])
+        if (
+            payload.get("phase") == self.fail_phase
+            and self.fail_phase is not None
+            and not self.failed
+        ):
+            self.failed = True
+            raise ModelError("MODEL_TIMEOUT")
         section = payload.get("sectionKey")
         self.calls.append({"section": section, "tools": bool(tools), "payload": payload})
         if section == self.block_section and section is not None:
@@ -49,7 +57,36 @@ class WorkspaceChat:
             output = {
                 "summary": "已核查事实与条款。",
                 "findings": [],
-                "insufficientEvidence": not bool(payload["citations"]),
+                "checkedItems": [
+                    {
+                        "category": "passed"
+                        if node == "consistency" or payload["citations"]
+                        else "limitation",
+                        "nodeKey": node,
+                        "title": title,
+                        "issueCode": f"{node}_review",
+                        "inference": "已结合本次原始材料和固定条款核对。",
+                        "evidenceStatus": "supported"
+                        if node == "consistency" or payload["citations"]
+                        else "insufficient",
+                        "supportQuote": payload["citations"][0]["content"][:50]
+                        if payload["citations"]
+                        else "",
+                        "factRefs": ["case:accident"],
+                        "citationRefs": [payload["citations"][0]["citationId"]]
+                        if payload["citations"]
+                        else [],
+                        "pendingItems": [],
+                    }
+                    for node, title in (
+                        ("consistency", "材料原文一致性"),
+                        ("clauses", "合同责任核验"),
+                        ("amount", "金额口径及支付解释核对"),
+                    )
+                    if node == payload.get("phase", node)
+                ],
+                "insufficientEvidence": payload.get("phase") == "clauses"
+                and not bool(payload["citations"]),
                 "pendingItems": [],
             }
         return {
@@ -62,7 +99,7 @@ class WorkspaceChat:
 
 
 def settle(client, task_id, expected=None):
-    deadline = time.monotonic() + 15
+    deadline = time.monotonic() + 45
     while time.monotonic() < deadline:
         response = client.get(f"/api/analyses/{task_id}")
         assert response.status_code == 200, response.text
@@ -71,8 +108,10 @@ def settle(client, task_id, expected=None):
             if expected:
                 assert task["status"] == expected, task
             return task
-        time.sleep(0.03)
-    raise AssertionError(f"Task did not settle: {task_id}")
+        time.sleep(0.1)
+    raise AssertionError(
+        f"Task did not settle: {task_id}; status={task['status']}; nodes={[(n['nodeKey'], n['status']) for n in task['reviewState']['businessNodes']]}; tail={[(e['type'], e['seq']) for e in task['execution']['timeline'][-4:]]}"
+    )
 
 
 def new_task(client, case_id="C02"):
@@ -126,6 +165,7 @@ def seed_knowledge(client):
 def workspace(postgres_env, monkeypatch, tmp_path):
     for key, value in postgres_env.items():
         monkeypatch.setenv(key, value)
+    monkeypatch.setenv("CASEPILOT_OPERATOR_ID", "test-reviewer")
     monkeypatch.setenv("CASEPILOT_REVIEW_SUPPLEMENTS_DIR", str(tmp_path / "supplements"))
     chat = WorkspaceChat()
     application = create_app(chat=chat, embedder=FakeEmbedding())

@@ -17,7 +17,7 @@ def test_waiting_review_survives_killed_process_and_only_one_decision(postgres_e
     try:
         with httpx.Client(base_url=first.base.removesuffix("/api"), timeout=15) as api:
             seed_knowledge(api)
-            _, created = new_task(api, "C03")
+            _, created = new_task(api, "C02")
             paused = settle(api, created["id"], "waiting_review")
         first.process.kill()
         first.process.wait(timeout=5)

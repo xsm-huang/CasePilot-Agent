@@ -55,6 +55,7 @@ class ApiProcess:
         env["OPENAI_API_KEY"] = ""
         env["PORT"] = str(self.port)
         env["HOST"] = "127.0.0.1"
+        env["CASEPILOT_OPERATOR_ID"] = "test-reviewer"
         env["PYTHONPATH"] = str(ROOT / "apps/api/src")
         self.process = subprocess.Popen(
             [sys.executable, str(self.worker)]

@@ -9,7 +9,9 @@ from fastapi import APIRouter, File, Form, Header, Request, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 
 from ..analyses.errors import AnalysisError
+from ..analyses.review import eligibility
 from ..analyses.workspace_store import TERMINAL
+from ..schemas.review import Eligibility, ManualFindingRequest, ReviewRecordRequest
 from ..schemas.workspace import (
     AnalysisTask,
     Citation,
@@ -20,11 +22,84 @@ from ..schemas.workspace import (
     CreateAnalysis,
     CreateConversation,
     EvidenceSupplement,
+    FindingReviewRequest,
     RecoverRequest,
     ReviewRequest,
+    WorkspaceEvent,
 )
 
 router = APIRouter()
+
+
+@router.get("/api/analyses/{task_id}/finalization-eligibility", response_model=Eligibility)
+async def finalization_eligibility(task_id: str, request: Request):
+    return eligibility(request.app.state.store.writable(task_id))
+
+
+@router.post("/api/analyses/{task_id}/findings", status_code=202, response_model=CommandAccepted)
+async def manual_finding(
+    task_id: str,
+    body: ManualFindingRequest,
+    request: Request,
+    key: str = Header(alias="Idempotency-Key"),
+):
+    return await request.app.state.store.manual_finding(
+        task_id, body.model_dump(), idempotency_key(key)
+    )
+
+
+def record_endpoint(kind):
+    async def record(
+        task_id: str,
+        body: ReviewRecordRequest,
+        request: Request,
+        key: str = Header(alias="Idempotency-Key"),
+    ):
+        return await request.app.state.store.add_review_record(
+            task_id, kind, body.model_dump(), idempotency_key(key)
+        )
+
+    return record
+
+
+for path, kind in {
+    "evidence-views": "evidence_view",
+    "human-completions": "human_completion",
+    "scope-adjustments": "scope_adjustment",
+    "professional-records": "professional",
+    "followup-records": "followup",
+    "business-records": "business_record",
+    "reopen-review": "reopen",
+}.items():
+    router.add_api_route(
+        f"/api/analyses/{{task_id}}/{path}",
+        record_endpoint(kind),
+        methods=["POST"],
+        status_code=202,
+        response_model=CommandAccepted,
+        name=f"review_{kind}",
+    )
+
+
+@router.get("/api/analyses/{task_id}/reports/{version}")
+async def report_version(task_id: str, version: int, request: Request):
+    task = request.app.state.store.writable(task_id)
+    report = next((r for r in task["reports"] if r["version"] == version), None)
+    if not report:
+        raise AnalysisError("NOT_FOUND", "报告版本不存在。")
+    return report
+
+
+@router.post("/api/analyses/{task_id}/reports", status_code=202, response_model=CommandAccepted)
+async def save_stage_report(
+    task_id: str,
+    body: ReviewRecordRequest,
+    request: Request,
+    key: str = Header(alias="Idempotency-Key"),
+):
+    return await request.app.state.store.review_write(
+        task_id, body.model_dump(), idempotency_key(key), "stage_report", lambda task: None
+    )
 
 
 def idempotency_key(value):
@@ -34,8 +109,8 @@ def idempotency_key(value):
 
 
 @router.get("/api/analyses", response_model=list[AnalysisTask])
-async def analyses(request: Request):
-    return request.app.state.analyses.list()
+async def analyses(request: Request, caseId: str | None = None):
+    return request.app.state.analyses.list(caseId)
 
 
 @router.get("/api/analyses/{task_id}", response_model=AnalysisTask)
@@ -83,6 +158,23 @@ async def review(
     )
 
 
+@router.post(
+    "/api/analyses/{task_id}/findings/{finding_id}/review",
+    status_code=202,
+    response_model=CommandAccepted,
+)
+async def finding_review(
+    task_id: str,
+    finding_id: str,
+    body: FindingReviewRequest,
+    request: Request,
+    idempotency_key_header: str = Header(alias="Idempotency-Key"),
+):
+    return await request.app.state.store.review_finding(
+        task_id, finding_id, body.model_dump(), idempotency_key(idempotency_key_header)
+    )
+
+
 @router.post("/api/analyses/{task_id}/recover", status_code=202, response_model=CommandAccepted)
 async def recover(
     task_id: str,
@@ -105,6 +197,9 @@ async def add_supplement(
     title: str = Form(min_length=1, max_length=200),
     material_type: str = Form(alias="materialType", min_length=1, max_length=100),
     entity_ids: str = Form(default="[]", alias="entityIds"),
+    node_key: str = Form(default="amount", alias="nodeKey"),
+    expected_revision: int = Form(alias="expectedRevision", ge=0),
+    key: str = Header(alias="Idempotency-Key"),
 ):
     try:
         parsed_ids = json.loads(entity_ids)
@@ -120,6 +215,9 @@ async def add_supplement(
         material_type=material_type,
         entity_ids=parsed_ids,
         content=await file.read(10 * 1024 * 1024 + 1),
+        node_key=node_key,
+        expected_revision=expected_revision,
+        key=idempotency_key(key),
     )
 
 
@@ -130,6 +228,17 @@ async def supplement_content(task_id: str, supplement_id: str, request: Request)
         path,
         media_type="application/pdf",
         filename=f"{title}.pdf" if not title.lower().endswith(".pdf") else title,
+        content_disposition_type="inline",
+    )
+
+
+@router.get("/api/analyses/{task_id}/materials/{document_id}/content")
+async def material_content(task_id: str, document_id: str, request: Request):
+    path, title = request.app.state.analyses.material_content(task_id, document_id)
+    return FileResponse(
+        path,
+        media_type="application/pdf",
+        filename=f"{title}.pdf",
         content_disposition_type="inline",
     )
 
@@ -168,6 +277,7 @@ async def events(
         while not await request.is_disconnected():
             for event in await store.repository.events_after(task_id, cursor):
                 cursor = event["seq"]
+                event = WorkspaceEvent.model_validate(event).model_dump(mode="json")
                 yield f"id: {cursor}\nevent: timeline\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
             task = store.get(task_id)
             if task["status"] in TERMINAL and cursor >= task["lastEventSeq"]:

@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import type { AnalysisTask, Conversation, ConversationSummary, CitationContext } from '@casepilot/contracts';
+import type { AnalysisTask, Conversation, ConversationSummary, CitationContext, FindingReviewRequest, ReviewRecordRequest, ManualFindingRequest } from '@casepilot/contracts';
 import { workbenchApi } from '../api/workbench';
 import { reviewCasesApi } from '../api/reviewCases';
 import { ApiError } from '../api/http';
@@ -13,10 +13,12 @@ export function useWorkbench() {
   const conversations = ref<ConversationSummary[]>([]), conversation = ref<Conversation>();
   const selectedId = ref(''), task = ref<AnalysisTask>();
   const pending = ref(false), error = ref(''), citation = ref<CitationContext>();
+  const historyReady = ref(false);
   const drafts = ref<Record<string, string>>({}), comments = ref<Record<string, string>>({});
   const scopes = createRequestScope(), stream = useAnalysisStream();
   // Keep the same key when retrying an uncertain response, including after navigation.
   const commandKeys = new Map<string, string>();
+  const newReviewAttempts = new Map<string, Conversation>();
   let conversationRead = 0;
   let citationRead = 0;
   const keyFor = (body: unknown) => { const fingerprint = JSON.stringify(body); if (!commandKeys.has(fingerprint)) commandKeys.set(fingerprint, crypto.randomUUID()); return commandKeys.get(fingerprint)!; };
@@ -54,6 +56,9 @@ export function useWorkbench() {
         task.value = result.task; remember(result.task);
         if (isTerminal(result.task.status)) {
           stream.close('执行已暂停或结束');
+          void workbenchApi.task(current.id, scope.signal).then(latest => {
+            if (scope.isCurrent() && task.value?.id === current.id) { task.value = latest; remember(latest); }
+          }).catch(cause => { if (scope.isCurrent()) error.value = String(cause); });
           void refreshConversation(scope).catch(cause => { if (scope.isCurrent()) error.value = String(cause); });
         }
       },
@@ -71,6 +76,8 @@ export function useWorkbench() {
     finally { if (scope.isCurrent()) pending.value = false; }
   }
   async function selectCase(id: string) {
+    const latest = history.value.find(t => t.caseId === id);
+    if (latest) { await openTask(latest.id); return; }
     const scope = begin(); selectedId.value = id; task.value = undefined; conversation.value = undefined; conversations.value = []; pending.value = true;
     try { const list = await workbenchApi.conversations(id, scope.signal); if (scope.isCurrent()) conversations.value = list; }
     catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
@@ -88,14 +95,16 @@ export function useWorkbench() {
   }
   async function start(newConversation = false, caseIdOverride?: string, expectedInputVersion?: string, predecessorAnalysisId?: string, supplementIds: string[] = []) {
     if (pending.value) return;
-    const draft = question.value, caseId = caseIdOverride ?? selectedId.value;
+    const draft = newConversation ? '' : question.value, caseId = caseIdOverride ?? selectedId.value;
+    const reviewAttempt = JSON.stringify({ caseId, expectedInputVersion, predecessorAnalysisId, supplementIds });
     if (caseIdOverride) selectedId.value = caseIdOverride;
-    let currentConversation = newConversation ? undefined : conversation.value;
+    let currentConversation = newConversation ? newReviewAttempts.get(reviewAttempt) : conversation.value;
     const scope = begin(); pending.value = true;
     try {
       if (!currentConversation) {
         const created = await workbenchApi.createConversation(caseId, scope.signal);
         currentConversation = await workbenchApi.conversation(created.id, scope.signal);
+        if (newConversation && scope.isCurrent()) newReviewAttempts.set(reviewAttempt, currentConversation);
       }
       if (!scope.isCurrent()) return;
       drafts.value[currentConversation.id] = draft;
@@ -104,6 +113,7 @@ export function useWorkbench() {
       const body = { conversationId: currentConversation.id, kind, question: draft || '请审查当前已结案案件。', expectedInputVersion: kind === 'initial' ? expectedInputVersion : undefined, predecessorAnalysisId, supplementIds };
       const current = await workbenchApi.start(body, keyFor(body), scope.signal);
       commandKeys.delete(JSON.stringify(body));
+      if (newConversation) newReviewAttempts.delete(reviewAttempt);
       if (scope.isCurrent()) { drafts.value[currentConversation.id] = ''; display(current, scope); await refreshConversation(scope); }
     } catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
     finally { if (scope.isCurrent()) pending.value = false; }
@@ -114,7 +124,7 @@ export function useWorkbench() {
     const scope = begin(); pending.value = true;
     try {
       if (decision && current.pendingReview) {
-        const body = { decision, comment: comment.value, interruptKey: current.pendingReview.interruptKey, expectedRevision: current.revision, supplementIds: current.evidenceSupplements.map(item => item.supplementId) };
+        const body = { decision, comment: comment.value, coverageConfirmed: decision === 'approve', interruptKey: current.pendingReview.interruptKey, expectedRevision: current.revision, supplementIds: [], reviewCycleId: current.reviewState.reviewCycleId, reportVersion: current.report!.version, basisHash: current.finalizationEligibility.basisHash };
         await workbenchApi.review(current.id, body, keyFor({ id: current.id, ...body }), scope.signal);
       } else if (!decision) await workbenchApi.recover(current.id, current.revision, keyFor({ recover: current.id, revision: current.revision }), scope.signal);
       const updated = await workbenchApi.task(current.id, scope.signal);
@@ -125,6 +135,25 @@ export function useWorkbench() {
       if (cause instanceof ApiError && cause.status === 409) {
         try { const updated = await workbenchApi.task(current.id, scope.signal); if (scope.isCurrent()) display(updated, scope); }
         catch { /* Preserve the original conflict. */ }
+      }
+    } finally { if (scope.isCurrent()) pending.value = false; }
+  }
+  async function reviewFinding(findingId: string, value: Omit<FindingReviewRequest, 'expectedRevision'>) {
+    const current = task.value;
+    if (!current || pending.value) return;
+    const scope = begin(); pending.value = true;
+    try {
+      const body = { ...value, expectedRevision: current.revision };
+      await workbenchApi.reviewFinding(current.id, findingId, body, keyFor({ id: current.id, findingId, ...body }), scope.signal);
+      const updated = await workbenchApi.task(current.id, scope.signal);
+      if (scope.isCurrent()) display(updated, scope);
+    } catch (cause) {
+      if (scope.isCurrent()) {
+        error.value = String(cause);
+        if (cause instanceof ApiError && cause.status === 409) {
+          const updated = await workbenchApi.task(current.id, scope.signal);
+          if (scope.isCurrent()) display(updated, scope);
+        }
       }
     } finally { if (scope.isCurrent()) pending.value = false; }
   }
@@ -141,6 +170,26 @@ export function useWorkbench() {
       if (scope.isCurrent() && task.value?.id === current.id && read === citationRead) error.value = String(cause);
     }
   }
+  async function saveReviewRecord(action: string, value: Omit<ReviewRecordRequest, 'expectedRevision'> | Omit<ManualFindingRequest, 'expectedRevision'>) {
+    const current = task.value;
+    if (!current || pending.value) return;
+    const scope = begin(); pending.value = true;
+    try {
+      const body = { ...value, expectedRevision: current.revision };
+      if (action === 'findings') await workbenchApi.manualFinding(current.id, body as ManualFindingRequest, keyFor({ id: current.id, action, ...body }), scope.signal);
+      else await workbenchApi.record(current.id, action, body as ReviewRecordRequest, keyFor({ id: current.id, action, ...body }), scope.signal);
+      const updated = await workbenchApi.task(current.id, scope.signal);
+      if (scope.isCurrent()) display(updated, scope);
+    } catch (cause) {
+      if (scope.isCurrent()) {
+        error.value = String(cause);
+        if (cause instanceof ApiError && cause.status === 409) {
+          const updated = await workbenchApi.task(current.id, scope.signal);
+          if (scope.isCurrent()) display(updated, scope);
+        }
+      }
+    } finally { if (scope.isCurrent()) pending.value = false; }
+  }
   async function olderMessages() {
     const current = conversation.value, scope = scopes.current();
     if (!current?.nextBefore) return;
@@ -154,14 +203,15 @@ export function useWorkbench() {
     }
     catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
   }
-  async function addSupplement(file: File, title: string, materialType: string) {
+  async function addSupplement(file: File, title: string, materialType: string, nodeKey = 'amount') {
     const current = task.value;
     if (!current || pending.value) return;
     const scope = begin(); pending.value = true;
     const body = new FormData();
     body.set('file', file); body.set('title', title); body.set('materialType', materialType); body.set('entityIds', '[]');
+    body.set('nodeKey', nodeKey); body.set('expectedRevision', String(current.revision));
     try {
-      await workbenchApi.supplement(current.id, body, scope.signal);
+      await workbenchApi.supplement(current.id, body, keyFor({ upload: current.id, revision: current.revision, title, nodeKey, name: file.name, size: file.size, modified: file.lastModified }), scope.signal);
       const updated = await workbenchApi.task(current.id, scope.signal);
       if (scope.isCurrent()) display(updated, scope);
     } catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
@@ -173,6 +223,7 @@ export function useWorkbench() {
     const scope = scopes.current();
     try {
       const preflight = await reviewCasesApi.preflight(current.caseId, scope.signal);
+      if (!scope.isCurrent() || task.value?.id !== current.id) return;
       await start(true, current.caseId, preflight.expectedInputVersion, current.id, current.evidenceSupplements.map(item => item.supplementId));
     } catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
   }
@@ -185,10 +236,11 @@ export function useWorkbench() {
         let saved: string | null = null;
         try { saved = localStorage.getItem('casepilot:last-task'); } catch { /* Optional browser preference. */ }
         if (saved && loadedHistory.some(t => t.id === saved)) await openTask(saved);
+        historyReady.value = true;
       }
     } catch (cause) { if (scope.isCurrent()) error.value = String(cause); }
     finally { if (scope.isCurrent()) pending.value = false; }
   });
   onBeforeUnmount(() => { scopes.dispose(); stream.close(); });
-  return { history, selectedId, task, pending, running, error, question, comment, conversation, conversations, citation, connection: stream.connection, selectCase, openTask, openConversation, start, startReview: (caseId: string, inputVersion: string) => start(true, caseId, inputVersion), addSupplement, reanalyze, review: command, recover: () => command(), showCitation, olderMessages };
+  return { history, historyReady, selectedId, task, pending, running, error, question, comment, conversation, conversations, citation, connection: stream.connection, selectCase, openTask, openConversation, start, startReview: (caseId: string, inputVersion: string, predecessor?: string) => start(true, caseId, inputVersion, predecessor), addSupplement, reanalyze, review: command, reviewFinding, saveReviewRecord, recover: () => command(), showCitation, olderMessages };
 }

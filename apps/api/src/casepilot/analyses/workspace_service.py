@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from ..cases.review_repository import review_case_exists
+from ..cases.review_repository import ReviewCaseDataError, review_case_exists, review_document
 from ..config import PROJECT_ROOT
 from ..knowledge.errors import KnowledgeError
 from ..knowledge.pdf import parse_pages
@@ -15,7 +15,7 @@ from ..model.chat import ChatClient
 from ..workflow.prompts import PROMPT_VERSION
 from .errors import AnalysisError
 from .review_input import ReviewInputBuilder
-from .workspace_store import CONTEXT_FIELDS, fingerprint, now
+from .workspace_store import CONTEXT_FIELDS, fingerprint, now, operator_id
 
 
 class WorkspaceService:
@@ -33,8 +33,12 @@ class WorkspaceService:
                 "DEPENDENCY_UNAVAILABLE", "模型配置不可用，请核对服务端配置。"
             ) from None
 
-    def list(self):
-        return [self.store.public(task) for task in self.store.list()]
+    def list(self, case_id=None):
+        return [
+            self.store.public(task)
+            for task in self.store.list()
+            if case_id is None or task["caseId"] == case_id
+        ]
 
     def get(self, task_id):
         return self.store.public(self.store.get(task_id))
@@ -45,8 +49,7 @@ class WorkspaceService:
             for c in sorted(
                 self.store.conversations.values(), key=lambda c: c["updatedAt"], reverse=True
             )
-            if review_case_exists(c["caseId"])
-            and (case_id is None or c["caseId"] == case_id)
+            if review_case_exists(c["caseId"]) and (case_id is None or c["caseId"] == case_id)
         ]
 
     async def create_conversation(self, case_id, title):
@@ -65,11 +68,29 @@ class WorkspaceService:
             os.getenv("CASEPILOT_REVIEW_SUPPLEMENTS_DIR", PROJECT_ROOT / "data/review-supplements")
         ).resolve()
 
-    async def add_supplement(self, task_id, *, title, material_type, entity_ids, content):
+    async def add_supplement(
+        self,
+        task_id,
+        *,
+        title,
+        material_type,
+        entity_ids,
+        content,
+        expected_revision,
+        key,
+        node_key="amount",
+    ):
         task = self.store.writable(task_id)
-        if task["status"] != "waiting_review":
+        if node_key not in {"archive", "coverage", "consistency", "clauses", "amount", "report"}:
+            raise AnalysisError("INVALID_INPUT", "补充证据须关联有效审查节点。")
+        if task["status"] not in {"waiting_review", "failed", "recoverable"}:
             raise AnalysisError("REVIEW_CONFLICT", "仅等待人工审核的任务可以补充证据。")
-        if not title.strip() or not material_type.strip() or len(title) > 200 or len(material_type) > 100:
+        if (
+            not title.strip()
+            or not material_type.strip()
+            or len(title) > 200
+            or len(material_type) > 100
+        ):
             raise AnalysisError("INVALID_INPUT", "补充证据标题或材料类型无效。")
         if not content.startswith(b"%PDF-") or len(content) > 10 * 1024 * 1024:
             raise AnalysisError("INVALID_INPUT", "补充证据必须是小于 10 MiB 的 PDF。")
@@ -78,6 +99,16 @@ class WorkspaceService:
         except KnowledgeError as error:
             raise AnalysisError("SUPPLEMENT_PARSE_FAILED", error.message) from error
         digest = hashlib.sha256(content).hexdigest()
+        request_digest = fingerprint(
+            dict(
+                title=title,
+                materialType=material_type,
+                entityIds=entity_ids,
+                sha256=digest,
+                nodeKey=node_key,
+                expectedRevision=expected_revision,
+            )
+        )
         root = self.supplement_root()
         root.mkdir(parents=True, exist_ok=True)
         target = root / f"{digest}.pdf"
@@ -94,24 +125,23 @@ class WorkspaceService:
             default=0,
         )
         supplement = {
+            "nodeKey": node_key,
             "supplementId": str(uuid4()),
             "version": version,
             "analysisId": task_id,
             "title": title.strip(),
             "materialType": material_type.strip(),
             "entityIds": sorted(
-                set(
-                    entity_ids
-                    or task["caseSnapshot"]["payload"]["reviewScope"]["targetClaimIds"]
-                )
+                set(entity_ids or task["caseSnapshot"]["payload"]["reviewScope"]["targetClaimIds"])
             ),
             "sha256": digest,
             "addedAt": now(),
-            "addedBy": "unidentified_operator",
+            "addedBy": operator_id(),
             "pages": [{"page": page, "content": text} for page, text in pages],
         }
-        await self.store.add_supplement(task_id, supplement)
-        return supplement
+        return await self.store.add_supplement(
+            task_id, supplement, key, request_digest, expected_revision
+        )
 
     def supplement_content(self, task_id, supplement_id):
         task = self.store.writable(task_id)
@@ -122,9 +152,36 @@ class WorkspaceService:
         if supplement is None:
             raise AnalysisError("NOT_FOUND", "补充证据不存在。")
         path = self.supplement_root() / f"{supplement['sha256']}.pdf"
-        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != supplement["sha256"]:
+        if (
+            not path.is_file()
+            or hashlib.sha256(path.read_bytes()).hexdigest() != supplement["sha256"]
+        ):
             raise AnalysisError("SUPPLEMENT_UNAVAILABLE", "补充证据文件不可用或校验失败。")
         return path, supplement["title"]
+
+    def material_content(self, task_id, document_id):
+        task = self.store.writable(task_id)
+        record = next(
+            (
+                d
+                for d in task["caseSnapshot"]["payload"].get("documents", [])
+                if d["documentId"] == document_id
+            ),
+            None,
+        )
+        if not record or record["status"] != "available":
+            raise AnalysisError("NOT_FOUND", "材料不属于本次输入或未取得。")
+        try:
+            resolved = review_document(task["caseId"], document_id)
+        except ReviewCaseDataError:
+            raise AnalysisError(
+                "INPUT_VERSION_CONFLICT", "原始材料已变化或校验失败，不能替代历史任务依据。"
+            ) from None
+        if not resolved or hashlib.sha256(resolved[0].read_bytes()).hexdigest() != record["sha256"]:
+            raise AnalysisError(
+                "INPUT_VERSION_CONFLICT", "原始材料版本已变化，不能用当前文件替代历史任务依据。"
+            )
+        return resolved
 
     def latest_review_statuses(self):
         statuses = {}
@@ -139,7 +196,14 @@ class WorkspaceService:
             "rejected": "pending_verification",
         }
         for task in self.store.list():
-            statuses.setdefault(task["caseId"], mapping[task["status"]])
+            status = mapping[task["status"]]
+            if task["status"] == "completed" and task.get("report", {}).get("kind") != "final":
+                status = "pending_verification"
+            if task["status"] == "waiting_review" and any(
+                r["decision"] in {"pending", "referred"} for r in task.get("reviewHistory", [])
+            ):
+                status = "pending_verification"
+            statuses.setdefault(task["caseId"], status)
         return statuses
 
     async def conversation(self, conversation_id, before=None):
@@ -214,13 +278,21 @@ class WorkspaceService:
                 "caseId": conversation["caseId"],
                 "caseSnapshot": snapshot,
                 "inputVersion": fingerprint(
-                    {"baseInputVersion": preflight["expectedInputVersion"], "supplements": selected_supplements}
-                ) if selected_supplements else preflight["expectedInputVersion"],
+                    {
+                        "baseInputVersion": preflight["expectedInputVersion"],
+                        "supplements": selected_supplements,
+                    }
+                )
+                if selected_supplements
+                else preflight["expectedInputVersion"],
                 "knowledgeBindings": preflight["knowledgeBindings"],
                 "modelProfile": chat.config.chat_model,
                 "promptVersion": PROMPT_VERSION,
             }
-        elif body.get("expectedInputVersion") and body["expectedInputVersion"] != context["inputVersion"]:
+        elif (
+            body.get("expectedInputVersion")
+            and body["expectedInputVersion"] != context["inputVersion"]
+        ):
             raise AnalysisError("INPUT_VERSION_CONFLICT", "当前会话已固定为另一输入版本。")
         if (
             context["modelProfile"] != chat.config.chat_model

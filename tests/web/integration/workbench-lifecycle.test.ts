@@ -19,7 +19,7 @@ class Source {
 }
 Object.defineProperty(globalThis, 'EventSource', { value: Source, configurable: true });
 const renderer = createRenderer({ createElement: () => ({}), createText: () => ({}), createComment: () => ({}), insert() {}, remove() {}, setText() {}, setElementText() {}, patchProp() {}, parentNode: () => null, nextSibling: () => null });
-const turn = (id: string) => ({ schemaVersion: 2, id, caseId: 'C01', conversationId: `conversation-${id}`, kind: 'initial', question: '核验', status: 'running', revision: 2, lastEventSeq: 2, userMessageId: `user-${id}`, assistantMessageId: null, caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'C01', caseRevision: 1, preparedAt: '2026-01-01T00:00:00Z', payload: {}, scopeItems: [], knowledgeBindings: [] }, predecessorAnalysisId: null, evidenceSupplements: [], reviewSupplementIds: [], context: { inputVersion: 'v2', knowledgeBindings: [], messageIds: [], modelProfile: 'm', promptVersion: 'p' }, facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null, execution: { nodes: [], tools: [], timeline: [] }, error: null });
+const turn = (id: string) => ({ reviewState: { reviewModelVersion: 1, checkPlan: [], checks: [], findings: [], findingHistory: [], records: [], businessNodes: [], nodeHistory: [], reviewCycleId: 1 }, finalizationEligibility: { allowed: false, blockers: [], basisHash: 'a'.repeat(64) }, reviewStatus: 'pending_review', schemaVersion: 2, id, caseId: 'C01', conversationId: `conversation-${id}`, kind: 'initial', question: '核验', status: 'running', revision: 2, lastEventSeq: 2, userMessageId: `user-${id}`, assistantMessageId: null, caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'C01', caseRevision: 1, preparedAt: '2026-01-01T00:00:00Z', payload: {}, scopeItems: [], knowledgeBindings: [] }, predecessorAnalysisId: null, evidenceSupplements: [], reviewSupplementIds: [], context: { inputVersion: 'v2', knowledgeBindings: [], messageIds: [], modelProfile: 'm', promptVersion: 'p' }, facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null, execution: { tools: [], timeline: [] }, error: null });
 const conversation = (id: string) => ({ id, caseId: 'C01', title: '验收', messages: [], analysisIds: [], activeAnalysisId: null, nextBefore: null });
 const citationContext = (id: string) => ({
   citation: { citationId: id, chunkId: `chunk-${id}`, generationId: 'generation-a', documentId: 'document-a', fileName: '条款.pdf', productCode: 'AUTO', clauseVersion: '2025-01', page: 1, ordinal: 0, content: `引用 ${id}` },
@@ -89,7 +89,7 @@ test('uncertain initial submission preserves the question, conversation and idem
 test('review conflicts resynchronize the authoritative snapshot without guessing approval', async () => {
   const { app, state } = await mount();
   try {
-    state.task.value = { ...turn('review'), status: 'waiting_review', pendingReview: { interruptKey: 'i1', checkpointId: 'cp1', revision: 2, reason: '核验' } };
+    state.task.value = { ...turn('review'), status: 'waiting_review', report: { version: 1 }, pendingReview: { interruptKey: 'i1', checkpointId: 'cp1', revision: 2, reason: '核验' } };
     workbenchApi.review = async () => { throw new ApiError(409, '审核点已变化'); };
     workbenchApi.task = async () => ({ ...turn('review'), status: 'rejected', revision: 4, lastEventSeq: 4 });
     await state.review('approve');
@@ -172,5 +172,24 @@ test('late history pagination preserves messages arriving during the request', a
     await loading;
     assert.deepEqual(state.conversation.value.messages.map(m => m.id), ['older', 'recent', 'arriving']);
     assert.equal(state.conversation.value.nextBefore, null);
+  } finally { app.unmount(); }
+});
+
+test('an uncertain new review reuses its conversation and task idempotency key', async () => {
+  const { app, state } = await mount();
+  const calls: unknown[] = [];
+  let creations = 0;
+  workbenchApi.createConversation = async () => { creations++; return conversation('review-attempt'); };
+  workbenchApi.start = async (body: unknown, key: string) => {
+    calls.push({ body, key });
+    if (calls.length === 1) throw new ApiError(0, 'response lost');
+    return { ...turn('accepted'), conversationId: 'review-attempt' };
+  };
+  try {
+    await state.startReview('C01', 'a'.repeat(64));
+    await state.startReview('C01', 'a'.repeat(64));
+    assert.equal(creations, 1);
+    assert.deepEqual(calls[0], calls[1]);
+    assert.equal(state.task.value.id, 'accepted');
   } finally { app.unmount(); }
 });

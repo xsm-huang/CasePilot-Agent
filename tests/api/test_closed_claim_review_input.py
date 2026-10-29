@@ -22,7 +22,9 @@ async def test_preflight_allows_partial_review_and_fixes_input_snapshot():
     assert preflight["status"] == "partial"
     assert any(item["status"] == "executable" for item in preflight["scopeItems"])
     assert any(item["status"] == "limited" for item in preflight["scopeItems"])
-    assert preflight["expectedInputVersion"] == review_input_version(snapshot["payload"])
+    assert preflight["expectedInputVersion"] == review_input_version(
+        {"case": snapshot["payload"], "knowledgeBindings": snapshot["knowledgeBindings"]}
+    )
     assert all("relativePath" not in item for item in snapshot["payload"]["documents"])
 
 

@@ -72,11 +72,13 @@ async def test_failures_and_explicit_retry_both_consume_budget_without_leaking_p
         await ledger.run("request", "model", success, attempt=3)
 
 
-async def test_only_one_structure_repair_is_allowed():
+async def test_only_one_structure_repair_is_allowed_per_business_node():
     _, _, ledger = await prepared()
     await ledger.run("repair-one", "model", success, repair=True)
     with pytest.raises(AgentError, match="STRUCTURE_REPAIR_EXHAUSTED"):
         await ledger.run("repair-two", "model", success, repair=True)
+    ledger.node_key = "amount"
+    await ledger.run("amount-repair", "model", success, repair=True)
 
 
 async def test_reserved_request_is_not_duplicated_concurrently_or_after_cancellation():

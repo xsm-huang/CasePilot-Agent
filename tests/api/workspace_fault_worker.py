@@ -1,7 +1,6 @@
 """Test-only barriers around actual production persistence/checkpoint boundaries."""
 
 import asyncio
-import json
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -29,7 +28,7 @@ async def lifespan(application):
     async with production_lifespan(application):
         store = application.state.store
         commit = store.repository.commit
-        section = store.section
+        save_report = store.save_report
         waiting = store.waiting_review
         complete = chat.complete
 
@@ -38,9 +37,9 @@ async def lifespan(application):
             if stage == "review_accepted" and kwargs.get("review"):
                 await barrier(task["id"])
 
-        async def section_wrapper(task_id, key, output):
-            result = await section(task_id, key, output)
-            if stage == "section_committed" and key == "summary":
+        async def report_wrapper(task_id, *, final=False):
+            result = await save_report(task_id, final=final)
+            if stage == "report_saved" and final:
                 await barrier(task_id)
             return result
 
@@ -51,16 +50,13 @@ async def lifespan(application):
 
         async def complete_wrapper(messages, **kwargs):
             result = await complete(messages, **kwargs)
-            if (
-                stage == "model_returned"
-                and json.loads(messages[1]["content"]).get("sectionKey") == "summary"
-            ):
+            if stage == "model_returned" and not kwargs.get("tools"):
                 task = next(t for t in store.tasks.values() if t["status"] == "running")
                 await barrier(task["id"])
             return result
 
         store.repository.commit = commit_wrapper
-        store.section = section_wrapper
+        store.save_report = report_wrapper
         store.waiting_review = waiting_wrapper
         chat.complete = complete_wrapper
         yield

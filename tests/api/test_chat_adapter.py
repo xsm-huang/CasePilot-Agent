@@ -152,3 +152,13 @@ async def test_provider_failure_is_not_retried_and_request_limits_apply_before_n
         with pytest.raises(ModelError, match="MODEL_CONTEXT_LIMIT"):
             await adapter.complete([{"role": "user", "content": "a" * 60001}])
     assert len(calls) == 1
+
+
+async def test_network_failure_is_not_reported_as_invalid_model_output():
+    def handle(request):
+        raise httpx.ConnectError("private transport details", request=request)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+        with pytest.raises(ModelError, match="DEPENDENCY_UNAVAILABLE") as caught:
+            await ChatClient(CONFIG, client=client).complete([{"role": "user", "content": "test"}])
+    assert "private" not in str(caught.value)

@@ -16,7 +16,7 @@ pytestmark = pytest.mark.database
 
 @pytest.mark.parametrize(
     "stage",
-    ["review_accepted", "checkpoint_before_projection", "section_committed", "model_returned"],
+    ["review_accepted", "checkpoint_before_projection", "report_saved", "model_returned"],
 )
 def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_path, stage):
     marker = tmp_path / "boundary.txt"
@@ -30,13 +30,8 @@ def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_pa
     try:
         with httpx.Client(base_url=first.base.removesuffix("/api"), timeout=30) as api:
             seed_knowledge(api)
-            _, created = new_task(
-                api,
-                "C03"
-                if stage in {"review_accepted", "checkpoint_before_projection"}
-                else "C02",
-            )
-            if stage == "review_accepted":
+            _, created = new_task(api, "C02")
+            if stage in {"review_accepted", "report_saved"}:
                 paused = settle(api, created["id"], "waiting_review")
                 pending = pool.submit(decision, api, paused)
             deadline = time.monotonic() + 15
@@ -68,7 +63,7 @@ def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_pa
             if stage == "model_returned":
                 assert restored["status"] == "recoverable"
                 assert restored["error"]["code"] == "MODEL_CALL_AMBIGUOUS"
-                assert restored["report"] is None
+                assert restored["report"]["kind"] == "stage"
                 assert (
                     api.post(
                         f"/api/analyses/{created['id']}/recover",
@@ -77,17 +72,18 @@ def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_pa
                     ).status_code
                     == 202
                 )
-            elif stage == "checkpoint_before_projection":
+            restored = settle(api, created["id"])
+            if restored["status"] == "waiting_review":
                 assert restored["status"] == "waiting_review"
                 assert restored["pendingReview"]["checkpointId"]
                 assert decision(api, restored).status_code == 202
             final = settle(api, created["id"], "completed")
             assert final["execution"]["timeline"][: len(before["events"])] == before["events"]
-            assert len(final["sections"]) == 3
+            assert final["report"]["kind"] == "final"
             assert sum(e["type"] == "report.completed" for e in final["execution"]["timeline"]) == 1
-            assert sum(e["type"] == "report.section" for e in final["execution"]["timeline"]) == 3
-            if stage == "section_committed":
-                assert final["sections"][0] == before["sections"][0]
+            assert sum(e["type"] == "report.saved" for e in final["execution"]["timeline"]) == (3 if stage == "model_returned" else 2)
+            if stage == "report_saved":
+                assert final["report"] == before["report"]
             with psycopg.connect(postgres_env["DATABASE_URL"]) as conn:
                 saved = conn.execute(
                     sql.SQL("SELECT snapshot FROM {}.tasks WHERE id=%s").format(
@@ -95,7 +91,7 @@ def test_killed_process_windows_preserve_effects_and_budget(postgres_env, tmp_pa
                     ),
                     (created["id"],),
                 ).fetchone()[0]
-            assert saved["_agent"]["counts"]["model"] == (6 if stage == "model_returned" else 5)
+            assert saved["_agent"]["counts"]["model"] == (5 if stage == "model_returned" else 4)
             assert saved["_agent"]["counts"]["model"] >= before["_agent"]["counts"]["model"]
             with api.stream(
                 "GET", f"/api/analyses/{created['id']}/events?after={len(before['events'])}"

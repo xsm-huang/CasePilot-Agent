@@ -35,5 +35,7 @@ async def run_agent_analysis(
     ledger = TaskLedger(store, task_id)
     await ledger.initialize(context)
     graph = create_agent_graph(context, ledger, knowledge, chat)
-    state = await graph.ainvoke({}, {"recursion_limit": 20})
+    state = await graph.ainvoke(
+        {"facts": [], "checks": [], "citations": [], "ruleFindings": []}, {"recursion_limit": 30}
+    )
     return state["result"]

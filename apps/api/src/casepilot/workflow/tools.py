@@ -1,12 +1,18 @@
 """Real LangChain tools with immutable server-side case and knowledge scope."""
 
+import asyncio
+import hashlib
 from copy import deepcopy
 
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..analyses.agent_errors import AgentError
 from ..analyses.evidence import case_facts
 from ..cases.evidence_rules import evaluate_evidence_rules
+from ..cases.review_repository import review_document
+from ..knowledge.pdf import parse_pages
+from ..schemas.agent import Fact
 
 
 class EmptyToolInput(BaseModel):
@@ -29,7 +35,27 @@ def build_analysis_tools(context, knowledge):
     claim = pinned["caseSnapshot"]
 
     async def query_case():
-        return {"caseSnapshot": deepcopy(claim), "facts": case_facts(claim)}
+        facts = case_facts(claim)
+        for document in claim["payload"].get("documents", []):
+            if document["status"] != "available":
+                continue
+            resolved = review_document(claim["caseId"], document["documentId"])
+            if not resolved:
+                raise AgentError("PINNED_MATERIAL_UNAVAILABLE")
+            content = resolved[0].read_bytes()
+            if hashlib.sha256(content).hexdigest() != document["sha256"]:
+                raise AgentError("PINNED_MATERIAL_CHANGED")
+            for page, text in await asyncio.to_thread(parse_pages, content):
+                facts.append(
+                    Fact(
+                        factId=f"material_pages:{document['documentId']}:{page}",
+                        fieldPath=f"documents[{document['documentId']}].pages[{page}]",
+                        value=text,
+                        sourceType="material",
+                        materialId=document["documentId"],
+                    ).model_dump()
+                )
+        return {"caseSnapshot": deepcopy(claim), "facts": facts}
 
     async def validate_materials():
         return evaluate_evidence_rules(claim, case_facts(claim))
@@ -40,8 +66,11 @@ def build_analysis_tools(context, knowledge):
         for binding in bindings:
             rows.extend(
                 await knowledge.search(
-                    binding["productCode"], binding["clauseVersion"],
-                    binding["generationId"], query.strip(), limit=4,
+                    binding["productCode"],
+                    binding["clauseVersion"],
+                    binding["generationId"],
+                    query.strip(),
+                    limit=4,
                     profile=binding["embeddingProfile"],
                 )
             )

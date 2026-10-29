@@ -5,6 +5,7 @@ import json
 from pydantic.json_schema import models_json_schema
 
 from .schemas.knowledge import V1KnowledgeGeneration, V1KnowledgeRetry
+from .schemas.review import ManualFindingRequest, ReviewRecordRequest
 from .schemas.review_cases import ReviewCaseDetail, ReviewCaseListResponse, ReviewPreflight
 from .schemas.workspace import (
     AnalysisTask,
@@ -15,6 +16,7 @@ from .schemas.workspace import (
     ConversationSummary,
     CreateAnalysis,
     CreateConversation,
+    FindingReviewRequest,
     RecoverRequest,
     ReviewRequest,
     WorkspaceEvent,
@@ -41,7 +43,10 @@ def main():
                 CreateAnalysis,
                 CreateConversation,
                 ReviewRequest,
+                FindingReviewRequest,
                 RecoverRequest,
+                ManualFindingRequest,
+                ReviewRecordRequest,
             )
         ]
     )

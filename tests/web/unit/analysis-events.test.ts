@@ -5,12 +5,12 @@ import { workspaceEventSchema, type AnalysisTask, type WorkspaceEvent } from '..
 
 // Reducer fixture contains a complete public V1 snapshot, never a legacy write shape.
 const task = (): AnalysisTask => ({
-  schemaVersion: 2, id: 'analysis-a', caseId: 'case-a', conversationId: 'conversation-a', kind: 'initial', question: '核验', status: 'running',
+  reviewState: { reviewModelVersion: 1, checkPlan: [], checks: [], findings: [], findingHistory: [], records: [], businessNodes: [], nodeHistory: [], reviewCycleId: 1 }, finalizationEligibility: { allowed: false, blockers: ['尚未完成'], basisHash: 'a'.repeat(64) }, reviewStatus: 'pending_review', schemaVersion: 2, id: 'analysis-a', caseId: 'case-a', conversationId: 'conversation-a', kind: 'initial', question: '核验', status: 'running',
   caseSnapshot: { snapshotKind: 'closed_claim_review', caseId: 'case-a', caseRevision: 1, preparedAt: '2026-01-01T00:00:00Z', payload: {}, scopeItems: [], knowledgeBindings: [] }, predecessorAnalysisId: null,
   evidenceSupplements: [], reviewSupplementIds: [],
   revision: 0, lastEventSeq: 0, userMessageId: 'user-a', assistantMessageId: null,
   context: { inputVersion: 'v2', knowledgeBindings: [], messageIds: [], modelProfile: 'm1', promptVersion: 'p1' },
-  facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null, execution: { nodes: [], tools: [], timeline: [] }, error: null,
+  facts: [], ruleFindings: [], modelFindings: [], citations: [], sections: [], report: null, pendingReview: null, execution: { tools: [], timeline: [] }, error: null,
 });
 const event = (seq: number): WorkspaceEvent => ({ schemaVersion: 2, analysisId: 'analysis-a', conversationId: 'conversation-a', seq, revision: seq, at: '2026-10-26T01:00:00Z', type: 'analysis.status', data: { status: 'running', revision: seq } });
 function apply(previous: AnalysisTask, value: WorkspaceEvent) {
@@ -46,23 +46,17 @@ test('review transitions and report commits remain distinct from partial section
   assert.equal(partial.report, null);
 });
 
-test('execution completion updates one card and recovery retains committed sections', () => {
-  const started = { executionId: 'e1', key: 'model:summary', name: '摘要生成', attempt: 1, status: 'running' as const, summary: '执行中', durationMs: 0 };
-  const one = apply(task(), { ...event(1), type: 'node.started', data: started });
-  const two = apply(one, { ...event(2), type: 'node.completed', data: { ...started, status: 'completed', durationMs: 125 } });
-  assert.equal(two.execution.nodes.length, 1);
-  assert.equal(two.execution.nodes[0].durationMs, 125);
-  assert.equal(one.execution.nodes[0].status, 'running');
-  const tool = apply(two, { ...event(3), type: 'tool.failed', data: { ...started, executionId: 'tool-1', key: 'retrieve', name: '条款检索', status: 'failed', summary: '检索失败' } });
-  assert.equal(tool.execution.nodes.length, 1);
-  assert.equal(tool.execution.tools.length, 1);
-  assert.equal(tool.execution.tools[0].executionId, 'tool-1');
-  const failed = apply(tool, { ...event(4), type: 'analysis.recoverable', data: { error: { code: 'MODEL_TIMEOUT', message: '调用超时', requestId: 'r1' }, revision: 4 } });
+test('real business-node events stay distinct from tool attempts and failure preserves reports', () => {
+  const original = task();
+  const node = { nodeRunId: 'amount:1', nodeKey: 'amount' as const, attempt: 1, status: 'not_started' as const, startedAt: null, endedAt: null, durationMs: 0, summary: '', reason: '' };
+  original.reviewState.businessNodes = [node];
+  const one = apply(original, { ...event(1), type: 'business_node.started', data: { ...node, status: 'running' } });
+  const two = apply(one, { ...event(2), type: 'business_node.failed', data: { ...node, status: 'failed', reason: 'MODEL_TIMEOUT' } });
+  assert.equal(two.reviewState.businessNodes[0].status, 'failed');
+  assert.equal(one.reviewState.businessNodes[0].status, 'running');
+  const failed = apply(two, { ...event(3), type: 'analysis.recoverable', data: { error: { code: 'MODEL_TIMEOUT', message: '调用超时', requestId: 'r1' }, revision: 3 } });
   assert.equal(failed.status, 'recoverable');
-  const retry = apply(failed, { ...event(5), data: { status: 'queued', revision: 5 } });
-  assert.equal(retry.error, null);
-  assert.equal(retry.execution.nodes.length, 1);
-  assert.equal(retry.execution.tools.length, 1);
+  assert.equal(failed.reviewState.businessNodes[0].reason, 'MODEL_TIMEOUT');
 });
 
 test('transport validation rejects legacy, unknown and malformed event payloads', () => {
@@ -73,4 +67,19 @@ test('transport validation rejects legacy, unknown and malformed event payloads'
   assert.throws(() => workspaceEventSchema.parse({ ...event(1), type: 'review.required', data: {} }));
   assert.throws(() => workspaceEventSchema.parse({ ...event(1), type: 'report.completed', data: { report: 'incomplete' } }));
   assert.equal(workspaceEventSchema.parse(event(1)).type, 'analysis.status');
+});
+
+test('saved stage reports and per-finding decisions do not mark the task completed', () => {
+  const report = { caseId: 'case-a', kind: 'stage' as const, version: 2, sections: [], insufficientEvidence: true, reviewerComment: null };
+  const waiting = { ...task(), status: 'waiting_review' as const };
+  const saved = apply(waiting, { ...event(1), type: 'report.saved', data: report });
+  assert.equal(saved.status, 'waiting_review');
+  assert.equal(saved.report?.version, 2);
+  assert.equal(saved.reports?.length, 1);
+  assert.equal(waiting.reports, undefined);
+  const review = { reviewId: 'r1', findingId: 'payment', nodeKey: 'amount', decision: 'pending' as const, comment: '需核对关联审批', operatorId: '测试001', at: '2026-10-29T00:00:00Z', factRefs: [], citationRefs: [], supplementIds: [], followup: '支付经办补充审批', changeReason: '' };
+  const reviewed = apply(saved, { ...event(2), type: 'finding.reviewed', data: { review, report, revision: 2 } });
+  assert.equal(reviewed.status, 'waiting_review');
+  assert.equal(reviewed.reviewHistory?.[0].comment, '需核对关联审批');
+  assert.equal(reviewed.pendingReview, null);
 });

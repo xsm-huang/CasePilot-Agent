@@ -33,11 +33,30 @@ def clause(number=1, generation="generation-1"):
 def assessment(*, fact="case:accident", citation="chunk-1", insufficient=False):
     return {
         "summary": "依据当前事实与条款，仍需核查事故和费用。",
+        "checkedItems": [
+            {
+                "category": "limitation" if insufficient else "passed",
+                "nodeKey": node,
+                "title": title,
+                "issueCode": f"{node}_review",
+                "inference": "依据当前材料及条款完成核对。",
+                "evidenceStatus": "insufficient" if insufficient else "supported",
+                "supportQuote": "provide evidence of repair cost.",
+                "factRefs": [fact],
+                "citationRefs": [citation] if citation else [],
+                "pendingItems": [],
+            }
+            for node, title in (("consistency", "材料一致性"), ("clauses", "合同责任"))
+        ],
         "findings": [
             {
+                "category": "issue",
+                "nodeKey": "clauses",
                 "title": "核查费用依据",
+                "issueCode": "repair_cost_support",
                 "inference": "需结合原文核查材料。",
                 "evidenceStatus": "insufficient" if insufficient else "supported",
+                "supportQuote": "provide evidence of repair cost.",
                 "factRefs": [fact],
                 "citationRefs": [citation] if citation else [],
                 "pendingItems": ["核查费用原件"],
@@ -99,7 +118,16 @@ class ScriptedChat:
                 if self.decisions
                 else {"content": "进入结构化分析。", "toolCalls": [], "usage": {}}
             )
-        output = self.assessments.pop(0) if self.assessments else assessment()
+        payload = json.loads(messages[1]["content"])
+        if payload.get("phase") in {"consistency", "amount"}:
+            output = assessment(citation=None)
+            output["findings"] = []
+            output["checkedItems"] = [
+                r for r in output["checkedItems"] if r["nodeKey"] == "consistency"
+            ]
+            output["checkedItems"][0]["nodeKey"] = payload["phase"]
+        else:
+            output = self.assessments.pop(0) if self.assessments else assessment()
         return {
             "content": output
             if isinstance(output, str)

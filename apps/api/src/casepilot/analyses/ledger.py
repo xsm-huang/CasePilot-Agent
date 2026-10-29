@@ -11,6 +11,8 @@ from .agent_errors import AgentError
 class TaskLedger:
     def __init__(self, store, task_id):
         self.store, self.task_id = store, task_id
+        self.node_key = "archive"
+        self.node_run_id = ""
 
     async def _change(self, update):
         async with self.store.lock:
@@ -52,6 +54,11 @@ class TaskLedger:
         ):
             raise AgentError("CALL_REQUEST_INVALID")
         call_key = f"{key}:{attempt}"
+        saved = self.store.get(self.task_id)["_agent"]["calls"].get(call_key)
+        if saved and saved["status"] == "completed":
+            if saved["kind"] != kind or saved["repair"] != repair:
+                raise AgentError("CALL_INTENT_CONFLICT")
+            return deepcopy(saved["result"])
 
         def reserve(task):
             agent = task["_agent"]
@@ -73,13 +80,18 @@ class TaskLedger:
             if kind == "retrieval" and counts["retrieval"] >= 3:
                 raise AgentError("RETRIEVAL_BUDGET_EXHAUSTED")
             first_repair = repair and not any(k.rsplit(":", 1)[0] == key for k in agent["calls"])
-            if first_repair and counts["repair"] >= 1:
+            if first_repair and any(
+                call["repair"] and call["nodeKey"] == self.node_key
+                for call in agent["calls"].values()
+            ):
                 raise AgentError("STRUCTURE_REPAIR_EXHAUSTED")
             if kind in counts:
                 counts[kind] += 1
             if first_repair:
                 counts["repair"] += 1
             agent["calls"][call_key] = {
+                "nodeKey": self.node_key,
+                "parentNodeRunId": self.node_run_id,
                 "kind": kind,
                 "repair": repair,
                 "status": "reserved",

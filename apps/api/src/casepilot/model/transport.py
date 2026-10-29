@@ -53,7 +53,9 @@ async def _provider_request(client, config, path, body):
         return result
     except httpx.TimeoutException:
         raise ModelError("MODEL_TIMEOUT") from None
-    except (httpx.HTTPError, ValueError) as exc:
+    except httpx.HTTPError:
+        raise ModelError("DEPENDENCY_UNAVAILABLE") from None
+    except ValueError as exc:
         if isinstance(exc, ModelError):
             raise
         raise ModelError("MODEL_RESPONSE_INVALID") from None
